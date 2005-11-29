@@ -1,0 +1,11 @@
+Package: affyio
+Version: 0.1.0
+Title: Tools for parsing Affymetrix data files
+Author: Benjamin Milo Bolstad <bmb@bmbolstad.com>
+Maintainer: Benjamin Milo Bolstad <bmb@bmbolstad.com>
+Depends: methods
+Description: Edit me.
+License: LGPL version 2 or newer
+biocViews: Microarray, DataImport
+SaveImage: yes
+
