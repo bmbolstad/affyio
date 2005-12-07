@@ -13,7 +13,7 @@
  **
  ** Note that the original text CDF parser (from which this file is not in
  ** anyway based) was written by Laurent Gautier. That file was named
- ** read_cdffile.c
+ ** read_cdffile.c (originally part of affy and then later makecdfenv)
  **
  ** Implemented based on documentation available from Affymetrix
  **
@@ -25,6 +25,8 @@
  ** Sep 21 - Continued Implementation and debugging
  ** Sep 22 - Continued Implementation and testing
  ** Sep 24 - QCunit probes, Unit Block probes, Finish and tested.
+ ** Dec 1, 2005 - Some comment cleaning. Added isTextCDFFile,CheckCDFtext
+ **               
  **
  *******************************************************************/
 
@@ -38,12 +40,13 @@
 #define BUFFER_SIZE 1024
 
 
-/***
-
-A structure for holding information in the 
-"CDF" and "Chip" sections (basically header information)
-
-***/
+/*****************************************************************
+ **
+ **
+ ** A structure for holding information in the 
+ ** "CDF" and "Chip" sections (basically header information)
+ **
+ ******************************************************************/
 
 
 
@@ -59,10 +62,14 @@ typedef struct {
 } cdf_text_header;
 
 
+/*****************************************************************
+ **
+ **
+ ** A structure for holding QC probe information
+ ** Note the "CYCLES" item is ignored and never parsed
+ **
+ ******************************************************************/
 
-/*** A structure for holding QC probe information
- *** Note the "CYCLES" item is ignored and never parsed
- ***/
 
 typedef struct {
   int x;
@@ -81,7 +88,14 @@ typedef struct {
 
 
 
-/** A structure for holding QC information */
+/*******************************************************************
+ **
+ ** A structure for holding QC units information. These are
+ ** areas of the chip that contain probes that may or may not be useful
+ ** for QC and other purposes. 
+ **
+ **
+ *******************************************************************/
 
 
 
@@ -94,9 +108,13 @@ typedef struct{
 } cdf_text_qc_unit;
 
 
-/*** A structure for holding probe information for unit_blocks **/
-
-
+/*******************************************************************
+ **
+ ** A structure for holding probe information for unit_blocks_probes 
+ **
+ ** probes are stored within blocks
+ ** 
+ *******************************************************************/
 
 typedef struct{
   int x;
@@ -120,11 +138,14 @@ typedef struct{
 
 
 
-/***
-
-A structure holding Unit_blocks
-
-***/
+/*******************************************************************
+ **
+ ** A structure holding Unit_blocks
+ **
+ ** blocks are stored within units.
+ ** blocks contain many probes
+ **
+ *******************************************************************/
 
 typedef struct{
   char *name;
@@ -143,11 +164,14 @@ typedef struct{
 
 
 
-/***
-
-A structure for holding "Units" AKA known as probesets
-
-***/
+/*******************************************************************
+ **
+ ** A structure for holding "Units" AKA known as probesets
+ **
+ ** Each unit contains one or more blocks. Each block contains one or
+ ** more probes
+ **
+ *******************************************************************/
 
 
 typedef struct{
@@ -164,11 +188,20 @@ typedef struct{
 
 
 
-/***
-
- A structure for holding a text CDF file
-
-***/
+/*******************************************************************
+ **
+ ** A structure for holding a text CDF file
+ **
+ ** text cdf files consist of 
+ ** basic header information
+ ** qcunits
+ **       - qc probes
+ ** units (aka probesets)
+ **       - blocks
+ **            - probes
+ **
+ **
+ *******************************************************************/
 
 typedef struct{
   cdf_text_header header;
@@ -415,29 +448,16 @@ static void AdvanceToSection(FILE *my_file,char *sectiontitle, char *buffer){
 }
 
 
-
-
-
-
-
-
-
-
-/*
-typedef struct {
-
-  char *version;
-  char *name;
-  int rows,cols;
-  int numberofunits;
-  int maxunit;
-  int NumQCUnits;
-  char *chipreference;
-} cdf_text_header;
-
-
-*/
-
+/*******************************************************************
+ **
+ ** void read_cdf_header(FILE *infile,  cdf_text *mycdf, char* linebuffer)
+ **
+ ** FILE *infile - pointer to open file presumed to be a CDF file
+ ** cdf_text *mycdf - structure for holding cdf file
+ ** char *linebuffer - a place to store strings that are read in. Length
+ **                   is given by BUFFER_SIZE
+ **
+ *******************************************************************/
 
 static void read_cdf_header(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 
@@ -497,7 +517,23 @@ static void read_cdf_header(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 
 }
 
-  
+
+
+/*******************************************************************
+ **
+ **  void read_cdf_QCUnits_probes(FILE *infile,  cdf_text *mycdf, char* linebuffer,int index)
+ **
+ **  FILE *infile - an opened CDF file
+ **  cdf_text *mycdf - a structure for holding cdf file
+ **  char *linebuffer - temporary place to store lines of text read in
+ **  int index - which QCunit. 
+ **
+ ** This function reads in the QC unit probes from the cdf file. It is assumed that the space to
+ ** store them is already allocated.
+ **
+ *******************************************************************/
+
+
 static void read_cdf_QCUnits_probes(FILE *infile,  cdf_text *mycdf, char* linebuffer,int index){
   tokenset *cur_tokenset;
   int i,j;
@@ -537,7 +573,18 @@ static void read_cdf_QCUnits_probes(FILE *infile,  cdf_text *mycdf, char* linebu
 
 }
 
-
+/*******************************************************************
+ **
+ ** void read_cdf_QCUnits(FILE *infile,  cdf_text *mycdf, char* linebuffer)
+ **
+ **  FILE *infile - an opened CDF file
+ **  cdf_text *mycdf - a structure for holding cdf file
+ **  char *linebuffer - temporary place to store lines of text read in
+ **
+ **  Reads all the QC units. Note that it allocates the space for the probes
+ **  it is assumed that the space for the actual QC units are already allocated
+ **
+ *******************************************************************/
 
 static void read_cdf_QCUnits(FILE *infile,  cdf_text *mycdf, char* linebuffer){
   
@@ -590,14 +637,24 @@ static void read_cdf_QCUnits(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 
 
   }
-
-
-
-
-
-
-
 }
+
+/*******************************************************************
+ **
+ ** void read_cdf_unit_block_probes(FILE *infile,  cdf_text *mycdf, char* linebuffer, int unit,int block)
+ **
+ **  FILE *infile - an opened CDF file
+ **  cdf_text *mycdf - a structure for holding cdf file
+ **  char *linebuffer - temporary place to store lines of text read in from the file
+ **  int unit - which unit
+ **  int block - which block
+ **
+ ** Reads in the probes for each unit. Note that it is assumed that the
+ ** space for the probes has actually been allocated.
+ ** 
+ *******************************************************************/
+
+
 
 static void read_cdf_unit_block_probes(FILE *infile,  cdf_text *mycdf, char* linebuffer, int unit,int block){
   int i;
@@ -633,11 +690,23 @@ static void read_cdf_unit_block_probes(FILE *infile,  cdf_text *mycdf, char* lin
     delete_tokens(cur_tokenset);
   }
 
-
-    
-
-
 }
+
+
+/*******************************************************************
+ **
+ ** void read_cdf_unit_block(FILE *infile,  cdf_text *mycdf, char* linebuffer, int unit)
+ ** 
+ **  FILE *infile - an opened CDF file
+ **  cdf_text *mycdf - a structure for holding cdf file
+ **  char *linebuffer - temporary place to store lines of text read in from the file
+ **  int unit - which unit
+ **
+ ** Reads in all the blocks for the unit. Assumes that space for the blocks are allocated
+ ** already. Allocates the space for the probes and calls a function to read them in.
+ ** 
+ *******************************************************************/
+
 
 static void read_cdf_unit_block(FILE *infile,  cdf_text *mycdf, char* linebuffer, int unit){
   tokenset *cur_tokenset;
@@ -700,18 +769,21 @@ static void read_cdf_unit_block(FILE *infile,  cdf_text *mycdf, char* linebuffer
 
 
   }
-  
-
-
-
 }
 
 
-
-
-
-
-
+/*******************************************************************
+ **
+ ** void read_cdf_Units(FILE *infile,  cdf_text *mycdf, char* linebuffer)
+ ** 
+ **  FILE *infile - an opened CDF file
+ **  cdf_text *mycdf - a structure for holding cdf file
+ **  char *linebuffer - temporary place to store lines of text read in from the file
+ ** 
+ ** Reads in all the units allocating the space for them and then calling sub functions
+ ** to read each block and probes within the blocks
+ **
+ *******************************************************************/
 
 static void read_cdf_Units(FILE *infile,  cdf_text *mycdf, char* linebuffer){
   tokenset *cur_tokenset;
@@ -776,6 +848,22 @@ static void read_cdf_Units(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 }
 
 
+/*******************************************************************
+ **
+ ** int read_cdf_text(char *filename, cdf_text *mycdf)
+ **
+ ** char *filename - name of text file
+ ** cdf_text *mycdf - pointer to root of structure that will contain
+ **                   the contents of the CDF file at the conclusion
+ **                   of the function.
+ **
+ ** RETURNS 0 if the function failed, otherwise returns 1
+ **
+ ** this function reads a text CDF file into C data structure.
+ **
+ *******************************************************************/
+
+
 static int read_cdf_text(char *filename, cdf_text *mycdf){
 
   FILE *infile;
@@ -818,6 +906,15 @@ static int read_cdf_text(char *filename, cdf_text *mycdf){
   return 1;
 }
 
+/*******************************************************************
+ **
+ ** void dealloc_cdf_text(cdf_text *my_cdf)
+ **
+ ** Frees memory allocated 
+ **
+ ******************************************************************/
+
+
 
 static void dealloc_cdf_text(cdf_text *my_cdf){
   int i,j,k;
@@ -856,19 +953,71 @@ static void dealloc_cdf_text(cdf_text *my_cdf){
 
 }
 
-/****
-     
- this function should be called from R. When supplied the name
- of a text cdf file it first parses it into a C data structure.
 
- An R list structure is then constructed from the C data structure
 
- The R list is then returned.
+/*******************************************************************
+ **
+ ** static int isTextCDFFile(char *filename)
+ **
+ ** char *filename - name of file to check
+ **
+ ** checks whether the supplied file is a text CDF file or not.
+ ** uses a very simple test.
+ **
+ ** Attempts to open the supplied filename. Then checks to see if the first
+ ** 5 characters are "[CDF]" if so returns 1, otherwise 0.
+ ** 
+ **
+ ******************************************************************/
 
- Note no special effort is made to reduce down the information in
- the text CDF file. Instead almost everything is returned, even somewhat redundant information.
+static int isTextCDFFile(char *filename){
 
-****/
+
+  FILE *infile;
+  int i;
+  char linebuffer[BUFFER_SIZE];  // a character buffer
+  tokenset *cur_tokenset;
+  
+  if ((infile = fopen(filename, "r")) == NULL)
+    {
+      error("Unable to open the file %s",filename);
+    }
+  
+
+
+  /* Check that is is a text CDF file */
+  ReadFileLine(linebuffer, BUFFER_SIZE, infile);
+  if (strncmp("[CDF]", linebuffer, 5) != 0){
+    fclose(infile);
+    return 1;
+  }
+  fclose(infile);
+  return 0;
+}
+
+
+
+
+
+/*******************************************************************
+ **
+ ** SEXP ReadtextCDFFileIntoRList(SEXP filename)
+ **
+ ** SEXP filename - name of cdffile. Should be full path to file.
+ **     
+ ** this function should be called from R. When supplied the name
+ ** of a text cdf file it first parses it into a C data structure.
+ **
+ ** An R list structure is then constructed from the C data structure
+ **
+ ** The R list is then returned.
+ **
+ ** Note no special effort is made to reduce down the information in
+ ** the text CDF file. Instead almost everything is returned, even 
+ ** somewhat redundant information.
+ **
+ ******************************************************************/
+
 
 SEXP ReadtextCDFFileIntoRList(SEXP filename){
 
@@ -1391,4 +1540,32 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 
 
 
+
+/*************************************************************
+ **
+ ** SEXP CheckCDFtext(SEXP filename)
+ ** 
+ ** Takes a given file name and returns 1 if it is a text format CDF file
+ ** otherwise it returns 0
+ **
+ *************************************************************/
+
+
+
+SEXP CheckCDFtext(SEXP filename){
+  SEXP tmp;
+  int good;
+  char *cur_file_name;
+  
+  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  
+  good = isTextCDFFile(cur_file_name);
+  
+  PROTECT(tmp= allocVector(INTSXP,1));
+
+  INTEGER(tmp)[0] = good;
+
+  UNPROTECT(1);
+  return tmp;
+}
 

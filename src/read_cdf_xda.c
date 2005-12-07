@@ -4,7 +4,8 @@
  **
  ** Implementation by: B. M. Bolstad
  **
- ** A parser designed to read the binary format cdf files
+ ** A parser designed to read the binary format cdf files.
+ ** Sometimes called the xda format.
  **
  ** Implemented based on documentation available from Affymetrix
  **
@@ -16,6 +17,8 @@
  ** Apr 20
  ** Aug 16, 2005 - Fix potential big endian bug
  ** Sep 22, 2005 - Fix some signed/unsigned bugs
+ ** Dec 1, 2005 - Comment cleaning
+ **
  **
  ****************************************************************/
 
@@ -35,7 +38,8 @@
 
 /************************************************************************
  **
- ** Structures for holding the CDF file information
+ ** Structures for holding the CDF file information. Basically 
+ ** header/general information that appears at the start of the CDF file
  **
  ************************************************************************/
 
@@ -50,18 +54,23 @@ typedef struct {
 } cdf_xda_header;
 
 
-/*   QC information, repeated for each QC unit:
-
-Type - unsigned short
-Number of probes - integer
-
-Probe information, repeated for each probe in the QC unit:
-X coordinate - unsigned short
-Y coordinate - unsigned short
-Probe length - unsigned char
-Perfect match flag - unsigned char
-Background probe flag - unsigned char
-*/
+/****************************************************************************
+ **
+ ** The following two structures store QC units and QC unit probe information
+ **
+ **  QC information, repeated for each QC unit:
+ ** Type - unsigned short
+ ** Number of probes - integer
+ **
+ ** Probe information, repeated for each probe in the QC unit:
+ ** X coordinate - unsigned short
+ ** Y coordinate - unsigned short
+ ** Probe length - unsigned char
+ ** Perfect match flag - unsigned char
+ ** Background probe flag - unsigned char
+ **
+ ****************************************************************************/
+ 
 
 typedef struct{
   unsigned short x;
@@ -81,37 +90,49 @@ typedef struct{
 } cdf_qc_unit;
 
 
-/* Unit information, repeated for each unit:
-
-UnitType - unsigned short (1 - expression, 2 - genotyping, 3 - CustomSeq, 3 - tag)
-Direction - unsigned char
-Number of atoms - integer
-Number of blocks - integer (always 1 for expression units)
-Number of cells - integer
-Unit number (probe set number) - integer
-Number of cells per atom - unsigned char
-
-Block information, repeated for each block in the unit:
-
-Number of atoms - integer
-Number of cells - integer
-Number of cells per atom - unsigned char
-Direction - unsigned char
-The position of the first atom - integer
-<unused integer value> - integer
-The block name - char[64]
-
-Cell information, repeated for each cell in the block:
-
-Atom number - integer
-X coordinate - unsigned short
-Y coordinate - unsigned short
-Index position (relative to sequence for resequencing units, for expression and mapping units this value is just the atom number) - integer
-Base of probe at substitution position - char
-Base of target at interrogation position - char
-
-*/
-
+/****************************************************************************
+ **
+ ** The following three structures store information for units (sometimes called
+ ** probesets), blocks (of which there are one or more within a unit) and cells 
+ ** sometimes called probe of which there are one or more within each block
+ ** 
+ **
+ ** Unit information, repeated for each unit:
+ **
+ ** UnitType - unsigned short (1 - expression, 2 - genotyping, 3 - CustomSeq, 3 - tag)
+ ** Direction - unsigned char
+ ** Number of atoms - integer
+ ** Number of blocks - integer (always 1 for expression units)
+ ** Number of cells - integer
+ ** Unit number (probe set number) - integer
+ ** Number of cells per atom - unsigned char
+ ** 
+ **
+ **
+ ** Block information, repeated for each block in the unit:
+ ** 
+ ** Number of atoms - integer
+ ** Number of cells - integer
+ ** Number of cells per atom - unsigned char
+ ** Direction - unsigned char
+ ** The position of the first atom - integer
+ ** <unused integer value> - integer
+ ** The block name - char[64]
+ **
+ **
+ ** 
+ ** Cell information, repeated for each cell in the block:
+ ** 
+ ** Atom number - integer
+ ** X coordinate - unsigned short
+ ** Y coordinate - unsigned short
+ ** Index position (relative to sequence for resequencing units, for expression and mapping units this value is just the atom number) - integer
+ ** Base of probe at substitution position - char
+ ** Base of target at interrogation position - char
+ **
+ **
+ ****************************************************************************/
+ 
 
 typedef struct{
   int atomnumber;
@@ -151,8 +172,14 @@ typedef struct{
 } cdf_unit;
 
 
-
-
+/****************************************************************************
+ **
+ ** A data structure for holding CDF information read from a xda format cdf file
+ **
+ ** note that this structure reads in everything including things that might not
+ ** be of any subsequent use.
+ **
+ ****************************************************************************/
 
 
 
@@ -326,6 +353,20 @@ static size_t fread_uchar(unsigned char *destination, int n, FILE *instream){
 
 
 
+/*************************************************************************
+ **
+ ** int read_cdf_qcunit(cdf_qc_unit *my_unit,int filelocation,FILE *instream)
+ **
+ ** cdf_qc_unit *my_unit - preallocated space to store qc unit information
+ ** int filelocation - indexing/location information used to read information
+ **                    from file
+ ** FILE *instream - a pre-opened file to read from
+ **
+ ** reads a specificed qc_unit from the file. Allocates space for the cdf_qc_probes
+ ** and also reads them in
+ **
+ ** 
+ *************************************************************************/
 
 int read_cdf_qcunit(cdf_qc_unit *my_unit,int filelocation,FILE *instream){
   
@@ -351,6 +392,20 @@ int read_cdf_qcunit(cdf_qc_unit *my_unit,int filelocation,FILE *instream){
   return 1;
 }
 
+/*************************************************************************
+ **
+ ** int read_cdf_unit(cdf_unit *my_unit,int filelocation,FILE *instream)
+ **
+ ** cdf_qc_unit *my_unit - preallocated space to store unit (aka probeset) information
+ ** int filelocation - indexing/location information used to read information
+ **                    from file
+ ** FILE *instream - a pre-opened file to read from
+ **
+ ** reads a specified probeset into the my_unit, including all blocks and all probes
+ ** it is assumed that the unit itself is preallocated. Blocks and probes within
+ ** the blocks are allocated by this function.
+ ** 
+ *************************************************************************/
 
 int read_cdf_unit(cdf_unit *my_unit,int filelocation,FILE *instream){
 
@@ -398,6 +453,13 @@ int read_cdf_unit(cdf_unit *my_unit,int filelocation,FILE *instream){
 
 }
 
+/*************************************************************************
+ **
+ ** static void dealloc_cdf_xda(cdf_xda *my_cdf)
+ **
+ ** Deallocates all the previously allocated memory.
+ ** 
+ *************************************************************************/
 
 static void dealloc_cdf_xda(cdf_xda *my_cdf){
 
@@ -595,7 +657,17 @@ static int read_cdf_xda(char *filename,cdf_xda *my_cdf){
 
 
 
-
+/*************************************************************
+ **
+ ** static int check_cdf_xda(char *filename)
+ **
+ ** Opens the file give by filename and checks it to see if
+ ** it looks like a binary CDF file. returns 0 if
+ ** the file looks like it is not a binary CDF aka xda format
+ ** cdf file
+ **
+ **
+ *************************************************************/
 
 
 static int check_cdf_xda(char *filename){
@@ -637,6 +709,20 @@ static int check_cdf_xda(char *filename){
 }
 
 
+
+/*************************************************************
+ **
+ ** static int isPM(char pbase,char tbase)
+ **
+ ** char pbase - probe base at substitution position
+ ** char tbase - target base at substitution position
+ **
+ ** this function works out whether a probe is a PM or MM
+ ** 
+ **
+ *************************************************************/
+
+
 static int isPM(char pbase,char tbase){
   /*
   if (Pbase.Cmp(Tbase) == 0){
@@ -666,6 +752,17 @@ static int isPM(char pbase,char tbase){
 
 
 }
+
+
+
+/*************************************************************
+ **
+ ** SEXP CheckCDFXDA(SEXP filename)
+ ** 
+ ** Takes a given file name and returns 1 if it is a xda format CDF file
+ ** otherwise it returns 0
+ **
+ *************************************************************/
 
 
 
