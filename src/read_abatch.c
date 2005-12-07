@@ -112,6 +112,9 @@
  **                and a gzipped file has been supplied.
  ** Aug 16, 2005 - fix bit flipping when more than one number read
  ** Nov 15, 2005 - ability to read in SD and npixels values
+ ** Nov 30, 2005 - remove compress argument from functions where it
+ **                appears. it is legacy and has not been used in 
+ **                a great deal of time.
  **
  *************************************************************/
  
@@ -2154,7 +2157,7 @@ static void binary_apply_masks(char *filename, double *intensity, int chip_num, 
  **
  *************************************************************************/
 
-SEXP read_abatch(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose){
+SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose){
   
   int i; 
   
@@ -2310,7 +2313,7 @@ SEXP read_abatch(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm_outliers,
  **
  *************************************************************************/
 
-SEXP ReadHeader(SEXP filename,SEXP compress){
+SEXP ReadHeader(SEXP filename){
 
   int ref_dim_1, ref_dim_2;
 
@@ -2320,6 +2323,7 @@ SEXP ReadHeader(SEXP filename,SEXP compress){
   SEXP headInfo;
   SEXP name;
   SEXP cel_dimensions;
+  SEXP cel_dimensions_names;
     
   PROTECT(cel_dimensions= allocVector(INTSXP,2));
   PROTECT(headInfo = allocVector(VECSXP,2));
@@ -2351,8 +2355,8 @@ SEXP ReadHeader(SEXP filename,SEXP compress){
   PROTECT(name = allocVector(STRSXP,1));
   SET_VECTOR_ELT(name,0,mkChar(cdfName));
 
-  INTEGER(cel_dimensions)[0] = ref_dim_1;
-  INTEGER(cel_dimensions)[1] = ref_dim_2;
+  INTEGER(cel_dimensions)[0] = ref_dim_1;   // This is cols
+  INTEGER(cel_dimensions)[1] = ref_dim_2;   // this is rows
 
   SET_VECTOR_ELT(headInfo,0,name);
   SET_VECTOR_ELT(headInfo,1,cel_dimensions);
@@ -2396,7 +2400,7 @@ SEXP ReadHeader(SEXP filename,SEXP compress){
  *************************************************************************/
  
 
-SEXP read_probeintensities(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose, SEXP cdfInfo,SEXP which){
+SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose, SEXP cdfInfo,SEXP which){
 
     
   int i; 
@@ -2584,7 +2588,7 @@ SEXP read_probeintensities(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm
  **                   SEXP ref_cdfName)
  **
  ** SEXP filenames - an R list of filenames to read
- ** SEXP compress  - logical flag TRUE means files are *.gz
+ ** 
  ** SEXP rm_mask   - if true set MASKS  to NA
  ** SEXP rm_outliers - if true set OUTLIERS to NA
  ** SEXP rm_extra    - if true  overrides rm_mask and rm_outliers settings
@@ -2604,7 +2608,7 @@ SEXP read_probeintensities(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm
  **
  *************************************************************************/
 
-SEXP read_abatch_stddev(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose){
+SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose){
   
   int i; 
   
@@ -2763,7 +2767,7 @@ SEXP read_abatch_stddev(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm_ou
  **                   SEXP ref_cdfName)
  **
  ** SEXP filenames - an R list of filenames to read
- ** SEXP compress  - logical flag TRUE means files are *.gz
+ ** 
  ** SEXP rm_mask   - if true set MASKS  to NA
  ** SEXP rm_outliers - if true set OUTLIERS to NA
  ** SEXP rm_extra    - if true  overrides rm_mask and rm_outliers settings
@@ -2783,7 +2787,7 @@ SEXP read_abatch_stddev(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm_ou
  **
  *************************************************************************/
 
-SEXP read_abatch_npixels(SEXP filenames, SEXP compress,  SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose){
+SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose){
   
   int i; 
   
