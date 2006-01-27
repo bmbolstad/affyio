@@ -7,7 +7,10 @@
  ** fine code.
  **
  ** The following code became the default parsing code
- ** at the BioC 1.3 release
+ ** at the BioC 1.3 release.
+ **
+ ** Also note that this code was originally part of the affy package
+ ** before being moved to affyio
  **
  ************************************************************/
 /*************************************************************
@@ -22,7 +25,7 @@
  **
  ** Notes:
  **
- ** The following assumptions are made about CEL files.
+ ** The following assumptions are made about text CEL files.
  ** 
  ** 1. A CEL file has a series of sections in the order
  **  
@@ -65,6 +68,9 @@
  **       the first two items are integers indicating the 
  **       X and Y locations of probes that should be set to NA
  **       if the user sets the right flags.
+ **
+ ** The implementation of parsing for binary files was based upon 
+ ** file format information supplied from Affymetrix.
  **
  **
  ** History
@@ -115,6 +121,12 @@
  ** Nov 30, 2005 - remove compress argument from functions where it
  **                appears. it is legacy and has not been used in 
  **                a great deal of time.
+ ** Dec 14, 2005 - Added ReadHeaderDetailed: which attempts to 
+ **                be more complete then ReadHeader in what it returns
+ **                from the header information basically the [CEL] and [HEADER]
+ **                sections in the text files and similar information contained in 
+ **                the first section of the binary CEL file format
+ ** Jan 27, 2005 - Complete ReadHeaderDetailed for supported formats.
  **
  *************************************************************/
  
@@ -131,6 +143,36 @@
 #endif
 
 #define BUF_SIZE 1024
+
+
+/****************************************************************
+ **
+ ** A structure for holding full header information
+ **
+ **
+ **
+ ***************************************************************/
+
+typedef struct{
+  char *cdfName;
+  int cols;
+  int rows;
+  int GridCornerULx,GridCornerULy;	/*XY coordinates of the upper left grid corner in pixel coordinates.*/
+  int GridCornerURx,GridCornerURy;    	/* XY coordinates of the upper right grid corner in pixel coordinates.*/
+  int GridCornerLRx,GridCornerLRy;	        /* XY coordinates of the lower right grid corner in pixel coordinates.*/
+  int GridCornerLLx,GridCornerLLy;         /* XY coordinates of the lower left grid corner in pixel coordinates.*/ 
+  char *DatHeader;
+  char *Algorithm;
+  char *AlgorithmParameters;
+} detailed_header_info;
+
+
+
+
+
+
+
+
 
 
 /****************************************************************
@@ -829,6 +871,123 @@ static char *get_header_info(char *filename, int *dim1, int *dim2){
 }
 
 
+/*************************************************************************
+ **
+ ** void get_detailed_header_info(char *filename, detailed_header_info *header_info)
+ **
+ ** char *filename - file to open
+ ** detailed_header_info *header_info - place to store header information
+ **
+ ** reads the header information from a text cdf file (ignoring some fields
+ ** that are unused).
+ **
+ ************************************************************************/
+
+static void get_detailed_header_info(char *filename, detailed_header_info *header_info){
+
+  int i,endpos;
+  FILE *currentFile; 
+  char buffer[BUF_SIZE];
+  char *buffercopy;
+
+  tokenset *cur_tokenset;
+
+  currentFile = open_cel_file(filename);
+
+  AdvanceToSection(currentFile,"[HEADER]",buffer);
+
+  findStartsWith(currentFile,"Cols",buffer);  
+  cur_tokenset = tokenize(buffer,"=");
+  header_info->cols = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+
+  findStartsWith(currentFile,"Rows",buffer);
+  cur_tokenset = tokenize(buffer,"=");
+  header_info->rows = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+
+  findStartsWith(currentFile,"GridCornerUL",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerULx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerULy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+
+  findStartsWith(currentFile,"GridCornerUR",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerURx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerURy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+  
+  findStartsWith(currentFile,"GridCornerLR",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerLRx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerLRy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+
+  findStartsWith(currentFile,"GridCornerLL",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerLLx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerLLy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+
+  findStartsWith(currentFile,"DatHeader",buffer);
+  /* first lets copy the entire string over */
+
+  buffercopy =  Calloc(strlen(buffer)+1,char);
+  strcpy(buffercopy,buffer);
+  cur_tokenset = tokenize(buffercopy,"\r\n");
+  header_info->DatHeader = Calloc(strlen(get_token(cur_tokenset,0))-8,char);
+  strcpy(header_info->DatHeader,(get_token(cur_tokenset,0)+10));  /* the +10 is to avoid the starting "DatHeader=" */
+  Free(buffercopy);
+  delete_tokens(cur_tokenset);
+
+  
+  /* now pull out the actual cdfname */ 
+  cur_tokenset = tokenize(buffer," ");
+  for (i =0; i < tokenset_size(cur_tokenset);i++){
+    /* look for a token ending in ".1sq" */
+    endpos=token_ends_with(get_token(cur_tokenset,i),".1sq");
+    if(endpos > 0){
+      /* Found the likely CDF name, now chop of .1sq and store it */
+      
+      header_info->cdfName= Calloc(endpos+1,char);
+      strncpy( header_info->cdfName,get_token(cur_tokenset,i),endpos);
+       header_info->cdfName[endpos] = '\0';
+      
+      break;
+    }
+    if (i == (tokenset_size(cur_tokenset) - 1)){
+      error("Cel file %s does not seem to be have cdf information",filename);
+    }
+  }
+  delete_tokens(cur_tokenset);
+  
+  findStartsWith(currentFile,"Algorithm",buffer);
+  cur_tokenset = tokenize(buffer,"=\r\n");
+  header_info->Algorithm = Calloc(strlen(get_token(cur_tokenset,1))+1,char);
+  strcpy(header_info->Algorithm,get_token(cur_tokenset,1));
+  
+
+  delete_tokens(cur_tokenset);
+
+  findStartsWith(currentFile,"AlgorithmParameters",buffer);
+  cur_tokenset = tokenize(buffer,"=\r\n");
+  header_info->AlgorithmParameters = Calloc(strlen(get_token(cur_tokenset,1))+1,char);
+  strcpy(header_info->AlgorithmParameters,get_token(cur_tokenset,1));
+  
+  fclose(currentFile);
+
+}
+
+
+
+
+
+
+
+
+
+
 /***************************************************************
  **
  ** int isTextCelFile(char *filename)
@@ -1364,6 +1523,127 @@ static char *gz_get_header_info(char *filename, int *dim1, int *dim2){
   return(cdfName);
 }
 
+
+
+
+/*************************************************************************
+ **
+ ** char *gz_get_detailed_header_info(char *filename, detailed_header_info *header_info)
+ **
+ ** char *filename - file to open
+ ** detailed_header_info *header_info - place to store header information
+ **
+ ** reads the header information from a gzipped text cdf file (ignoring some fields
+ ** that are unused).
+ **
+ ************************************************************************/
+
+static void gz_get_detailed_header_info(char *filename, detailed_header_info *header_info){
+
+  int i,endpos;
+  gzFile *currentFile; 
+  char buffer[BUF_SIZE];
+  char *buffercopy;
+
+  tokenset *cur_tokenset;
+
+  currentFile = open_gz_cel_file(filename);
+
+  gzAdvanceToSection(currentFile,"[HEADER]",buffer);
+
+  gzfindStartsWith(currentFile,"Cols",buffer);  
+  cur_tokenset = tokenize(buffer,"=");
+  header_info->cols = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+
+  gzfindStartsWith(currentFile,"Rows",buffer);
+  cur_tokenset = tokenize(buffer,"=");
+  header_info->rows = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+
+  gzfindStartsWith(currentFile,"GridCornerUL",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerULx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerULy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+
+  gzfindStartsWith(currentFile,"GridCornerUR",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerURx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerURy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+  
+  gzfindStartsWith(currentFile,"GridCornerLR",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerLRx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerLRy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+
+  gzfindStartsWith(currentFile,"GridCornerLL",buffer);
+  cur_tokenset = tokenize(buffer,"= ");
+  header_info->GridCornerLLx  = atoi(get_token(cur_tokenset,1));
+  header_info->GridCornerLLy  = atoi(get_token(cur_tokenset,2));
+  delete_tokens(cur_tokenset);
+
+  gzfindStartsWith(currentFile,"DatHeader",buffer);
+  /* first lets copy the entire string over */
+
+  buffercopy =  Calloc(strlen(buffer)+1,char);
+  strcpy(buffercopy,buffer);
+  cur_tokenset = tokenize(buffercopy,"\r\n");
+  header_info->DatHeader = Calloc(strlen(get_token(cur_tokenset,0))-8,char);
+  strcpy(header_info->DatHeader,(get_token(cur_tokenset,0)+10));  /* the +10 is to avoid the starting "DatHeader=" */
+  Free(buffercopy);
+  delete_tokens(cur_tokenset);
+
+  
+  /* now pull out the actual cdfname */ 
+  cur_tokenset = tokenize(buffer," ");
+  for (i =0; i < tokenset_size(cur_tokenset);i++){
+    /* look for a token ending in ".1sq" */
+    endpos=token_ends_with(get_token(cur_tokenset,i),".1sq");
+    if(endpos > 0){
+      /* Found the likely CDF name, now chop of .1sq and store it */
+      
+      header_info->cdfName= Calloc(endpos+1,char);
+      strncpy( header_info->cdfName,get_token(cur_tokenset,i),endpos);
+       header_info->cdfName[endpos] = '\0';
+      
+      break;
+    }
+    if (i == (tokenset_size(cur_tokenset) - 1)){
+      error("Cel file %s does not seem to be have cdf information",filename);
+    }
+  }
+  delete_tokens(cur_tokenset);
+  
+  gzfindStartsWith(currentFile,"Algorithm",buffer);
+  cur_tokenset = tokenize(buffer,"=\r\n");
+  header_info->Algorithm = Calloc(strlen(get_token(cur_tokenset,1))+1,char);
+  strcpy(header_info->Algorithm,get_token(cur_tokenset,1));
+  
+
+  delete_tokens(cur_tokenset);
+
+  gzfindStartsWith(currentFile,"AlgorithmParameters",buffer);
+  cur_tokenset = tokenize(buffer,"=\r\n");
+  header_info->AlgorithmParameters = Calloc(strlen(get_token(cur_tokenset,1))+1,char);
+  strcpy(header_info->AlgorithmParameters,get_token(cur_tokenset,1));
+  
+  fclose(currentFile);
+
+}
+
+
+
+
+
+
+
+
+
+
+
 #endif
 
 
@@ -1874,6 +2154,160 @@ static char *binary_get_header_info(char *filename, int *dim1, int *dim2){
   
 }
 
+
+
+
+
+/*************************************************************************
+ **
+ ** void binary_get_detailed_header_info(char *filename, detailed_header_info *header_info)
+ **
+ ** char *filename - file to open
+ ** detailed_header_info *header_info - place to store header information
+ **
+ ** reads the header information from a binary cdf file (ignoring some fields
+ ** that are unused).
+ **
+ ************************************************************************/
+
+
+
+
+
+static void binary_get_detailed_header_info(char *filename, detailed_header_info *header_info){
+
+  char *cdfName =0;
+  tokenset *my_tokenset;
+  tokenset *temp_tokenset;
+
+  char *header_copy;
+  char *tmpbuffer;
+
+
+  
+  int i = 0,endpos;
+  
+  binary_header *my_header;
+  
+
+  my_header = read_binary_header(filename,0);
+
+
+  header_info->cols = my_header->cols;
+  header_info->rows = my_header->rows;
+
+
+  header_info->Algorithm = Calloc(strlen(my_header->algorithm)+1,char);
+  
+  strcpy(header_info->Algorithm,my_header->algorithm);
+
+  header_info->AlgorithmParameters = Calloc(strlen(my_header->alg_param)+1,char);
+  strncpy(header_info->AlgorithmParameters,my_header->alg_param,strlen(my_header->alg_param)-1);
+  
+
+  /* Rprintf("%s\n\n\n",my_header->header); */
+
+
+  header_copy = Calloc(strlen(my_header->header) +1,char);
+  strcpy(header_copy,my_header->header);
+  my_tokenset = tokenize(header_copy,"\n");
+
+  /** Looking for GridCornerUL, GridCornerUR, GridCornerLR, GridCornerLL and DatHeader */
+
+
+  for (i =0; i < tokenset_size(my_tokenset);i++){
+    /* Rprintf("%d: %s\n",i,get_token(my_tokenset,i)); */
+    if (strncmp("GridCornerUL",get_token(my_tokenset,i),12) == 0){
+      tmpbuffer = Calloc(strlen(get_token(my_tokenset,i))+1,char);
+      strcpy(tmpbuffer,get_token(my_tokenset,i));
+
+      temp_tokenset = tokenize(tmpbuffer,"= ");
+      header_info->GridCornerULx  = atoi(get_token(temp_tokenset,1));
+      header_info->GridCornerULy  = atoi(get_token(temp_tokenset,2));
+      delete_tokens(temp_tokenset);
+      Free(tmpbuffer);
+    }
+    if (strncmp("GridCornerUR",get_token(my_tokenset,i),12) == 0){
+      tmpbuffer = Calloc(strlen(get_token(my_tokenset,i))+1,char);
+      strcpy(tmpbuffer,get_token(my_tokenset,i));
+
+      temp_tokenset = tokenize(tmpbuffer,"= ");
+      header_info->GridCornerURx  = atoi(get_token(temp_tokenset,1));
+      header_info->GridCornerURy  = atoi(get_token(temp_tokenset,2));
+      delete_tokens(temp_tokenset);
+      Free(tmpbuffer);
+    }
+    if (strncmp("GridCornerLR",get_token(my_tokenset,i),12) == 0){
+      tmpbuffer = Calloc(strlen(get_token(my_tokenset,i))+1,char);
+      strcpy(tmpbuffer,get_token(my_tokenset,i));
+
+      temp_tokenset = tokenize(tmpbuffer,"= ");
+      header_info->GridCornerLRx  = atoi(get_token(temp_tokenset,1));
+      header_info->GridCornerLRy  = atoi(get_token(temp_tokenset,2));
+      delete_tokens(temp_tokenset);
+      Free(tmpbuffer);
+    }
+    if (strncmp("GridCornerLL",get_token(my_tokenset,i),12) == 0){
+      tmpbuffer = Calloc(strlen(get_token(my_tokenset,i))+1,char);
+      strcpy(tmpbuffer,get_token(my_tokenset,i));
+
+      temp_tokenset = tokenize(tmpbuffer,"= ");
+      header_info->GridCornerLLx  = atoi(get_token(temp_tokenset,1));
+      header_info->GridCornerLLy  = atoi(get_token(temp_tokenset,2));
+      delete_tokens(temp_tokenset);
+      Free(tmpbuffer);
+    }
+    if (strncmp("DatHeader",get_token(my_tokenset,i),9) == 0){
+      header_info->DatHeader = Calloc(strlen(get_token(my_tokenset,i))+1, char);
+      strcpy(header_info->DatHeader,(get_token(my_tokenset,i)+10));
+    }
+  }
+    
+
+  delete_tokens(my_tokenset);
+
+
+  Free(header_copy);
+
+
+  my_tokenset = tokenize(my_header->header," ");
+    
+  for (i =0; i < tokenset_size(my_tokenset);i++){
+    /* look for a token ending in ".1sq" */
+    endpos=token_ends_with(get_token(my_tokenset,i),".1sq");
+    if(endpos > 0){
+      /* Found the likely CDF name, now chop of .1sq and store it */      
+      header_info->cdfName= Calloc(endpos+1,char);
+      strncpy(header_info->cdfName,get_token(my_tokenset,i),endpos);
+      header_info->cdfName[endpos] = '\0';
+      
+      break;
+    }
+    if (i == (tokenset_size(my_tokenset) - 1)){
+      error("Cel file %s does not seem to be have cdf information",filename);
+    }
+  }
+  
+
+  delete_tokens(my_tokenset);
+  
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /***************************************************************
  **
  ** static int check_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
@@ -2367,6 +2801,112 @@ SEXP ReadHeader(SEXP filename){
 
 }
 
+
+
+/*************************************************************************
+ **
+ ** SEXP ReadHeaderDetailed(SEXP filename)
+ **
+ ** SEXP filename - name of the file to Read.
+ **
+ ** RETURNS a List containing CDFName, Rows and Cols dimensions plus more detailed header information
+ **
+ ** 
+ ** This function reads the HEADER of the CEL file
+ **
+ *************************************************************************/
+
+
+SEXP ReadHeaderDetailed(SEXP filename){
+
+  SEXP HEADER;
+  SEXP tmp_sexp;
+
+
+  char *cur_file_name;
+  detailed_header_info header_info;
+
+  PROTECT(HEADER = allocVector(VECSXP,9)); /* return as a list */
+
+
+  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+ 
+
+  if (isTextCelFile(cur_file_name)){
+    get_detailed_header_info(cur_file_name,&header_info);
+  } else if (isgzTextCelFile(cur_file_name)){
+#if defined HAVE_ZLIB
+    gz_get_detailed_header_info(cur_file_name,&header_info);
+#else
+    error("Compress option not supported on your platform\n");
+#endif
+  } else if (isBinaryCelFile(cur_file_name)){
+    binary_get_detailed_header_info(cur_file_name,&header_info);
+  } else {
+#if defined HAVE_ZLIB
+    error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",cur_file_name);
+#else
+    error("Is %s really a CEL file? tried reading as text and binary. The gzipped text format is not supported on your platform.\n",cur_file_name);
+#endif
+  }
+
+  // Rprintf("%s\n",header_info.cdfName);
+
+  /* Copy everything across into the R data structure */
+  
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.cdfName));
+  SET_VECTOR_ELT(HEADER,0,tmp_sexp);
+  UNPROTECT(1);
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = header_info.cols;   // This is cols
+  INTEGER(tmp_sexp)[1] = header_info.rows;   // this is rows
+  SET_VECTOR_ELT(HEADER,1,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = header_info.GridCornerULx;   
+  INTEGER(tmp_sexp)[1] = header_info.GridCornerULy;   
+  SET_VECTOR_ELT(HEADER,2,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = header_info.GridCornerURx;   
+  INTEGER(tmp_sexp)[1] = header_info.GridCornerURy;   
+  SET_VECTOR_ELT(HEADER,3,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = header_info.GridCornerLRx;   
+  INTEGER(tmp_sexp)[1] = header_info.GridCornerLRy;   
+  SET_VECTOR_ELT(HEADER,4,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = header_info.GridCornerLLx;   
+  INTEGER(tmp_sexp)[1] = header_info.GridCornerLLy;   
+  SET_VECTOR_ELT(HEADER,5,tmp_sexp);
+  UNPROTECT(1);
+   
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.DatHeader));
+  SET_VECTOR_ELT(HEADER,6,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.Algorithm));
+  SET_VECTOR_ELT(HEADER,7,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.AlgorithmParameters));
+  SET_VECTOR_ELT(HEADER,8,tmp_sexp);
+  UNPROTECT(1);
+
+
+  UNPROTECT(1);
+  return HEADER;
+}
 
 /*************************************************************************
  **
