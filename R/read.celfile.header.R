@@ -8,17 +8,19 @@ read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
 
   if (info == "basic"){
     if (verbose)
-      cat("Reading", filename, "to get header information")
-    headdetails <- .Call("ReadHeader", filenames[[1]], compress, PACKAGE="affyio")
-
-
+      cat("Reading", filename, "to get header information.\n")
+    headdetails <- .Call("ReadHeader", filename, PACKAGE="affyio")
+    names(headdetails) <- c("cdfName","CEL dimensions")
+    
     return(headdetails)
   } else {
+    if (verbose)
+      cat("Reading", filename, "to get full header information.\n")
     ### full returns greater detailed information from the header. Exact details differ depending on the file format.
+    headdetails <- .Call("ReadHeaderDetailed", filename, PACKAGE="affyio")
+    names(headdetails) <- c("cdfName","CEL dimensions","GridCornerUL","GridCornerUR","GridCornerLR","GridCornerLL","DatHeader","Algorithm","AlgorithmParameters")
 
-
-
-
+    return(headdetails)
   }
 
 
