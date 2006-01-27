@@ -157,10 +157,10 @@ typedef struct{
   char *cdfName;
   int cols;
   int rows;
-  int GridCornerULx,GridCornerULy;	/*XY coordinates of the upper left grid corner in pixel coordinates.*/
+  int GridCornerULx,GridCornerULy;	/* XY coordinates of the upper left grid corner in pixel coordinates.*/
   int GridCornerURx,GridCornerURy;    	/* XY coordinates of the upper right grid corner in pixel coordinates.*/
-  int GridCornerLRx,GridCornerLRy;	        /* XY coordinates of the lower right grid corner in pixel coordinates.*/
-  int GridCornerLLx,GridCornerLLy;         /* XY coordinates of the lower left grid corner in pixel coordinates.*/ 
+  int GridCornerLRx,GridCornerLRy;	/* XY coordinates of the lower right grid corner in pixel coordinates.*/
+  int GridCornerLLx,GridCornerLLy;      /* XY coordinates of the lower left grid corner in pixel coordinates.*/ 
   char *DatHeader;
   char *Algorithm;
   char *AlgorithmParameters;
@@ -235,6 +235,7 @@ static tokenset *tokenize(char *str, char *delimiters){
     my_tokenset->tokens = Realloc(my_tokenset->tokens,my_tokenset->n,char*);
     my_tokenset->tokens[i] = Calloc(strlen(current_token)+1,char);
     strcpy(my_tokenset->tokens[i],current_token);
+    my_tokenset->tokens[i][(strlen(current_token))] = '\0';
     i++;
     current_token = strtok(NULL,delimiters);
   }
@@ -2048,7 +2049,7 @@ static binary_header *read_binary_header(char *filename, int return_stream){  //
     error("Binary file corrupted? Could not read any further\n");
   }
 
-  this_header->header = Calloc(this_header->header_len,char);
+  this_header->header = Calloc(this_header->header_len+1,char);
   
   if (!fread(this_header->header,sizeof(char),this_header->header_len,infile)){
     error("binary file corrupted? Could not read any further.\n");
@@ -2058,7 +2059,7 @@ static binary_header *read_binary_header(char *filename, int return_stream){  //
     error("Binary file corrupted? Could not read any further\n");
   }
   
-  this_header->algorithm = Calloc(this_header->alg_len,char);
+  this_header->algorithm = Calloc(this_header->alg_len+1,char);
   
   if (!fread_char(this_header->algorithm,this_header->alg_len,infile)){
     error("binary file corrupted? Could not read any further.\n");
@@ -2068,7 +2069,7 @@ static binary_header *read_binary_header(char *filename, int return_stream){  //
     error("Binary file corrupted? Could not read any further\n");
   }
   
-  this_header->alg_param = Calloc(this_header->alg_param_len,char);
+  this_header->alg_param = Calloc(this_header->alg_param_len+1,char);
   
   if (!fread_char(this_header->alg_param,this_header->alg_param_len,infile)){
     error("binary file corrupted? Could not read any further.\n");
@@ -2269,8 +2270,9 @@ static void binary_get_detailed_header_info(char *filename, detailed_header_info
 
   Free(header_copy);
 
-
-  my_tokenset = tokenize(my_header->header," ");
+  header_copy = Calloc(my_header->header_len +1,char);
+  strcpy(header_copy,my_header->header);
+  my_tokenset = tokenize(header_copy," ");
     
   for (i =0; i < tokenset_size(my_tokenset);i++){
     /* look for a token ending in ".1sq" */
@@ -2290,7 +2292,8 @@ static void binary_get_detailed_header_info(char *filename, detailed_header_info
   
 
   delete_tokens(my_tokenset);
-  
+  delete_binary_header(my_header);
+  Free(header_copy);
 
 
 }
@@ -2903,6 +2906,10 @@ SEXP ReadHeaderDetailed(SEXP filename){
   SET_VECTOR_ELT(HEADER,8,tmp_sexp);
   UNPROTECT(1);
 
+  Free(header_info.Algorithm);
+  Free(header_info.AlgorithmParameters);
+  Free(header_info.DatHeader);
+  Free(header_info.cdfName);
 
   UNPROTECT(1);
   return HEADER;
