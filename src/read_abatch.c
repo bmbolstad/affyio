@@ -19,7 +19,7 @@
  **
  ** aim: read in from 1st to nth chips of CEL data
  **
- ** Copyright (C) 2003-2005    B. M. Bolstad
+ ** Copyright (C) 2003-2006    B. M. Bolstad
  **
  ** Created on Jun 13, 2003
  **
@@ -127,6 +127,8 @@
  **                sections in the text files and similar information contained in 
  **                the first section of the binary CEL file format
  ** Jan 27, 2005 - Complete ReadHeaderDetailed for supported formats.
+ **                Add in a C level object for storing contents of a single
+ **                CEL file
  **
  *************************************************************/
  
@@ -137,6 +139,8 @@
 
 #include "stdlib.h"
 #include "stdio.h"
+
+
 
 #if defined(HAVE_ZLIB)
 #include <zlib.h>
@@ -168,6 +172,36 @@ typedef struct{
 
 
 
+/******************************************************************
+ **
+ ** A "C" level object designed to hold information for a
+ ** single CEL file
+ **
+ ** These should be created using the function
+ **
+ ** read_cel_file()
+ **
+ **
+ **
+ *****************************************************************/
+
+typedef struct{
+  detailed_header_info header;
+  
+  /** these are for storing the intensities, the sds and the number of pixels **/
+  double *intensities;
+  double *stddev;
+  double *npixels;
+
+  /** these are for storing information in the masks and outliers section **/
+  
+  int nmasks;
+  int noutliers;
+
+  short *masks_x, *masks_y;
+  short *outliers_x, *outliers_y;
+
+} CEL;
 
 
 
@@ -811,6 +845,91 @@ static void apply_masks(char *filename, double *intensity, int chip_num, int row
 
 }
 
+
+/****************************************************************
+ **
+ ** static void get_masks_outliers(char *filename, 
+ **                         int *nmasks, short **masks_x, short **masks_y, 
+ **                         int *noutliers, short **outliers_x, short **outliers_y
+ ** 
+ ** This gets the x and y coordinates stored in the masks and outliers sections
+ ** of the cel files.
+ **
+ ****************************************************************/
+
+static void get_masks_outliers(char *filename, int *nmasks, short *masks_x, short *masks_y, int *noutliers, short *outliers_x, short *outliers_y){
+  
+  FILE *currentFile;
+  char buffer[BUF_SIZE];
+  int numcells, cur_x, cur_y, cur_index;
+  tokenset *cur_tokenset;
+  int i;
+
+
+  currentFile = open_cel_file(filename);
+  /* read masks section */
+  
+
+  AdvanceToSection(currentFile,"[MASKS]",buffer);
+  findStartsWith(currentFile,"NumberCells=",buffer); 
+  cur_tokenset = tokenize(buffer,"=");
+  numcells = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+  findStartsWith(currentFile,"CellHeader=",buffer); 
+  
+  *nmasks = numcells;
+
+  masks_x = Calloc(numcells,short);
+  masks_y = Calloc(numcells,short);
+
+
+  for (i =0; i < numcells; i++){
+    ReadFileLine(buffer, BUF_SIZE, currentFile);
+    
+    
+    cur_tokenset = tokenize(buffer," \t");
+    cur_x = atoi(get_token(cur_tokenset,0));
+    cur_y = atoi(get_token(cur_tokenset,1));
+    masks_x[i] = (short)cur_x;
+    masks_y[i] = (short)cur_y;
+    
+    delete_tokens(cur_tokenset); 
+  }
+  
+  
+  /* read outliers section */
+    
+  AdvanceToSection(currentFile,"[OUTLIERS]",buffer);
+  findStartsWith(currentFile,"NumberCells=",buffer);
+  cur_tokenset = tokenize(buffer,"=");
+  numcells = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+  findStartsWith(currentFile,"CellHeader=",buffer); 
+
+  *noutliers = numcells;
+  outliers_x = Calloc(numcells,short);
+  outliers_y = Calloc(numcells,short);
+
+
+  for (i = 0; i < numcells; i++){
+    ReadFileLine(buffer, BUF_SIZE, currentFile);      
+    cur_tokenset = tokenize(buffer," \t");
+    cur_x = atoi(get_token(cur_tokenset,0));
+    cur_y = atoi(get_token(cur_tokenset,1));
+    Rprintf("%d: %d %d   %d\n",i, cur_x,cur_y, numcells);
+    outliers_x[i] = (short)cur_x;
+    outliers_y[i] = (short)cur_y;
+    
+    delete_tokens(cur_tokenset); 
+  }
+  
+  
+  fclose(currentFile);
+
+
+
+
+}
 
 
 /*************************************************************************
@@ -1631,12 +1750,97 @@ static void gz_get_detailed_header_info(char *filename, detailed_header_info *he
   header_info->AlgorithmParameters = Calloc(strlen(get_token(cur_tokenset,1))+1,char);
   strcpy(header_info->AlgorithmParameters,get_token(cur_tokenset,1));
   
-  fclose(currentFile);
+  gzclose(currentFile);
 
 }
 
 
 
+
+/****************************************************************
+ **
+ ** static void gz_get_masks_outliers(char *filename, 
+ **                         int *nmasks, short **masks_x, short **masks_y, 
+ **                         int *noutliers, short **outliers_x, short **outliers_y
+ ** 
+ ** This gets the x and y coordinates stored in the masks and outliers sections
+ ** of the cel files. (for gzipped text CEL files)
+ **
+ ****************************************************************/
+
+static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, short *masks_y, int *noutliers, short *outliers_x, short *outliers_y){
+  
+  gzFile *currentFile;
+  char buffer[BUF_SIZE];
+  int numcells, cur_x, cur_y, cur_index;
+  tokenset *cur_tokenset;
+  int i;
+
+
+  currentFile = open_gz_cel_file(filename);
+  /* read masks section */
+  
+
+  gzAdvanceToSection(currentFile,"[MASKS]",buffer);
+  gzfindStartsWith(currentFile,"NumberCells=",buffer); 
+  cur_tokenset = tokenize(buffer,"=");
+  numcells = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+  gzfindStartsWith(currentFile,"CellHeader=",buffer); 
+  
+  *nmasks = numcells;
+
+  masks_x = Calloc(numcells,short);
+  masks_y = Calloc(numcells,short);
+
+
+  for (i =0; i < numcells; i++){
+    ReadgzFileLine(buffer, BUF_SIZE, currentFile);
+    
+    
+    cur_tokenset = tokenize(buffer," \t");
+    cur_x = atoi(get_token(cur_tokenset,0));
+    cur_y = atoi(get_token(cur_tokenset,1));
+    masks_x[i] = (short)cur_x;
+    masks_y[i] = (short)cur_y;
+    
+    delete_tokens(cur_tokenset); 
+  }
+  
+  
+  /* read outliers section */
+    
+  gzAdvanceToSection(currentFile,"[OUTLIERS]",buffer);
+  gzfindStartsWith(currentFile,"NumberCells=",buffer);
+  cur_tokenset = tokenize(buffer,"=");
+  numcells = atoi(get_token(cur_tokenset,1));
+  delete_tokens(cur_tokenset);
+  gzfindStartsWith(currentFile,"CellHeader=",buffer); 
+
+  *noutliers = numcells;
+  outliers_x = Calloc(numcells,short);
+  outliers_y = Calloc(numcells,short);
+
+
+  for (i = 0; i < numcells; i++){
+    ReadgzFileLine(buffer, BUF_SIZE, currentFile);      
+    cur_tokenset = tokenize(buffer," \t");
+    cur_x = atoi(get_token(cur_tokenset,0));
+    cur_y = atoi(get_token(cur_tokenset,1));
+    //Rprintf("%d: %d %d   %d\n",i, cur_x,cur_y, numcells);
+    outliers_x[i] = (short)cur_x;
+    outliers_y[i] = (short)cur_y;
+    
+    delete_tokens(cur_tokenset); 
+  }
+  
+  
+  gzclose(currentFile);
+
+
+
+
+}
 
 
 
@@ -1651,7 +1855,7 @@ static void gz_get_detailed_header_info(char *filename, detailed_header_info *he
 
 /***************************************************************
  **
- ** int isTextCelFile(char *filename)
+ ** int isgzTextCelFile(char *filename)
  **
  ** test whether the file is a valid gzipped text cel file
  ** 
@@ -2558,6 +2762,66 @@ static void binary_apply_masks(char *filename, double *intensity, int chip_num, 
 
 }
 
+/****************************************************************
+ **
+ ** static void gz_get_masks_outliers(char *filename, 
+ **                         int *nmasks, short **masks_x, short **masks_y, 
+ **                         int *noutliers, short **outliers_x, short **outliers_y
+ ** 
+ ** This gets the x and y coordinates stored in the masks and outliers sections
+ ** of the cel files. (for gzipped binary CEL files)
+ **
+ ****************************************************************/
+
+static void binary_get_masks_outliers(char *filename, int *nmasks, short *masks_x, short *masks_y, int *noutliers, short *outliers_x, short *outliers_y){
+
+  
+  int i=0;
+
+  int cur_index;
+
+  outliermask_loc *cur_loc= Calloc(1,outliermask_loc);
+  binary_header *my_header;
+
+  my_header = read_binary_header(filename,1);
+
+  fseek(my_header->infile,my_header->n_cells*sizeof(celintens_record),SEEK_CUR);
+ 
+
+  *nmasks = my_header->n_masks;
+  masks_x = Calloc(my_header->n_masks,short);
+  masks_y = Calloc(my_header->n_masks,short);
+
+  for (i =0; i < my_header->n_masks; i++){
+    fread_int16(&(cur_loc->x),sizeof(short),my_header->infile);
+    fread_int16(&(cur_loc->y),sizeof(short),my_header->infile);
+    masks_x[i] = (cur_loc->x);
+    masks_y[i] = (cur_loc->y);
+  }
+
+
+  *noutliers = my_header->n_outliers;
+  outliers_x = Calloc(my_header->n_outliers,short);
+  outliers_y = Calloc(my_header->n_outliers,short);
+  
+
+
+  for (i =0; i < my_header->n_outliers; i++){
+    fread_int16(&(cur_loc->x),sizeof(short),my_header->infile);
+    fread_int16(&(cur_loc->y),sizeof(short),my_header->infile);
+    outliers_x[i] = (cur_loc->x);
+    outliers_y[i] = (cur_loc->y);
+
+
+  }
+      
+
+  delete_binary_header(my_header);
+ 
+  Free(cur_loc);
+  
+
+}
 
 /****************************************************************
  ****************************************************************
@@ -3475,4 +3739,139 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
   UNPROTECT(3);
   
   return intensity;  
+}
+
+
+
+
+/****************************************************************
+ ****************************************************************
+ **
+ ** The following is for "C" code interfacing with CEL files
+ ** in a manner other than above.
+ **
+ ***************************************************************
+ ***************************************************************/
+
+
+/************************************************************************
+ **
+ ** CEL *read_cel_file(char *filename)
+ **  
+ ** Reads the contents of the CEL file into a "CEL" structure.
+ ** Currently slightly inefficient (should be reimplemented more
+ ** cleanly later)
+ **
+ **
+ ************************************************************************/
+
+CEL *read_cel_file(char *filename){
+  
+  CEL *my_CEL;
+
+
+  my_CEL = Calloc(1, CEL);
+
+  
+  /** First get the header information **/
+
+
+  if (isTextCelFile(filename)){
+    get_detailed_header_info(filename,&my_CEL->header);
+  } else if (isgzTextCelFile(filename)){
+#if defined HAVE_ZLIB
+    gz_get_detailed_header_info(filename,&my_CEL->header);
+#else
+    error("Compress option not supported on your platform\n");
+#endif
+  } else if (isBinaryCelFile(filename)){
+    binary_get_detailed_header_info(filename,&my_CEL->header);
+  } else {
+#if defined HAVE_ZLIB
+    error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",filename);
+#else
+    error("Is %s really a CEL file? tried reading as text and binary. The gzipped text format is not supported on your platform.\n",filename);
+#endif
+  }
+
+
+  /*** Now lets allocate the space for intensities, stdev, npixels ****/
+
+  my_CEL->intensities = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+  my_CEL->stddev = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+  my_CEL->npixels = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+
+  if (isTextCelFile(filename)){
+    read_cel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
+    read_cel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    read_cel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+  }  else if (isgzTextCelFile(filename)){
+#if defined HAVE_ZLIB
+    read_gzcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
+    read_gzcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    read_gzcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+#else
+    error("Compress option not supported on your platform\n");
+#endif
+  } else if (isBinaryCelFile(filename)){
+    read_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
+    read_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    read_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+  } else {
+#if defined HAVE_ZLIB
+    error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",filename);
+#else
+    error("Is %s really a CEL file? tried reading as text and binary. The gzipped text format is not supported on your platform.\n",filename);
+#endif
+  }
+
+  /*** Now add masks and outliers ***/
+
+  if (isTextCelFile(filename)){
+    get_masks_outliers(filename, &(my_CEL->nmasks), (my_CEL->masks_x), (my_CEL->masks_y), &(my_CEL->noutliers), (my_CEL->outliers_x), (my_CEL->outliers_y));
+  } else if (isgzTextCelFile(filename)){
+#if defined HAVE_ZLIB
+    gz_get_masks_outliers(filename, &(my_CEL->nmasks), (my_CEL->masks_x), (my_CEL->masks_y), &(my_CEL->noutliers), (my_CEL->outliers_x), (my_CEL->outliers_y));
+#else
+    error("Compress option not supported on your platform\n");
+#endif 
+  } else if (isBinaryCelFile(filename)){
+
+
+
+  } else {
+#if defined HAVE_ZLIB
+    error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",filename);
+#else
+    error("Is %s really a CEL file? tried reading as text and binary. The gzipped text format is not supported on your platform.\n",filename);
+#endif
+  }
+
+
+
+
+
+}
+
+
+/**************************************************************************
+ **
+ **
+ ** Read a single CEL file into an R list structure
+ ** Mostly just for testing the above
+ **
+ **************************************************************************/
+
+
+
+
+SEXP R_read_cel_file(SEXP filename){
+
+  char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
+
+  CEL *myCEL =read_cel_file(cur_file_name);
+
+
+
+
 }
