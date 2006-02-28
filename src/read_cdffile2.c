@@ -987,7 +987,7 @@ static int isTextCDFFile(char *filename){
 
   /* Check that is is a text CDF file */
   ReadFileLine(linebuffer, BUFFER_SIZE, infile);
-  if (strncmp("[CDF]", linebuffer, 5) != 0){
+  if (strncmp("[CDF]", linebuffer, 5) == 0){
     fclose(infile);
     return 1;
   }
