@@ -26,6 +26,7 @@
  ** Sep 22 - Continued Implementation and testing
  ** Sep 24 - QCunit probes, Unit Block probes, Finish and tested.
  ** Dec 1, 2005 - Some comment cleaning. Added isTextCDFFile,CheckCDFtext
+ ** Feb 28, 2006 - replace // with /* */ for older compilers
  **               
  **
  *******************************************************************/
@@ -722,7 +723,7 @@ static void read_cdf_unit_block(FILE *infile,  cdf_text *mycdf, char* linebuffer
     mycdf->units[unit].blocks[i].name = Calloc(strlen(get_token(cur_tokenset,1))+1,char);
     strcpy(mycdf->units[unit].blocks[i].name,get_token(cur_tokenset,1));
     delete_tokens(cur_tokenset);
-    // Rprintf("%s\n",mycdf->units[unit].blocks[i].name);
+    /* Rprintf("%s\n",mycdf->units[unit].blocks[i].name); */
     
 
 
@@ -730,7 +731,7 @@ static void read_cdf_unit_block(FILE *infile,  cdf_text *mycdf, char* linebuffer
     cur_tokenset = tokenize(linebuffer,"=");
     mycdf->units[unit].blocks[i].blocknumber = atoi(get_token(cur_tokenset,1));
     delete_tokens(cur_tokenset);
-    //  Rprintf("%d %d %d\n",unit,i,mycdf->header.numberofunits);
+    /*  Rprintf("%d %d %d\n",unit,i,mycdf->header.numberofunits); */
 
     findStartsWith(infile,"NumAtoms",linebuffer);
     cur_tokenset = tokenize(linebuffer,"=");
@@ -839,8 +840,8 @@ static void read_cdf_Units(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 
   
     read_cdf_unit_block(infile,mycdf,linebuffer,i); 
-    //    AdvanceToSection(infile,"[Unit",linebuffer);
-    //Rprintf("%d\n",i);
+    /*    AdvanceToSection(infile,"[Unit",linebuffer);
+	  Rprintf("%d\n",i); */
   }
   
 
@@ -868,7 +869,7 @@ static int read_cdf_text(char *filename, cdf_text *mycdf){
 
   FILE *infile;
   int i;
-  char linebuffer[BUFFER_SIZE];  // a character buffer
+  char linebuffer[BUFFER_SIZE];  /* a character buffer */
   tokenset *cur_tokenset;
   
   if ((infile = fopen(filename, "r")) == NULL)
@@ -975,7 +976,7 @@ static int isTextCDFFile(char *filename){
 
   FILE *infile;
   int i;
-  char linebuffer[BUFFER_SIZE];  // a character buffer
+  char linebuffer[BUFFER_SIZE];  /* a character buffer */
   tokenset *cur_tokenset;
   
   if ((infile = fopen(filename, "r")) == NULL)
