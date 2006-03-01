@@ -26,7 +26,7 @@
  ** Sep 22 - Continued Implementation and testing
  ** Sep 24 - QCunit probes, Unit Block probes, Finish and tested.
  ** Dec 1, 2005 - Some comment cleaning. Added isTextCDFFile,CheckCDFtext
- ** Feb 28, 2006 - replace // with /* */ for older compilers
+ ** Feb 28, 2006 - replace C++ comments with ANSI comments for older compilers
  **               
  **
  *******************************************************************/
