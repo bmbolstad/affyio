@@ -18,7 +18,7 @@
  ** Aug 16, 2005 - Fix potential big endian bug
  ** Sep 22, 2005 - Fix some signed/unsigned bugs
  ** Dec 1, 2005 - Comment cleaning
- ** Feb 28, 2006 - replace // with /*  */ for old compilers
+ ** Feb 28, 2006 - replace C++ comments with ANSI comments for older compilers
  **
  **
  ****************************************************************/
