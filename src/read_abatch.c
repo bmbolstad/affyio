@@ -2197,7 +2197,7 @@ static void delete_binary_header(binary_header *my_header){
  **
  *************************************************************/
 
-static binary_header *read_binary_header(char *filename, int return_stream){  //, FILE *infile){
+static binary_header *read_binary_header(char *filename, int return_stream){  /* , FILE *infile){ */
   
   FILE *infile;
 
@@ -3056,8 +3056,8 @@ SEXP ReadHeader(SEXP filename){
   PROTECT(name = allocVector(STRSXP,1));
   SET_VECTOR_ELT(name,0,mkChar(cdfName));
 
-  INTEGER(cel_dimensions)[0] = ref_dim_1;   // This is cols
-  INTEGER(cel_dimensions)[1] = ref_dim_2;   // this is rows
+  INTEGER(cel_dimensions)[0] = ref_dim_1;   /* This is cols */
+  INTEGER(cel_dimensions)[1] = ref_dim_2;   /* this is rows */
 
   SET_VECTOR_ELT(headInfo,0,name);
   SET_VECTOR_ELT(headInfo,1,cel_dimensions);
@@ -3117,7 +3117,7 @@ SEXP ReadHeaderDetailed(SEXP filename){
 #endif
   }
 
-  // Rprintf("%s\n",header_info.cdfName);
+  /* Rprintf("%s\n",header_info.cdfName); */
 
   /* Copy everything across into the R data structure */
   
@@ -3126,8 +3126,8 @@ SEXP ReadHeaderDetailed(SEXP filename){
   SET_VECTOR_ELT(HEADER,0,tmp_sexp);
   UNPROTECT(1);
   PROTECT(tmp_sexp= allocVector(INTSXP,2));
-  INTEGER(tmp_sexp)[0] = header_info.cols;   // This is cols
-  INTEGER(tmp_sexp)[1] = header_info.rows;   // this is rows
+  INTEGER(tmp_sexp)[0] = header_info.cols;   /* This is cols */
+  INTEGER(tmp_sexp)[1] = header_info.rows;   /* this is rows */
   SET_VECTOR_ELT(HEADER,1,tmp_sexp);
   UNPROTECT(1);
 
