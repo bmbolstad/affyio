@@ -2,7 +2,7 @@
  **
  ** File: read_cdf_xda.c
  **
- ** Implementation by: B. M. Bolstad
+ ** Implementation by: B. M. Bolstad <bmb@bmbolstad.com>
  **
  ** A parser designed to read the binary format cdf files.
  ** Sometimes called the xda format.
@@ -18,6 +18,7 @@
  ** Aug 16, 2005 - Fix potential big endian bug
  ** Sep 22, 2005 - Fix some signed/unsigned bugs
  ** Dec 1, 2005 - Comment cleaning
+ ** Feb 28, 2006 - replace // with /*  */ for old compilers
  **
  **
  ****************************************************************/
@@ -30,8 +31,8 @@
 #include "stdio.h"
 
 
-//#define READ_CDF_DEBUG
-//#define READ_CDF_DEBUG_SNP
+						  /* #define READ_CDF_DEBUG */
+						  /* #define READ_CDF_DEBUG_SNP */
 #define READ_CDF_NOSNP
 
 
@@ -344,7 +345,7 @@ static size_t fread_uchar(unsigned char *destination, int n, FILE *instream){
 
 #ifdef WORDS_BIGENDIAN
   /* Probably don't need to do anything for characters */
-  // destination = ~destination;
+  /* destination = ~destination; */
 #endif
 
   return result;
@@ -652,7 +653,7 @@ static int read_cdf_xda(char *filename,cdf_xda *my_cdf){
   fclose(infile);
   return 1;
 
-  // fseek()
+  /* fseek() */
 }
 
 
@@ -695,12 +696,12 @@ static int check_cdf_xda(char *filename){
 
 
   if (magicnumber != 67){
-    // error("Magic number is not 67. This is probably not a binary cdf file.\n");
+    /* error("Magic number is not 67. This is probably not a binary cdf file.\n"); */
     return 0;
   }
 
   if (version_number != 1){
-    // error("Don't know if version %d binary cdf files can be handled.\n",my_cdf->header.version_number);
+    /* error("Don't know if version %d binary cdf files can be handled.\n",my_cdf->header.version_number); */
     return 0;
   } 
 
@@ -872,7 +873,7 @@ SEXP ReadCDFFile(SEXP filename){
 	  current_cell = &(my_cdf.units[i].unit_block[j].unit_cells[k]);
 	  
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           //"y*", sizex, "+x+1";
+	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
 	  } else {
 	    curlocs[current_cell->atomnumber+ cur_atoms] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
 	  }
@@ -908,7 +909,7 @@ SEXP ReadCDFFile(SEXP filename){
 	  current_cell = &(my_cdf.units[i].unit_block[0].unit_cells[k]);
 	  
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           //"y*", sizex, "+x+1";
+	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
 	  } else {
 	    curlocs[current_cell->atomnumber+ cur_atoms] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
 	  }
@@ -953,9 +954,9 @@ SEXP ReadCDFFile(SEXP filename){
 
 	for (k=0; k < cur_cells; k++){
 	  current_cell = &(my_cdf.units[i].unit_block[0].unit_cells[k]);
-	  //	  Rprintf("%d %d  %u %u \n",cur_cells, current_cell->atomnumber,current_cell->x,current_cell->y);
+	  /*	  Rprintf("%d %d  %u %u \n",cur_cells, current_cell->atomnumber,current_cell->x,current_cell->y); */
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           //"y*", sizex, "+x+1";
+	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
 	  } else {
 	    curlocs[current_cell->atomnumber+ 2*cur_atoms] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
 	  }
@@ -969,9 +970,9 @@ SEXP ReadCDFFile(SEXP filename){
 	cur_atoms = my_cdf.units[i].unit_block[2].natoms; 
 	for (k=0; k < cur_cells; k++){
 	  current_cell = &(my_cdf.units[i].unit_block[2].unit_cells[k]);
-	  //Rprintf("half : %d %d  %u %u \n",cur_cells, current_cell->atomnumber,current_cell->x,current_cell->y);
+	  /* Rprintf("half : %d %d  %u %u \n",cur_cells, current_cell->atomnumber,current_cell->x,current_cell->y); */
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber - (cur_atoms)] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           //"y*", sizex, "+x+1";
+	    curlocs[current_cell->atomnumber - (cur_atoms)] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
 	  } else {
 	    curlocs[current_cell->atomnumber - (cur_atoms)+ 2*cur_atoms] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
 	  }
@@ -1008,9 +1009,9 @@ SEXP ReadCDFFile(SEXP filename){
 	
 	for (k=0; k < cur_cells; k++){
 	  current_cell = &(my_cdf.units[i].unit_block[1].unit_cells[k]);
-	  //Rprintf("Dual : %d %d  %u %u \n",cur_cells, current_cell->atomnumber,current_cell->x,current_cell->y);
+	  /* Rprintf("Dual : %d %d  %u %u \n",cur_cells, current_cell->atomnumber,current_cell->x,current_cell->y); */
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber - (cur_atoms)] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           //"y*", sizex, "+x+1";
+	    curlocs[current_cell->atomnumber - (cur_atoms)] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
 	  } else {
 	    curlocs[current_cell->atomnumber - (cur_atoms)+ 2*cur_atoms] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
 	  }
@@ -1021,9 +1022,9 @@ SEXP ReadCDFFile(SEXP filename){
 	cur_atoms = my_cdf.units[i].unit_block[3].natoms; 
 	for (k=0; k < cur_cells; k++){
 	  current_cell = &(my_cdf.units[i].unit_block[3].unit_cells[k]);
-	  //Rprintf("half deux : %d %d  %d %u %u \n",cur_cells, current_cell->atomnumber, cur_atoms,current_cell->x,current_cell->y);
+	  /* Rprintf("half deux : %d %d  %d %u %u \n",cur_cells, current_cell->atomnumber, cur_atoms,current_cell->x,current_cell->y); */
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber - (2*cur_atoms)] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           //"y*", sizex, "+x+1";
+	    curlocs[current_cell->atomnumber - (2*cur_atoms)] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
 	  } else {
 	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
 	  }
@@ -1397,11 +1398,11 @@ SEXP ReadCDFFileIntoRList(SEXP filename,SEXP fullstructure){
 	PROTECT(UNITSBlockTbase = allocVector(STRSXP,my_cdf.units[i].unit_block[j].ncells));
 	
 	for (k=0; k < my_cdf.units[i].unit_block[j].ncells; k++){
-	  //Rprintf("%d %d %d\n",i,j,k);
-	  // NUMERIC_POINTER(UNITSBlockAtom)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].atomnumber;
-	  // NUMERIC_POINTER(UNITSBlockX)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].x;
-	  //NUMERIC_POINTER(UNITSBlockY)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].y;
-	  //NUMERIC_POINTER(UNITSBlockIndexPos)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].indexpos;
+	  /*  Rprintf("%d %d %d\n",i,j,k);
+	  //  NUMERIC_POINTER(UNITSBlockAtom)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].atomnumber;
+	  //  NUMERIC_POINTER(UNITSBlockX)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].x;
+	  //  NUMERIC_POINTER(UNITSBlockY)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].y;
+	  //  NUMERIC_POINTER(UNITSBlockIndexPos)[k] = (double)my_cdf.units[i].unit_block[j].unit_cells[k].indexpos; */
 	  INTEGER_POINTER(UNITSBlockAtom)[k] = (int)my_cdf.units[i].unit_block[j].unit_cells[k].atomnumber;
 	  INTEGER_POINTER(UNITSBlockX)[k] = (int)my_cdf.units[i].unit_block[j].unit_cells[k].x;
 	  INTEGER_POINTER(UNITSBlockY)[k] = (int)my_cdf.units[i].unit_block[j].unit_cells[k].y;
