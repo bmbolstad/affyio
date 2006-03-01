@@ -1827,7 +1827,7 @@ static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, s
     cur_tokenset = tokenize(buffer," \t");
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
-    //Rprintf("%d: %d %d   %d\n",i, cur_x,cur_y, numcells);
+    /* Rprintf("%d: %d %d   %d\n",i, cur_x,cur_y, numcells); */
     outliers_x[i] = (short)cur_x;
     outliers_y[i] = (short)cur_y;
     
