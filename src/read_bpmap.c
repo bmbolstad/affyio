@@ -1,0 +1,793 @@
+/****************************************************************
+ **
+ ** File: read_bpmap.c
+ **
+ ** Implementation by: B. M. Bolstad
+ **
+ ** Copyright (C) B. M. Bolstad 2005
+ **
+ ** A parser designed to read bpmap files into an R List structure
+ **
+ ** History
+ ** Mar 11, 2006 - Initial version
+ **
+ *******************************************************************/
+
+#include <R.h>
+#include <Rdefines.h>
+
+#include "stdlib.h"
+#include "stdio.h"
+
+
+
+
+
+
+/****************************************************************
+ **
+ **
+ **
+ **
+ ** Note BPMAP files are stored in big endian format
+ **
+ *******************************************************************/
+
+
+
+/*************************************************************************
+ **
+ ** Code for reading from the big endian binary files, doing bit flipping if
+ ** necessary (on little-endian machines)
+ **
+ **
+ ************************************************************************/
+
+
+static size_t fread_be_int32(int *destination, int n, FILE *instream){
+
+  size_t result;
+
+  result = fread(destination,sizeof(int),n,instream);
+
+#ifndef WORDS_BIGENDIAN
+  while (n-- > 0){
+    /* bit flip since on a little endian machine */
+
+    *destination=(((*destination>>24)&0xff) | ((*destination&0xff)<<24) |
+                  ((*destination>>8)&0xff00) | ((*destination&0xff00)<<8));
+    destination++;
+  }
+#endif
+  return result;
+}
+
+
+
+static size_t fread_be_uint32(unsigned int *destination, int n, FILE *instream){
+
+
+  size_t result;
+
+  result = fread(destination,sizeof(unsigned int),n,instream);
+
+
+#ifndef WORDS_BIGENDIAN
+  while (n-- > 0){
+    /* bit flip since all Affymetrix binary files are little endian */
+    *destination=(((*destination>>24)&0xff) | ((*destination&0xff)<<24) |
+                  ((*destination>>8)&0xff00) | ((*destination&0xff00)<<8));
+    destination++;
+  }
+
+#endif
+  return result;
+}
+
+
+
+static size_t fread_be_int16(short *destination, int n, FILE *instream){
+   size_t result;
+
+   result = fread(destination,sizeof(short),n,instream);
+
+#ifndef WORDS_BIGENDIAN
+   while (n-- > 0){
+     /* bit flip since all Affymetrix binary files are little endian */
+     *destination=(((*destination>>8)&0xff) | ((*destination&0xff)<<8));
+     destination++;
+  }
+#endif
+   return result;
+
+}
+
+
+
+
+static size_t fread_be_uint16(unsigned short *destination, int n, FILE *instream){
+   size_t result;
+
+   result = fread(destination,sizeof(unsigned short),n,instream);
+
+#ifndef WORDS_BIGENDIAN
+   while( n-- > 0 ){
+     /* bit flip since all Affymetrix binary files are little endian */
+     *destination=(((*destination>>8)&0xff) | ((*destination&0xff)<<8));
+     destination++;
+   }
+#endif
+   return result;
+
+}
+
+
+
+static void swap_float_4(float *tnf4)              /* 4 byte floating point numbers */
+{
+ int *tni4=(int *)tnf4;
+ *tni4=(((*tni4>>24)&0xff) | ((*tni4&0xff)<<24) |
+            ((*tni4>>8)&0xff00) | ((*tni4&0xff00)<<8));
+}
+
+
+
+static size_t fread_be_float32(float *destination, int n, FILE *instream){
+
+  size_t result;
+
+
+
+  result = fread(destination,sizeof(float),n,instream);
+
+#ifndef WORDS_BIGENDIAN
+  while( n-- > 0 ) {
+    swap_float_4(destination);
+    destination++;
+  }
+#endif
+
+  return result;
+}
+
+
+
+static size_t fread_float32(float *destination, int n, FILE *instream){
+
+  size_t result;
+
+
+
+  result = fread(destination,sizeof(float),n,instream);
+
+#ifdef WORDS_BIGENDIAN
+  while( n-- > 0 ) {
+    swap_float_4(destination);
+    destination++;
+  }
+#endif
+
+  return result;
+}
+
+
+
+
+
+
+
+
+
+static size_t fread_be_char(char *destination, int n, FILE *instream){
+
+  int i=0;
+  size_t result;
+
+  result = fread(destination,sizeof(char),n,instream);
+
+#ifndef WORDS_BIGENDIAN
+  /* Probably don't need to do anything for characters */
+
+#endif
+
+  return result;
+
+}
+
+static size_t fread_be_uchar(unsigned char *destination, int n, FILE *instream){
+
+  int i=0;
+  size_t result;
+
+  result = fread(destination,sizeof(unsigned char),n,instream);
+
+#ifndef WORDS_BIGENDIAN
+  /* Probably don't need to do anything for characters */
+  /* destination = ~destination; */
+#endif
+
+  return result;
+
+}
+
+
+
+
+static SEXP ReadBPMAPHeader(FILE *infile){
+ 
+  
+  SEXP Header;
+  SEXP tmpSXP;
+
+
+  char *Magicnumber = R_alloc(8,sizeof(char));
+  float version_number;
+  int version_number_int;
+  
+  unsigned int n_seq;
+
+
+
+
+  fread_be_char(Magicnumber,8,infile);
+
+  if (strcmp(Magicnumber,"PHT7\r\n\032\n") !=0){
+    error("Based on the magic number which was %s, this does not appear to be a BPMAP file",Magicnumber);
+  }
+
+
+  /* version number is a little bit funky 
+     need to somer funny things to coax it
+     into the right format
+  */
+
+ 
+
+#ifdef WORDS_BIGENDIAN
+  /* swap, cast to integer, swap bytes and cast back to float */
+  fread_be_float32(&version_number,1,infile);
+  swap_float_4(&version_number);
+  version_number_int = (int)version_number;
+  
+  
+  version_number_int=(((version_number_int>>24)&0xff) | ((version_number_int&0xff)<<24) |
+		       ((version_number_int>>8)&0xff00) | ((version_number_int&0xff00)<<8));
+  version_number = (float)version_number_int;
+
+#else
+  /* cast to integer, swap bytes, cast to float */ 
+  fread_float32(&version_number,1,infile);
+  version_number_int = (int)version_number;
+  version_number_int=(((version_number_int>>24)&0xff) | ((version_number_int&0xff)<<24) |
+  ((version_number_int>>8)&0xff00) | ((version_number_int&0xff00)<<8));
+  version_number = (float)version_number_int;
+#endif
+
+  
+
+  fread_be_uint32(&n_seq,1,infile);
+  
+  PROTECT(Header=allocVector(VECSXP,3));
+  
+  PROTECT(tmpSXP=allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmpSXP,0,mkChar(Magicnumber));
+  SET_VECTOR_ELT(Header,0,tmpSXP);
+  UNPROTECT(1);
+  
+
+  PROTECT(tmpSXP=allocVector(REALSXP,1));
+  REAL(tmpSXP)[0] = version_number;
+  SET_VECTOR_ELT(Header,1,tmpSXP);
+  UNPROTECT(1);
+
+  
+  PROTECT(tmpSXP=allocVector(INTSXP,1));
+  INTEGER(tmpSXP)[0] = (int)n_seq;
+  SET_VECTOR_ELT(Header,2,tmpSXP);
+  UNPROTECT(1);
+
+  PROTECT(tmpSXP=allocVector(STRSXP,3));
+  SET_VECTOR_ELT(tmpSXP,0,mkChar("magic.number"));
+  SET_VECTOR_ELT(tmpSXP,1,mkChar("version"));
+  SET_VECTOR_ELT(tmpSXP,2,mkChar("n.seq"));
+  setAttrib(Header,R_NamesSymbol,tmpSXP);
+  UNPROTECT(2);
+  
+
+  return Header;
+    
+}
+
+
+
+static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
+
+
+  SEXP SequenceDescriptionList;
+
+  SEXP CurSequenceDescription;
+  SEXP tmpSXP;
+    
+
+
+  int i;
+
+  unsigned int seq_name_length;
+
+  char *seq_name;
+  
+  unsigned int probe_mapping_type;
+  unsigned int seq_file_offset;
+  
+  unsigned int n_probes;
+  
+  unsigned int group_name_length;
+  char *group_name;
+  
+  unsigned int version_number_length;
+  char *version_number;
+
+  unsigned int number_parameters;
+
+  unsigned int param_length;
+  char *param_name;
+
+  
+
+  PROTECT(SequenceDescriptionList=allocVector(VECSXP,(int)nseq));
+
+  for (i=0; i < nseq; i++){
+    fread_be_uint32(&seq_name_length,1,infile);
+    seq_name = (char *)Calloc(seq_name_length,char);
+    fread_be_char(seq_name,seq_name_length,infile);
+    
+  
+
+    if (version == 3.00){
+      PROTECT(CurSequenceDescription=allocVector(VECSXP,8));
+    } else if (version == 2.00){
+      
+    } else if (version == 1.00){
+      PROTECT(CurSequenceDescription=allocVector(VECSXP,2));
+      PROTECT(tmpSXP=allocVector(STRSXP,2));
+      SET_VECTOR_ELT(tmpSXP,0,mkChar("Name"));
+      SET_VECTOR_ELT(tmpSXP,1,mkChar("n.probepairs"));
+      setAttrib(CurSequenceDescription,R_NamesSymbol,tmpSXP);
+      UNPROTECT(1);
+
+    }
+    
+    
+    
+    
+    PROTECT(tmpSXP=allocVector(STRSXP,1));
+    SET_VECTOR_ELT(tmpSXP,0,mkChar(seq_name));
+    SET_VECTOR_ELT(CurSequenceDescription,0,tmpSXP);
+    UNPROTECT(1);
+    Free(seq_name);
+
+    
+    if (version == 1.0){
+      fread_be_uint32(&n_probes,1,infile);
+      PROTECT(tmpSXP=allocVector(INTSXP,1));
+      INTEGER(tmpSXP)[0] = n_probes;
+      SET_VECTOR_ELT(CurSequenceDescription,1,tmpSXP);
+      UNPROTECT(1);
+    } else if (version ==2.0){
+      
+      
+      
+    } else if (version ==3.0){
+      
+    }
+    
+    
+    SET_VECTOR_ELT(SequenceDescriptionList,i,CurSequenceDescription);
+    UNPROTECT(1);
+  }
+  
+  UNPROTECT(1);
+  return SequenceDescriptionList;
+
+}
+
+
+
+static void *packedSeqTobaseStr(unsigned char probeseq[7], char *dest){
+
+  unsigned char currentchar;
+  
+  unsigned char firsttwobits;
+  unsigned char secondtwobits;
+  unsigned char thirdtwobits;
+  unsigned char fourthtwobits;
+
+  int i;
+
+
+  /* Rprintf("\n\n\n\n\n"); */
+
+  
+  for (i =0; i < 6;i++){
+    currentchar = probeseq[i];
+    
+    /* extract first two bits */
+    firsttwobits = (currentchar & 192);
+    secondtwobits = (currentchar & 48);
+    thirdtwobits  = (currentchar & 12); 
+    fourthtwobits  = (currentchar & 3);
+
+
+    
+    firsttwobits = firsttwobits >> 6;
+    secondtwobits = secondtwobits >> 4;
+    thirdtwobits =  thirdtwobits >> 2;
+    
+    /*    Rprintf("%x %x %x %x\n",firsttwobits,secondtwobits,thirdtwobits,fourthtwobits); */
+
+    
+
+    
+    if (firsttwobits == 0){
+      dest[4*i +0]='A';
+    }
+    if (firsttwobits == 1){
+      dest[4*i +0]='C';
+    }
+    if (firsttwobits == 2){
+      dest[4*i +0]='G';
+    }
+    if (firsttwobits == 3){
+      dest[4*i +0]='T';
+    }
+  
+    if (secondtwobits == 0){
+      dest[4*i +1]='A';
+    }
+    if (secondtwobits == 1){
+      dest[4*i +1]='C';
+    }
+    if (secondtwobits == 2){
+      dest[4*i +1]='G';
+    }
+    if (secondtwobits == 3){
+      dest[4*i +1]='T';
+    }
+
+    if (thirdtwobits == 0){
+      dest[4*i +2]='A';
+    }
+    if (thirdtwobits == 1){
+      dest[4*i +2]='C';
+    }
+    if (thirdtwobits == 2){
+      dest[4*i +2]='G';
+    }
+    if (thirdtwobits == 3){
+      dest[4*i +2]='T';
+    }
+    
+    if (fourthtwobits == 0){
+      dest[4*i +3]='A';
+    }
+    if (fourthtwobits == 1){
+      dest[4*i +3]='C';
+    }
+    if (fourthtwobits == 2){
+      dest[4*i +3]='G';
+    }
+    if (fourthtwobits == 3){
+      dest[4*i +3]='T';
+    }
+
+    /* Rprintf("%c%c%c%c\n",dest[4*i],dest[4*i +1],dest[4*i +2], dest[4*i +3]); */
+  }
+
+  currentchar = probeseq[6];
+  
+  /* extract first two bits */
+    
+  firsttwobits = (currentchar & 192);
+  firsttwobits = firsttwobits >> 6;
+  if (firsttwobits == 0){
+    dest[24]='A';
+  }
+  if (firsttwobits == 1){
+    dest[24]='C';
+  }
+  if (firsttwobits == 2){
+    dest[24]='G';
+  }
+  if (firsttwobits == 3){
+    dest[24]='T';
+  }
+}
+
+
+
+
+
+
+
+
+static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SEXP seqDesc){
+
+
+  SEXP SeqIdPositionInfoList;
+  SEXP curSeqIdPositionInfo;
+  SEXP PositionInfo;
+  SEXP PositionInfoRowNames;
+  SEXP tmpSEXP;
+
+  SEXP xPM,yPM,xMM,yMM;
+  SEXP PMprobeLength;
+  SEXP probeSeqString;
+  SEXP MatchScore;
+  SEXP PMposition;
+  SEXP Strand;
+
+  char buf[10];
+
+  char *dest;
+
+
+  int nprobes;
+  int i,j;
+
+
+  unsigned int SeqId;
+
+  unsigned int x;
+  unsigned int y;
+  
+  unsigned int x_mm;
+  unsigned int y_mm;
+
+  unsigned char probelength;
+
+  unsigned char probeseq[7];
+
+  float matchScore;
+  int matchScore_int;
+
+  unsigned int positionPM;
+  unsigned char strand;
+
+  
+  PROTECT(SeqIdPositionInfoList = allocVector(VECSXP,nseq));
+  
+  for (i =0; i < nseq; i++){
+    fread_be_uint32(&SeqId,1,infile);
+    /*Rprintf("Seq id:%u\n",SeqId);*/
+    
+    PROTECT(curSeqIdPositionInfo = allocVector(VECSXP,2));
+
+
+    PROTECT(tmpSEXP=allocVector(INTSXP,1));
+    INTEGER(tmpSEXP)[0] = (int)SeqId;    
+    SET_VECTOR_ELT(curSeqIdPositionInfo,0,tmpSEXP);
+    UNPROTECT(1);
+
+    
+    PROTECT(tmpSEXP=allocVector(STRSXP,2));
+    SET_VECTOR_ELT(tmpSEXP,0,mkChar("Header"));
+    SET_VECTOR_ELT(tmpSEXP,1,mkChar("PositionInformation"));
+    setAttrib(curSeqIdPositionInfo,R_NamesSymbol,tmpSEXP);
+    UNPROTECT(1);
+      
+
+
+    if (version == 1.0){
+      nprobes = INTEGER(VECTOR_ELT(VECTOR_ELT(seqDesc,i),1))[0];
+      /* Rprintf("nprobes: %d\n",nprobes); */
+   
+      
+      PROTECT(PositionInfo = allocVector(VECSXP,9));
+      PROTECT(xPM = allocVector(INTSXP,nprobes));
+      PROTECT(yPM = allocVector(INTSXP,nprobes));
+      PROTECT(xMM = allocVector(INTSXP,nprobes));
+      PROTECT(yMM = allocVector(INTSXP,nprobes));
+      PROTECT(PMprobeLength = allocVector(INTSXP,nprobes));
+      PROTECT(probeSeqString = allocVector(STRSXP,nprobes));
+      PROTECT(MatchScore = allocVector(REALSXP,nprobes));
+      PROTECT(PMposition = allocVector(INTSXP,nprobes));
+      PROTECT(Strand = allocVector(STRSXP,nprobes));
+      
+      SET_VECTOR_ELT(PositionInfo,0,xPM);
+      SET_VECTOR_ELT(PositionInfo,1,yPM);
+      SET_VECTOR_ELT(PositionInfo,2,xMM);
+      SET_VECTOR_ELT(PositionInfo,3,yMM);
+      SET_VECTOR_ELT(PositionInfo,4,PMprobeLength);
+      SET_VECTOR_ELT(PositionInfo,5,probeSeqString);
+      SET_VECTOR_ELT(PositionInfo,6,MatchScore);
+      SET_VECTOR_ELT(PositionInfo,7,PMposition);
+      SET_VECTOR_ELT(PositionInfo,8,Strand);
+
+      setAttrib(PositionInfo,R_ClassSymbol,mkString("data.frame"));
+
+      PROTECT(PositionInfoRowNames = allocVector(STRSXP,nprobes));
+      for (j=0; j < nprobes; j++){
+	sprintf(buf, "%d", j+1);
+	SET_VECTOR_ELT(PositionInfoRowNames,j,mkChar(buf));
+      }
+      setAttrib(PositionInfo, R_RowNamesSymbol, PositionInfoRowNames);
+      UNPROTECT(1);
+
+      PROTECT(tmpSEXP = allocVector(STRSXP,9));
+      SET_VECTOR_ELT(tmpSEXP,0,mkChar("x"));
+      SET_VECTOR_ELT(tmpSEXP,1,mkChar("y"));
+      SET_VECTOR_ELT(tmpSEXP,2,mkChar("x.mm"));
+      SET_VECTOR_ELT(tmpSEXP,3,mkChar("y.mm"));
+      SET_VECTOR_ELT(tmpSEXP,4,mkChar("PMLength"));
+      SET_VECTOR_ELT(tmpSEXP,5,mkChar("ProbeSeq"));
+      SET_VECTOR_ELT(tmpSEXP,6,mkChar("MatchScore"));
+      SET_VECTOR_ELT(tmpSEXP,7,mkChar("PMPosition"));
+      SET_VECTOR_ELT(tmpSEXP,8,mkChar("TargetStrand"));
+
+      setAttrib(PositionInfo,R_NamesSymbol,tmpSEXP);
+      UNPROTECT(1);
+
+    }
+
+    for (j=0; j < nprobes; j++){
+      fread_be_uint32(&x,1,infile);
+      fread_be_uint32(&y,1,infile);
+      /* Rprintf("x y :%u %u\n",x,y); */
+
+
+      fread_be_uint32(&x_mm,1,infile);
+      fread_be_uint32(&y_mm,1,infile);
+      /* Rprintf("mm x y :%u %u\n",x_mm,y_mm); */
+      
+      INTEGER(xPM)[j] = x;
+      INTEGER(yPM)[j] = y;
+      INTEGER(xMM)[j] = x_mm;
+      INTEGER(yMM)[j] = y_mm;
+
+      fread_be_uchar(&probelength,1,infile);
+      /* Rprintf("probelength : %d\n",(int)probelength);*/
+      
+      INTEGER(PMprobeLength)[j] = probelength;
+      
+
+      fread_be_uchar(probeseq,7,infile);
+      /* Rprintf("probeseq : %s\n",probeseq); */
+
+
+
+      dest = (char *)Calloc(25,char);
+      packedSeqTobaseStr(probeseq,dest);
+
+      SET_VECTOR_ELT(probeSeqString,j,mkChar(dest));
+      Free(dest);
+
+
+
+      
+      /* matchScore is treated same as version number in header */
+#ifdef WORDS_BIGENDIAN
+      /* swap, cast to integer, swap bytes and cast back to float */
+      fread_be_float32(&matchScore,1,infile);
+      swap_float_4(&matchScore);
+      matchScore_int = (int)matchScore;
+      
+      
+      matchScore_int=(((matchScore_int>>24)&0xff) | ((matchScore_int&0xff)<<24) |
+		      ((matchScore_int>>8)&0xff00) | ((matchScore_int&0xff00)<<8));
+      matchScore = (float)matchScore_int;
+      
+#else
+      /* cast to integer, swap bytes, cast to float */ 
+      fread_float32(&matchScore,1,infile);
+      matchScore_int = (int)matchScore;
+      matchScore_int=(((matchScore_int>>24)&0xff) | ((matchScore_int&0xff)<<24) |
+		      ((matchScore_int>>8)&0xff00) | ((matchScore_int&0xff00)<<8));
+      matchScore = (float)matchScore_int;
+#endif
+      /* Rprintf("matchScore : %f\n",matchScore); */
+      
+      REAL(MatchScore)[j] = matchScore;
+
+
+      
+      fread_be_uint32(&positionPM,1,infile);
+      /* Rprintf("positionPM : %u\n",positionPM);*/
+      INTEGER(PMposition)[j] = positionPM;
+      
+      
+      fread_be_uchar(&strand,1,infile);
+      /* Rprintf("strand: %d\n",(int)strand);*/
+
+      if ((int)strand ==1){
+	SET_VECTOR_ELT(Strand,j,mkChar("F"));
+      } else {
+	SET_VECTOR_ELT(Strand,j,mkChar("R"));
+      }
+
+    
+    }
+
+    UNPROTECT(9);
+    SET_VECTOR_ELT(curSeqIdPositionInfo,1,PositionInfo);
+    UNPROTECT(1);
+
+    SET_VECTOR_ELT(SeqIdPositionInfoList,i,curSeqIdPositionInfo);
+    UNPROTECT(1);
+  }
+
+  
+  UNPROTECT(1);
+  return SeqIdPositionInfoList;
+    
+}
+
+
+
+
+
+
+SEXP ReadBPMAPFileIntoRList(SEXP filename){
+
+
+
+  SEXP bpmapRlist;
+
+  SEXP bpmapHeader;
+  SEXP bpmapSeqDesc;
+
+  SEXP tmpSXP;
+
+  FILE *infile;
+ 
+
+  int n_seq;
+  float version;
+
+
+  char *cur_file_name;
+  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  
+
+
+  if ((infile = fopen(cur_file_name, "rb")) == NULL)
+    {
+      error("Unable to open the file %s",filename);
+    }
+  
+
+      
+  /*
+    first element is header, second item is sequence descriptions
+    third item is sequence header/position information
+    
+  */
+  PROTECT(bpmapRlist  = allocVector(VECSXP,3));
+
+
+  PROTECT(bpmapHeader = ReadBPMAPHeader(infile));
+  SET_VECTOR_ELT(bpmapRlist,0,bpmapHeader);
+  version = REAL(VECTOR_ELT(bpmapHeader,1))[0];
+  n_seq = INTEGER(VECTOR_ELT(bpmapHeader,2))[0];
+  UNPROTECT(1);
+  
+  /*  Rprintf("version nseq: %f %d\n", version, n_seq);*/
+
+
+  PROTECT(bpmapSeqDesc = ReadBPMAPSeqDescription(infile,version,n_seq));
+  SET_VECTOR_ELT(bpmapRlist,1,bpmapSeqDesc);
+  SET_VECTOR_ELT(bpmapRlist,2,readBPMAPSeqIdPositionInfo(infile,version,n_seq,bpmapSeqDesc));
+  UNPROTECT(1);
+  
+  PROTECT(tmpSXP=allocVector(STRSXP,3));
+  SET_VECTOR_ELT(tmpSXP,0,mkChar("Header"));
+  SET_VECTOR_ELT(tmpSXP,1,mkChar("SequenceDescription"));
+  SET_VECTOR_ELT(tmpSXP,2,mkChar("SeqHead.PosInfo"));
+  setAttrib(bpmapRlist,R_NamesSymbol,tmpSXP);
+  UNPROTECT(1);
+  
+  UNPROTECT(1);
+  return bpmapRlist;
+
+
+}
+
