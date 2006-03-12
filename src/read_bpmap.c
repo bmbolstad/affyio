@@ -4,12 +4,13 @@
  **
  ** Implementation by: B. M. Bolstad
  **
- ** Copyright (C) B. M. Bolstad 2005
+ ** Copyright (C) B. M. Bolstad 2006
  **
  ** A parser designed to read bpmap files into an R List structure
  **
  ** History
  ** Mar 11, 2006 - Initial version
+ ** Mar 12, 2006 - add additional support for versions 2 and 3
  **
  *******************************************************************/
 
@@ -256,11 +257,19 @@ static SEXP ReadBPMAPHeader(FILE *infile){
 
 #else
   /* cast to integer, swap bytes, cast to float */ 
-  fread_float32(&version_number,1,infile);
-  version_number_int = (int)version_number;
-  version_number_int=(((version_number_int>>24)&0xff) | ((version_number_int&0xff)<<24) |
-  ((version_number_int>>8)&0xff00) | ((version_number_int&0xff00)<<8));
-  version_number = (float)version_number_int;
+  fread_be_float32(&version_number,1,infile);
+  if ((version_number > 3.0 || version_number < 1.0)){
+    /*    Rprintf("%f\n",version_number); */ 
+    swap_float_4(&version_number);
+    /* Rprintf("%f\n",version_number); */ 
+    
+    version_number_int = (int)version_number;
+    version_number_int=(((version_number_int>>24)&0xff) | ((version_number_int&0xff)<<24) |
+			((version_number_int>>8)&0xff00) | ((version_number_int&0xff00)<<8));
+   /* Rprintf("%d\n",version_number); */ 
+    version_number = (float)version_number_int;
+    /*  Rprintf("%f\n",version_number);  */ 
+  }
 #endif
 
   
@@ -306,11 +315,11 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
   SEXP SequenceDescriptionList;
 
   SEXP CurSequenceDescription;
-  SEXP tmpSXP;
+  SEXP tmpSXP,tmpSXP2;
     
 
 
-  int i;
+  int i,j;
 
   unsigned int seq_name_length;
 
@@ -332,7 +341,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
   unsigned int param_length;
   char *param_name;
 
-  
+  /* Rprintf("%f %d\n",version,nseq); */
 
   PROTECT(SequenceDescriptionList=allocVector(VECSXP,(int)nseq));
 
@@ -344,9 +353,29 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
   
 
     if (version == 3.00){
-      PROTECT(CurSequenceDescription=allocVector(VECSXP,8));
+      PROTECT(CurSequenceDescription=allocVector(VECSXP,8)); 
+      PROTECT(tmpSXP=allocVector(STRSXP,7));
+      SET_VECTOR_ELT(tmpSXP,0,mkChar("Name"));
+      SET_VECTOR_ELT(tmpSXP,1,mkChar("ProbeMappingType"));
+      SET_VECTOR_ELT(tmpSXP,2,mkChar("SequenceFileOffset"));
+      SET_VECTOR_ELT(tmpSXP,3,mkChar("n.probepairs"));
+      SET_VECTOR_ELT(tmpSXP,4,mkChar("GroupName"));
+      SET_VECTOR_ELT(tmpSXP,5,mkChar("VersionNumber"));
+      SET_VECTOR_ELT(tmpSXP,6,mkChar("NumberOfParameters"));
+      SET_VECTOR_ELT(tmpSXP,7,mkChar("Parameters"));
+      setAttrib(CurSequenceDescription,R_NamesSymbol,tmpSXP);
+      UNPROTECT(1);
     } else if (version == 2.00){
-      
+      PROTECT(CurSequenceDescription=allocVector(VECSXP,6));
+      PROTECT(tmpSXP=allocVector(STRSXP,6));
+      SET_VECTOR_ELT(tmpSXP,0,mkChar("Name")); 
+      SET_VECTOR_ELT(tmpSXP,1,mkChar("n.probepairs"));
+      SET_VECTOR_ELT(tmpSXP,2,mkChar("GroupName"));
+      SET_VECTOR_ELT(tmpSXP,3,mkChar("VersionNumber"));
+      SET_VECTOR_ELT(tmpSXP,4,mkChar("NumberOfParameters"));
+      SET_VECTOR_ELT(tmpSXP,5,mkChar("Parameters"));
+      setAttrib(CurSequenceDescription,R_NamesSymbol,tmpSXP);
+      UNPROTECT(1);
     } else if (version == 1.00){
       PROTECT(CurSequenceDescription=allocVector(VECSXP,2));
       PROTECT(tmpSXP=allocVector(STRSXP,2));
@@ -374,16 +403,140 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       SET_VECTOR_ELT(CurSequenceDescription,1,tmpSXP);
       UNPROTECT(1);
     } else if (version ==2.0){
+      fread_be_uint32(&n_probes,1,infile);
+      PROTECT(tmpSXP=allocVector(INTSXP,1));
+      INTEGER(tmpSXP)[0] = n_probes;
+      SET_VECTOR_ELT(CurSequenceDescription,1,tmpSXP);
+      UNPROTECT(1);
       
       
       
+
+      fread_be_uint32(&group_name_length,1,infile);
+      group_name = (char *)Calloc(group_name_length,char);
+      fread_be_char(group_name,group_name_length,infile);
+      
+      PROTECT(tmpSXP=allocVector(STRSXP,1));
+      SET_VECTOR_ELT(tmpSXP,0,mkChar(group_name));
+      SET_VECTOR_ELT(CurSequenceDescription,2,tmpSXP);
+      UNPROTECT(1);
+      Free(group_name);
+      
+
+      fread_be_uint32(&version_number_length,1,infile);
+      version_number = (char *)Calloc(version_number_length,char);
+      fread_be_char(version_number,version_number_length,infile);
+      
+      PROTECT(tmpSXP=allocVector(STRSXP,1));
+      SET_VECTOR_ELT(tmpSXP,0,mkChar(version_number));
+      SET_VECTOR_ELT(CurSequenceDescription,3,tmpSXP);
+      UNPROTECT(1);
+      Free(version_number);
+
+
+      fread_be_uint32(&number_parameters,1,infile);
+      PROTECT(tmpSXP=allocVector(INTSXP,1));
+      INTEGER(tmpSXP)[0] = number_parameters;
+      SET_VECTOR_ELT(CurSequenceDescription,4,tmpSXP);
+      UNPROTECT(1);
+
+      PROTECT(tmpSXP=allocVector(VECSXP,number_parameters));
+      
+
+      for (j=0; j < number_parameters; j++){
+	PROTECT(tmpSXP2 = allocVector(STRSXP,2));
+	fread_be_uint32(&param_length,1,infile);
+	param_name = (char *)Calloc(param_length,char);
+	fread_be_char(param_name,param_length,infile);
+	SET_VECTOR_ELT(tmpSXP2,0,mkChar(param_name));
+	Free(param_name);
+	fread_be_uint32(&param_length,1,infile);
+	param_name = (char *)Calloc(param_length,char);
+	fread_be_char(param_name,param_length,infile);
+	SET_VECTOR_ELT(tmpSXP2,1,mkChar(param_name));
+	Free(param_name);
+		
+	SET_VECTOR_ELT(tmpSXP,j,tmpSXP2);
+	UNPROTECT(1);
+      }
+      SET_VECTOR_ELT(CurSequenceDescription,5,tmpSXP);
+      UNPROTECT(1);     
+   
+
+
     } else if (version ==3.0){
+      fread_be_uint32(&probe_mapping_type,1,infile);
+      PROTECT(tmpSXP=allocVector(INTSXP,1));
+      INTEGER(tmpSXP)[0] = probe_mapping_type;
+      SET_VECTOR_ELT(CurSequenceDescription,1,tmpSXP);
+      UNPROTECT(1);
+
+      fread_be_uint32(&seq_file_offset,1,infile);
+      PROTECT(tmpSXP=allocVector(INTSXP,1));
+      INTEGER(tmpSXP)[0] = seq_file_offset;
+      SET_VECTOR_ELT(CurSequenceDescription,2,tmpSXP);
+      UNPROTECT(1);
       
+      fread_be_uint32(&n_probes,1,infile);
+      PROTECT(tmpSXP=allocVector(INTSXP,1));
+      INTEGER(tmpSXP)[0] = n_probes;
+      SET_VECTOR_ELT(CurSequenceDescription,3,tmpSXP);
+      UNPROTECT(1);
+
+      fread_be_uint32(&group_name_length,1,infile);
+      group_name = (char *)Calloc(group_name_length,char);
+      fread_be_char(group_name,group_name_length,infile);
+      
+      PROTECT(tmpSXP=allocVector(STRSXP,1));
+      SET_VECTOR_ELT(tmpSXP,0,mkChar(group_name));
+      SET_VECTOR_ELT(CurSequenceDescription,4,tmpSXP);
+      UNPROTECT(1);
+      Free(group_name);
+      
+      fread_be_uint32(&version_number_length,1,infile);
+      version_number = (char *)Calloc(version_number_length,char);
+      fread_be_char(version_number,version_number_length,infile);
+      
+      PROTECT(tmpSXP=allocVector(STRSXP,1));
+      SET_VECTOR_ELT(tmpSXP,0,mkChar(version_number));
+      SET_VECTOR_ELT(CurSequenceDescription,5,tmpSXP);
+      UNPROTECT(1);
+      Free(version_number);
+
+      fread_be_uint32(&number_parameters,1,infile);
+      PROTECT(tmpSXP=allocVector(INTSXP,1));
+      INTEGER(tmpSXP)[0] = number_parameters;
+      SET_VECTOR_ELT(CurSequenceDescription,6,tmpSXP);
+      UNPROTECT(1);
+
+
+
+      PROTECT(tmpSXP=allocVector(VECSXP,number_parameters));
+      
+
+      for (j=0; j < number_parameters; j++){
+	PROTECT(tmpSXP2 = allocVector(STRSXP,2));
+	fread_be_uint32(&param_length,1,infile);
+	param_name = (char *)Calloc(param_length,char);
+	fread_be_char(param_name,param_length,infile);
+	SET_VECTOR_ELT(tmpSXP2,0,mkChar(param_name));
+	Free(param_name);
+	fread_be_uint32(&param_length,1,infile);
+	param_name = (char *)Calloc(param_length,char);
+	fread_be_char(param_name,param_length,infile);
+	SET_VECTOR_ELT(tmpSXP2,1,mkChar(param_name));
+	Free(param_name);
+		
+	SET_VECTOR_ELT(tmpSXP,j,tmpSXP2);
+	UNPROTECT(1);
+      }
+      SET_VECTOR_ELT(CurSequenceDescription,7,tmpSXP);
+      UNPROTECT(1);     
     }
-    
     
     SET_VECTOR_ELT(SequenceDescriptionList,i,CurSequenceDescription);
     UNPROTECT(1);
+    
   }
   
   UNPROTECT(1);
@@ -532,6 +685,7 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 
 
   int nprobes;
+  int probe_mapping_type;
   int i,j;
 
 
@@ -577,10 +731,10 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
       
 
 
-    if (version == 1.0){
+    if ((version == 1.0) || (version == 2.0)){
       nprobes = INTEGER(VECTOR_ELT(VECTOR_ELT(seqDesc,i),1))[0];
       /* Rprintf("nprobes: %d\n",nprobes); */
-   
+      probe_mapping_type = 0; /* PM/MM tiling */
       
       PROTECT(PositionInfo = allocVector(VECSXP,9));
       PROTECT(xPM = allocVector(INTSXP,nprobes));
@@ -627,23 +781,124 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
       setAttrib(PositionInfo,R_NamesSymbol,tmpSEXP);
       UNPROTECT(1);
 
+    } else if (version == 3.0){
+      nprobes = INTEGER(VECTOR_ELT(VECTOR_ELT(seqDesc,i),3))[0];
+      probe_mapping_type = INTEGER(VECTOR_ELT(VECTOR_ELT(seqDesc,i),1))[0];
+
+
+      if (probe_mapping_type == 0){
+	PROTECT(PositionInfo = allocVector(VECSXP,9));
+	PROTECT(xPM = allocVector(INTSXP,nprobes));
+	PROTECT(yPM = allocVector(INTSXP,nprobes));
+	PROTECT(xMM = allocVector(INTSXP,nprobes));
+	PROTECT(yMM = allocVector(INTSXP,nprobes));
+	PROTECT(PMprobeLength = allocVector(INTSXP,nprobes));
+	PROTECT(probeSeqString = allocVector(STRSXP,nprobes));
+	PROTECT(MatchScore = allocVector(REALSXP,nprobes));
+	PROTECT(PMposition = allocVector(INTSXP,nprobes));
+	PROTECT(Strand = allocVector(STRSXP,nprobes));
+	
+	SET_VECTOR_ELT(PositionInfo,0,xPM);
+	SET_VECTOR_ELT(PositionInfo,1,yPM);
+	SET_VECTOR_ELT(PositionInfo,2,xMM);
+	SET_VECTOR_ELT(PositionInfo,3,yMM);
+	SET_VECTOR_ELT(PositionInfo,4,PMprobeLength);
+	SET_VECTOR_ELT(PositionInfo,5,probeSeqString);
+	SET_VECTOR_ELT(PositionInfo,6,MatchScore);
+	SET_VECTOR_ELT(PositionInfo,7,PMposition);
+	SET_VECTOR_ELT(PositionInfo,8,Strand);
+	
+	setAttrib(PositionInfo,R_ClassSymbol,mkString("data.frame"));
+	
+	PROTECT(PositionInfoRowNames = allocVector(STRSXP,nprobes));
+	for (j=0; j < nprobes; j++){
+	  sprintf(buf, "%d", j+1);
+	  SET_VECTOR_ELT(PositionInfoRowNames,j,mkChar(buf));
+	}
+	setAttrib(PositionInfo, R_RowNamesSymbol, PositionInfoRowNames);
+	UNPROTECT(1);
+	
+	PROTECT(tmpSEXP = allocVector(STRSXP,9));
+	SET_VECTOR_ELT(tmpSEXP,0,mkChar("x"));
+	SET_VECTOR_ELT(tmpSEXP,1,mkChar("y"));
+	SET_VECTOR_ELT(tmpSEXP,2,mkChar("x.mm"));
+	SET_VECTOR_ELT(tmpSEXP,3,mkChar("y.mm"));
+	SET_VECTOR_ELT(tmpSEXP,4,mkChar("PMLength"));
+	SET_VECTOR_ELT(tmpSEXP,5,mkChar("ProbeSeq"));
+	SET_VECTOR_ELT(tmpSEXP,6,mkChar("MatchScore"));
+	SET_VECTOR_ELT(tmpSEXP,7,mkChar("PMPosition"));
+	SET_VECTOR_ELT(tmpSEXP,8,mkChar("TargetStrand"));
+	
+	setAttrib(PositionInfo,R_NamesSymbol,tmpSEXP);
+	UNPROTECT(1);
+      } else {
+
+	PROTECT(PositionInfo = allocVector(VECSXP,7));
+	PROTECT(xPM = allocVector(INTSXP,nprobes));
+	PROTECT(yPM = allocVector(INTSXP,nprobes));
+	PROTECT(PMprobeLength = allocVector(INTSXP,nprobes));
+	PROTECT(probeSeqString = allocVector(STRSXP,nprobes));
+	PROTECT(MatchScore = allocVector(REALSXP,nprobes));
+	PROTECT(PMposition = allocVector(INTSXP,nprobes));
+	PROTECT(Strand = allocVector(STRSXP,nprobes));
+	
+	SET_VECTOR_ELT(PositionInfo,0,xPM);
+	SET_VECTOR_ELT(PositionInfo,1,yPM);
+	SET_VECTOR_ELT(PositionInfo,2,PMprobeLength);
+	SET_VECTOR_ELT(PositionInfo,3,probeSeqString);
+	SET_VECTOR_ELT(PositionInfo,4,MatchScore);
+	SET_VECTOR_ELT(PositionInfo,5,PMposition);
+	SET_VECTOR_ELT(PositionInfo,6,Strand);
+	
+	setAttrib(PositionInfo,R_ClassSymbol,mkString("data.frame"));
+	
+	PROTECT(PositionInfoRowNames = allocVector(STRSXP,nprobes));
+	for (j=0; j < nprobes; j++){
+	  sprintf(buf, "%d", j+1);
+	  SET_VECTOR_ELT(PositionInfoRowNames,j,mkChar(buf));
+	}
+	setAttrib(PositionInfo, R_RowNamesSymbol, PositionInfoRowNames);
+	UNPROTECT(1);
+	
+	PROTECT(tmpSEXP = allocVector(STRSXP,9));
+	SET_VECTOR_ELT(tmpSEXP,0,mkChar("x"));
+	SET_VECTOR_ELT(tmpSEXP,1,mkChar("y"));
+	SET_VECTOR_ELT(tmpSEXP,2,mkChar("PMLength"));
+	SET_VECTOR_ELT(tmpSEXP,3,mkChar("ProbeSeq"));
+	SET_VECTOR_ELT(tmpSEXP,4,mkChar("MatchScore"));
+	SET_VECTOR_ELT(tmpSEXP,5,mkChar("PMPosition"));
+	SET_VECTOR_ELT(tmpSEXP,6,mkChar("TargetStrand"));
+	
+	setAttrib(PositionInfo,R_NamesSymbol,tmpSEXP);
+	UNPROTECT(1);
+      }
+
+
     }
+    
+    
+
+
 
     for (j=0; j < nprobes; j++){
       fread_be_uint32(&x,1,infile);
       fread_be_uint32(&y,1,infile);
       /* Rprintf("x y :%u %u\n",x,y); */
 
+      if (probe_mapping_type == 0){
+	fread_be_uint32(&x_mm,1,infile);
+	fread_be_uint32(&y_mm,1,infile);
+      }
 
-      fread_be_uint32(&x_mm,1,infile);
-      fread_be_uint32(&y_mm,1,infile);
       /* Rprintf("mm x y :%u %u\n",x_mm,y_mm); */
       
       INTEGER(xPM)[j] = x;
       INTEGER(yPM)[j] = y;
-      INTEGER(xMM)[j] = x_mm;
-      INTEGER(yMM)[j] = y_mm;
 
+      if (probe_mapping_type == 0){
+	INTEGER(xMM)[j] = x_mm;
+	INTEGER(yMM)[j] = y_mm;
+      }
       fread_be_uchar(&probelength,1,infile);
       /* Rprintf("probelength : %d\n",(int)probelength);*/
       
@@ -707,7 +962,14 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
     
     }
 
-    UNPROTECT(9);
+
+    if ((version == 1) || (version == 2)){
+      UNPROTECT(9);
+    } else {
+      UNPROTECT(7);
+    }
+
+
     SET_VECTOR_ELT(curSeqIdPositionInfo,1,PositionInfo);
     UNPROTECT(1);
 
