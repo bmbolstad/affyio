@@ -1,0 +1,27 @@
+dnl
+dnl Configuration things for affyR.
+dnl (http://www.cbs.dtu.dk/laurent/download/affyR/
+dnl What is below (and in the other configuration fiels 
+dnl was taken from different configuration scripts for R version 1.3.0.
+dnl
+dnl Acknowledgments: The author(s) of the R configure scripts, Kurt Hornik for the tip with autoconf.
+dnl
+dnl Laurent 2001
+
+
+AC_INIT("DESCRIPTION")
+
+dnl
+dnl Are things (still) the same ?
+dnl (taken from the 'writing R extensions manual')
+
+
+dnl
+dnl tests the zlib.h
+dnl (the test is found in 'acinclude.m4')
+dnl
+
+R_ZLIB
+
+
+AC_OUTPUT(src/Makevars)
