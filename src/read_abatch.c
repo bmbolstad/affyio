@@ -140,7 +140,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-
+#define HAVE_ZLIB 1
 
 #if defined(HAVE_ZLIB)
 #include <zlib.h>
