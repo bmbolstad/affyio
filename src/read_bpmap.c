@@ -11,6 +11,7 @@
  ** History
  ** Mar 11, 2006 - Initial version
  ** Mar 12, 2006 - add additional support for versions 2 and 3
+ ** May 31, 2006 - Fix some compiler warnings
  **
  *******************************************************************/
 
@@ -181,7 +182,7 @@ static size_t fread_float32(float *destination, int n, FILE *instream){
 
 static size_t fread_be_char(char *destination, int n, FILE *instream){
 
-  int i=0;
+ 
   size_t result;
 
   result = fread(destination,sizeof(char),n,instream);
@@ -197,7 +198,7 @@ static size_t fread_be_char(char *destination, int n, FILE *instream){
 
 static size_t fread_be_uchar(unsigned char *destination, int n, FILE *instream){
 
-  int i=0;
+ 
   size_t result;
 
   result = fread(destination,sizeof(unsigned char),n,instream);
@@ -314,7 +315,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
 
   SEXP SequenceDescriptionList;
 
-  SEXP CurSequenceDescription;
+  SEXP CurSequenceDescription = R_NilValue;
   SEXP tmpSXP,tmpSXP2;
     
 
@@ -546,7 +547,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
 
 
 
-static void *packedSeqTobaseStr(unsigned char probeseq[7], char *dest){
+static void packedSeqTobaseStr(unsigned char probeseq[7], char *dest){
 
   unsigned char currentchar;
   
@@ -668,24 +669,24 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 
   SEXP SeqIdPositionInfoList;
   SEXP curSeqIdPositionInfo;
-  SEXP PositionInfo;
+  SEXP PositionInfo= R_NilValue;
   SEXP PositionInfoRowNames;
   SEXP tmpSEXP;
 
-  SEXP xPM,yPM,xMM,yMM;
-  SEXP PMprobeLength;
-  SEXP probeSeqString;
-  SEXP MatchScore;
-  SEXP PMposition;
-  SEXP Strand;
+  SEXP xPM= R_NilValue,yPM= R_NilValue,xMM= R_NilValue,yMM= R_NilValue;
+  SEXP PMprobeLength= R_NilValue;
+  SEXP probeSeqString= R_NilValue;
+  SEXP MatchScore= R_NilValue;
+  SEXP PMposition= R_NilValue;
+  SEXP Strand= R_NilValue;
 
   char buf[10];
 
   char *dest;
 
 
-  int nprobes;
-  int probe_mapping_type;
+  int nprobes=0;
+  int probe_mapping_type=0;
   int i,j;
 
 

@@ -126,9 +126,10 @@
  **                from the header information basically the [CEL] and [HEADER]
  **                sections in the text files and similar information contained in 
  **                the first section of the binary CEL file format
- ** Jan 27, 2005 - Complete ReadHeaderDetailed for supported formats.
+ ** Jan 27, 2006 - Complete ReadHeaderDetailed for supported formats.
  **                Add in a C level object for storing contents of a single
  **                CEL file
+ ** May 31, 2006 - Fix some compiler warnings
  **
  *************************************************************/
  
@@ -861,7 +862,7 @@ static void get_masks_outliers(char *filename, int *nmasks, short *masks_x, shor
   
   FILE *currentFile;
   char buffer[BUF_SIZE];
-  int numcells, cur_x, cur_y, cur_index;
+  int numcells, cur_x, cur_y; 
   tokenset *cur_tokenset;
   int i;
 
@@ -1772,7 +1773,7 @@ static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, s
   
   gzFile *currentFile;
   char buffer[BUF_SIZE];
-  int numcells, cur_x, cur_y, cur_index;
+  int numcells, cur_x, cur_y;
   tokenset *cur_tokenset;
   int i;
 
@@ -2072,14 +2073,14 @@ static size_t fread_int16(short *destination, int n, FILE *instream){
 
 }
 
-
+#ifdef WORDS_BIGENDIAN
 static void swap_float_4(float *tnf4)              /* 4 byte floating point numbers */
 {
  int *tni4=(int *)tnf4;
  *tni4=(((*tni4>>24)&0xff) | ((*tni4&0xff)<<24) |
 	    ((*tni4>>8)&0xff00) | ((*tni4&0xff00)<<8));  
 }
-
+#endif
 
 
 static size_t fread_float32(float *destination, int n, FILE *instream){
@@ -2101,7 +2102,6 @@ static size_t fread_float32(float *destination, int n, FILE *instream){
 
 static size_t fread_char(char *destination, int n, FILE *instream){
 
-  int i=0;
   size_t result;
   
   result = fread(destination,sizeof(char),n,instream);
@@ -2381,7 +2381,7 @@ static char *binary_get_header_info(char *filename, int *dim1, int *dim2){
 
 static void binary_get_detailed_header_info(char *filename, detailed_header_info *header_info){
 
-  char *cdfName =0;
+  /* char *cdfName =0; */
   tokenset *my_tokenset;
   tokenset *temp_tokenset;
 
@@ -2778,7 +2778,7 @@ static void binary_get_masks_outliers(char *filename, int *nmasks, short *masks_
   
   int i=0;
 
-  int cur_index;
+
 
   outliermask_loc *cur_loc= Calloc(1,outliermask_loc);
   binary_header *my_header;
@@ -3016,7 +3016,7 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
 
 SEXP ReadHeader(SEXP filename){
 
-  int ref_dim_1, ref_dim_2;
+  int ref_dim_1=0, ref_dim_2=0;
 
   char *cur_file_name;
   char *cdfName=0;
@@ -3024,7 +3024,7 @@ SEXP ReadHeader(SEXP filename){
   SEXP headInfo;
   SEXP name;
   SEXP cel_dimensions;
-  SEXP cel_dimensions_names;
+  /* SEXP cel_dimensions_names; */
     
   PROTECT(cel_dimensions= allocVector(INTSXP,2));
   PROTECT(headInfo = allocVector(VECSXP,2));
@@ -3226,7 +3226,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   char *cdfName;
   double *CurintensityMatrix, *pmMatrix=0, *mmMatrix=0;
 
-  SEXP PM_intensity, MM_intensity, Current_intensity, names, dimnames;
+  SEXP PM_intensity= R_NilValue, MM_intensity= R_NilValue, Current_intensity, names, dimnames;
   SEXP output_list,pmmmnames;
   
   if (strcmp(CHAR(STRING_ELT(which,0)),"pm") == 0){
@@ -3848,7 +3848,7 @@ CEL *read_cel_file(char *filename){
   }
 
 
-
+  return my_CEL;
 
 
 }
@@ -3872,6 +3872,6 @@ SEXP R_read_cel_file(SEXP filename){
   CEL *myCEL =read_cel_file(cur_file_name);
 
 
-
+  return filename;
 
 }

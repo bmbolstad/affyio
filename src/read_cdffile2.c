@@ -27,6 +27,7 @@
  ** Sep 24 - QCunit probes, Unit Block probes, Finish and tested.
  ** Dec 1, 2005 - Some comment cleaning. Added isTextCDFFile,CheckCDFtext
  ** Feb 28, 2006 - replace C++ comments with ANSI comments for older compilers
+ ** May 31, 2006 - fix some compiler warnings
  **               
  **
  *******************************************************************/
@@ -537,7 +538,7 @@ static void read_cdf_header(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 
 static void read_cdf_QCUnits_probes(FILE *infile,  cdf_text *mycdf, char* linebuffer,int index){
   tokenset *cur_tokenset;
-  int i,j;
+  int i;
 
   for (i =0; i < mycdf->qc_units[index].n_probes; i++){
     ReadFileLine(linebuffer, BUFFER_SIZE, infile);
@@ -868,7 +869,7 @@ static void read_cdf_Units(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 static int read_cdf_text(char *filename, cdf_text *mycdf){
 
   FILE *infile;
-  int i;
+
   char linebuffer[BUFFER_SIZE];  /* a character buffer */
   tokenset *cur_tokenset;
   
@@ -975,9 +976,9 @@ static int isTextCDFFile(char *filename){
 
 
   FILE *infile;
-  int i;
+
   char linebuffer[BUFFER_SIZE];  /* a character buffer */
-  tokenset *cur_tokenset;
+
   
   if ((infile = fopen(filename, "r")) == NULL)
     {
@@ -1044,7 +1045,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
   SEXP QCUNITSProbeInfoINDEX;
   SEXP QCUNITSProbeInfoPMFLAG;
   SEXP QCUNITSProbeInfoBGFLAG;
-  SEXP QCUNITSProbeInfoNames;
+  SEXP QCUNITSProbeInfoNames = R_NilValue;
   SEXP QCUNITSProbeInforow_names;
 
   /* Basically fields (possible) for  Unit Block probes */
