@@ -19,6 +19,7 @@
  ** Sep 22, 2005 - Fix some signed/unsigned bugs
  ** Dec 1, 2005 - Comment cleaning
  ** Feb 28, 2006 - replace C++ comments with ANSI comments for older compilers
+ ** May 31, 2006 - fix some compiler warnings
  **
  **
  ****************************************************************/
@@ -322,7 +323,7 @@ static size_t fread_float32(float *destination, int n, FILE *instream){
 
 static size_t fread_char(char *destination, int n, FILE *instream){
 
-  int i=0;
+
   size_t result;
 
   result = fread(destination,sizeof(char),n,instream);
@@ -338,7 +339,7 @@ static size_t fread_char(char *destination, int n, FILE *instream){
 
 static size_t fread_uchar(unsigned char *destination, int n, FILE *instream){
 
-  int i=0;
+
   size_t result;
 
   result = fread(destination,sizeof(unsigned char),n,instream);
@@ -371,7 +372,7 @@ static size_t fread_uchar(unsigned char *destination, int n, FILE *instream){
 
 int read_cdf_qcunit(cdf_qc_unit *my_unit,int filelocation,FILE *instream){
   
-  int i,j;
+  int i;
 
 
   fseek(instream,filelocation,SEEK_SET);
@@ -675,7 +676,7 @@ static int check_cdf_xda(char *filename){
 
   FILE *infile;
 
-  int i;
+  
   int magicnumber,version_number;
 
   if ((infile = fopen(filename, "rb")) == NULL)
@@ -793,26 +794,26 @@ SEXP ReadCDFFile(SEXP filename){
   
   SEXP CDFInfo;
   SEXP Dimensions;
-  SEXP LocMap,tempLocMap;
+  SEXP LocMap= R_NilValue,tempLocMap;
   SEXP CurLocs;
-  SEXP PSnames,tempPSnames;
+  SEXP PSnames = R_NilValue,tempPSnames;
   SEXP ColNames;
   SEXP dimnames;
 
   cdf_xda my_cdf;
   char *cur_file_name;
-  char *tmp_name;
+  /* char *tmp_name; */
 
   int i,j,k;
   int cur_blocks,cur_cells, cur_atoms;
-  int which_probetype;
+  /* int which_probetype; */
   int which_psname=0;
 
   cdf_unit_cell *current_cell;
 
   double *curlocs;
   
-  int nrows, ncols;
+  /* int nrows, ncols; */
 
  
   cur_file_name = CHAR(VECTOR_ELT(filename,0));
@@ -1096,7 +1097,7 @@ SEXP ReadCDFFile(SEXP filename){
 
 SEXP ReadCDFFileIntoRList(SEXP filename,SEXP fullstructure){
 
-  SEXP CDFInfo;  /* this is the object that will be returned */
+  SEXP CDFInfo = R_NilValue;  /* this is the object that will be returned */
   SEXP CDFInfoNames;
   SEXP HEADER;  /* Will store the header information */
   SEXP HEADERNames;
