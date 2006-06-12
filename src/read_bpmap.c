@@ -12,6 +12,7 @@
  ** Mar 11, 2006 - Initial version
  ** Mar 12, 2006 - add additional support for versions 2 and 3
  ** May 31, 2006 - Fix some compiler warnings
+ ** June 12, 2006 - fix naming vector length issue.
  **
  *******************************************************************/
 
@@ -757,6 +758,7 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
       SET_VECTOR_ELT(PositionInfo,6,MatchScore);
       SET_VECTOR_ELT(PositionInfo,7,PMposition);
       SET_VECTOR_ELT(PositionInfo,8,Strand);
+      UNPROTECT(9);
 
       setAttrib(PositionInfo,R_ClassSymbol,mkString("data.frame"));
 
@@ -808,7 +810,8 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 	SET_VECTOR_ELT(PositionInfo,6,MatchScore);
 	SET_VECTOR_ELT(PositionInfo,7,PMposition);
 	SET_VECTOR_ELT(PositionInfo,8,Strand);
-	
+	UNPROTECT(9);
+
 	setAttrib(PositionInfo,R_ClassSymbol,mkString("data.frame"));
 	
 	PROTECT(PositionInfoRowNames = allocVector(STRSXP,nprobes));
@@ -850,7 +853,8 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 	SET_VECTOR_ELT(PositionInfo,4,MatchScore);
 	SET_VECTOR_ELT(PositionInfo,5,PMposition);
 	SET_VECTOR_ELT(PositionInfo,6,Strand);
-	
+	UNPROTECT(7);
+
 	setAttrib(PositionInfo,R_ClassSymbol,mkString("data.frame"));
 	
 	PROTECT(PositionInfoRowNames = allocVector(STRSXP,nprobes));
@@ -861,7 +865,7 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 	setAttrib(PositionInfo, R_RowNamesSymbol, PositionInfoRowNames);
 	UNPROTECT(1);
 	
-	PROTECT(tmpSEXP = allocVector(STRSXP,9));
+	PROTECT(tmpSEXP = allocVector(STRSXP,7));
 	SET_VECTOR_ELT(tmpSEXP,0,mkChar("x"));
 	SET_VECTOR_ELT(tmpSEXP,1,mkChar("y"));
 	SET_VECTOR_ELT(tmpSEXP,2,mkChar("PMLength"));
@@ -963,14 +967,6 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
     
     }
 
-
-    if ((version == 1) || (version == 2)){
-      UNPROTECT(9);
-    } else {
-      UNPROTECT(7);
-    }
-
-
     SET_VECTOR_ELT(curSeqIdPositionInfo,1,PositionInfo);
     UNPROTECT(1);
 
@@ -1033,7 +1029,7 @@ SEXP ReadBPMAPFileIntoRList(SEXP filename){
   n_seq = INTEGER(VECTOR_ELT(bpmapHeader,2))[0];
   UNPROTECT(1);
   
-  /*  Rprintf("version nseq: %f %d\n", version, n_seq);*/
+  /* Rprintf("version nseq: %f %d\n", version, n_seq); */
 
 
   PROTECT(bpmapSeqDesc = ReadBPMAPSeqDescription(infile,version,n_seq));
