@@ -130,6 +130,7 @@
  **                Add in a C level object for storing contents of a single
  **                CEL file
  ** May 31, 2006 - Fix some compiler warnings
+ ** Jul 17, 2006 - Fix application of masks and outliers for binary cel files.
  **
  *************************************************************/
  
@@ -2722,22 +2723,27 @@ static void binary_apply_masks(char *filename, double *intensity, int chip_num, 
 
   int cur_index;
 
+  int sizeofrecords;
+
   outliermask_loc *cur_loc= Calloc(1,outliermask_loc);
   binary_header *my_header;
 
   my_header = read_binary_header(filename,1);
-
-  fseek(my_header->infile,my_header->n_cells*sizeof(celintens_record),SEEK_CUR);
+  
+  sizeofrecords = 2*sizeof(float) + sizeof(short); /* sizeof(celintens_record) */
+  
+  fseek(my_header->infile,my_header->n_cells*sizeofrecords,SEEK_CUR);
 
   if (rm_mask){
     for (i =0; i < my_header->n_masks; i++){
-      fread_int16(&(cur_loc->x),sizeof(short),my_header->infile);
-      fread_int16(&(cur_loc->y),sizeof(short),my_header->infile);
-      /*      cur_index = (int)cur_loc->x + my_header->rows*(int)cur_loc->y; */
-      cur_index = (int)cur_loc->y + my_header->rows*(int)cur_loc->x;
+      fread_int16(&(cur_loc->x),1,my_header->infile);
+      fread_int16(&(cur_loc->y),1,my_header->infile);
+      cur_index = (int)cur_loc->x + my_header->rows*(int)cur_loc->y; 
+      /* cur_index = (int)cur_loc->y + my_header->rows*(int)cur_loc->x; */
+      /*   intensity[chip_num*my_header->rows + cur_index] = R_NaN; */
+      intensity[chip_num*rows + cur_index] =  R_NaN;
       
 
-      intensity[chip_num*my_header->rows + cur_index] = R_NaN;
     }
   } else {
     fseek(my_header->infile,my_header->n_masks*sizeof(cur_loc),SEEK_CUR);
@@ -2746,10 +2752,11 @@ static void binary_apply_masks(char *filename, double *intensity, int chip_num, 
 
   if (rm_outliers){
     for (i =0; i < my_header->n_outliers; i++){
-      fread_int16(&(cur_loc->x),sizeof(short),my_header->infile);
-      fread_int16(&(cur_loc->y),sizeof(short),my_header->infile);
-      cur_index = (int)cur_loc->x + my_header->rows*(int)cur_loc->y;
-      intensity[chip_num*my_header->n_cells + cur_index] = R_NaN;
+      fread_int16(&(cur_loc->x),1,my_header->infile);
+      fread_int16(&(cur_loc->y),1,my_header->infile);
+      cur_index = (int)cur_loc->x + my_header->rows*(int)cur_loc->y; 
+      /* intensity[chip_num*my_header->n_cells + cur_index] = R_NaN; */
+      intensity[chip_num*rows + cur_index] =  R_NaN;
     }
   } else {
     fseek(my_header->infile,my_header->n_outliers*sizeof(cur_loc),SEEK_CUR);
@@ -2793,8 +2800,8 @@ static void binary_get_masks_outliers(char *filename, int *nmasks, short *masks_
   masks_y = Calloc(my_header->n_masks,short);
 
   for (i =0; i < my_header->n_masks; i++){
-    fread_int16(&(cur_loc->x),sizeof(short),my_header->infile);
-    fread_int16(&(cur_loc->y),sizeof(short),my_header->infile);
+    fread_int16(&(cur_loc->x),1,my_header->infile);
+    fread_int16(&(cur_loc->y),1,my_header->infile);
     masks_x[i] = (cur_loc->x);
     masks_y[i] = (cur_loc->y);
   }
@@ -2807,8 +2814,8 @@ static void binary_get_masks_outliers(char *filename, int *nmasks, short *masks_
 
 
   for (i =0; i < my_header->n_outliers; i++){
-    fread_int16(&(cur_loc->x),sizeof(short),my_header->infile);
-    fread_int16(&(cur_loc->y),sizeof(short),my_header->infile);
+    fread_int16(&(cur_loc->x),1,my_header->infile);
+    fread_int16(&(cur_loc->y),1,my_header->infile);
     outliers_x[i] = (cur_loc->x);
     outliers_y[i] = (cur_loc->y);
 
