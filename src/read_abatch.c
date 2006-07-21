@@ -131,6 +131,7 @@
  **                CEL file
  ** May 31, 2006 - Fix some compiler warnings
  ** Jul 17, 2006 - Fix application of masks and outliers for binary cel files.
+ ** Jul 21, 2006 - Binary parser checks for file truncation
  **
  *************************************************************/
  
@@ -2593,6 +2594,8 @@ static int read_binarycel_file_intensities(char *filename, double *intensity, in
 
   int i=0, j=0;
   int cur_index;
+  
+  int fread_err=0;
 
 
   celintens_record *cur_intensity = Calloc(1,celintens_record);
@@ -2603,9 +2606,16 @@ static int read_binarycel_file_intensities(char *filename, double *intensity, in
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
       cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
-      fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
-      fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
-      fread_int16(&(cur_intensity->npixels),1,my_header->infile);
+      fread_err = fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
+      fread_err+= fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
+      fread_err+=fread_int16(&(cur_intensity->npixels),1,my_header->infile);
+      if (fread_err < 3){
+	fclose(my_header->infile);
+	delete_binary_header(my_header);
+	Free(cur_intensity);
+	return 1;
+      }
+      fread_err=0;
       intensity[chip_num*my_header->n_cells + cur_index] = (double )cur_intensity->cur_intens;
     }
   }
@@ -2633,7 +2643,8 @@ static int read_binarycel_file_stddev(char *filename, double *intensity, int chi
   int i=0, j=0;
   int cur_index;
 
-
+  int fread_err=0;
+  
   celintens_record *cur_intensity = Calloc(1,celintens_record);
   binary_header *my_header;
 
@@ -2642,9 +2653,16 @@ static int read_binarycel_file_stddev(char *filename, double *intensity, int chi
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
       cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
-      fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
-      fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
-      fread_int16(&(cur_intensity->npixels),1,my_header->infile);
+      fread_err = fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
+      fread_err+= fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
+      fread_err+= fread_int16(&(cur_intensity->npixels),1,my_header->infile);
+      if (fread_err < 3){
+	fclose(my_header->infile);
+	delete_binary_header(my_header);
+	Free(cur_intensity);
+	return 1;
+      }
+      fread_err=0;
       intensity[chip_num*my_header->n_cells + cur_index] = (double )cur_intensity->cur_sd;
     }
   }
@@ -2672,7 +2690,8 @@ static int read_binarycel_file_npixels(char *filename, double *intensity, int ch
   int i=0, j=0;
   int cur_index;
 
-
+  int fread_err=0;
+ 
   celintens_record *cur_intensity = Calloc(1,celintens_record);
   binary_header *my_header;
 
@@ -2681,9 +2700,16 @@ static int read_binarycel_file_npixels(char *filename, double *intensity, int ch
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
       cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
-      fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
-      fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
-      fread_int16(&(cur_intensity->npixels),1,my_header->infile);
+      fread_err = fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
+      fread_err+= fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
+      fread_err+= fread_int16(&(cur_intensity->npixels),1,my_header->infile);  
+      if (fread_err < 3){
+	fclose(my_header->infile);
+	delete_binary_header(my_header);
+	Free(cur_intensity);
+	return 1;
+      }
+      fread_err=0;
       intensity[chip_num*my_header->n_cells + cur_index] = (double )cur_intensity->npixels;
     }
   }
@@ -2939,7 +2965,9 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
       error("Compress option not supported on your platform\n");
 #endif
     } else if (isBinaryCelFile(cur_file_name)){
-      read_binarycel_file_intensities(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+	if (read_binarycel_file_intensities(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1)){
+	  error("It appears that the file %s is corrupted.\n",cur_file_name);
+	}
     } else {
 #if defined HAVE_ZLIB
        error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",cur_file_name);
@@ -3500,7 +3528,9 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
       error("Compress option not supported on your platform\n");
 #endif
     } else if (isBinaryCelFile(cur_file_name)){
-      read_binarycel_file_stddev(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      	if (read_binarycel_file_stddev(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1)){
+	  error("It appears that the file %s is corrupted.\n",cur_file_name);
+	}
     } else {
 #if defined HAVE_ZLIB
        error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",cur_file_name);
@@ -3679,7 +3709,9 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
       error("Compress option not supported on your platform\n");
 #endif
     } else if (isBinaryCelFile(cur_file_name)){
-      read_binarycel_file_npixels(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+	if (read_binarycel_file_npixels(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1)){
+	  error("It appears that the file %s is corrupted.\n",cur_file_name);
+	}
     } else {
 #if defined HAVE_ZLIB
        error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",cur_file_name);
