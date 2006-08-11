@@ -132,6 +132,7 @@
  ** May 31, 2006 - Fix some compiler warnings
  ** Jul 17, 2006 - Fix application of masks and outliers for binary cel files.
  ** Jul 21, 2006 - Binary parser checks for file truncation
+ ** Aug 11, 2006 - Additional truncation checks for text files
  **
  *************************************************************/
  
@@ -597,15 +598,30 @@ static int read_cel_file_intensities(char *filename, double *intensity, int chip
     cur_mean = atof(get_token(cur_tokenset,2)); */
     
     if (strlen(buffer) <=2){
-      Rprintf("Warning: found an empty line where not expected in %s.\n This means that there is a cel intensity missing from the cel file.\n Sucessfully read to cel intensity %d of %d expected\n", filename, i-1, i);
+      Rprintf("Warning: found an empty line where not expected in %s.\nThis means that there is a cel intensity missing from the cel file.\nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, i);
       break;
     }
 
     current_token = strtok(buffer," \t");
+    if (current_token == NULL){
+       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_x = atoi(current_token);
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_y = atoi(current_token);
-    current_token = strtok(NULL," \t");
+    current_token = strtok(NULL," \t");  
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_mean = atof(current_token);
 
     cur_index = cur_x + chip_dim_rows*(cur_y);
@@ -614,6 +630,11 @@ static int read_cel_file_intensities(char *filename, double *intensity, int chip
   }
 
   fclose(currentFile);
+
+  if (i != rows){
+    return 1;
+  }
+
 
   return 0;
 }
@@ -663,12 +684,31 @@ static int read_cel_file_stddev(char *filename, double *intensity, int chip_num,
     }
 
     current_token = strtok(buffer," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_x = atoi(current_token);
+
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_y = atoi(current_token);
+    
     current_token = strtok(NULL," \t");
+     if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_mean = atof(current_token);
+
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_stddev = atof(current_token);
 
 
@@ -678,6 +718,10 @@ static int read_cel_file_stddev(char *filename, double *intensity, int chip_num,
   }
 
   fclose(currentFile);
+
+  if (i != rows){
+    return 1;
+  }
 
   return 0;
 }
@@ -729,23 +773,50 @@ static int read_cel_file_npixels(char *filename, double *intensity, int chip_num
     }
 
     current_token = strtok(buffer," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_x = atoi(current_token);
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+    
     cur_y = atoi(current_token);
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+    
     cur_mean = atof(current_token);
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_stddev = atof(current_token);
-
-    current_token = strtok(NULL," \t");
+    
+    current_token = strtok(NULL," \t");  
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+    
     cur_npixels = atoi(current_token);
-
+    
     cur_index = cur_x + chip_dim_rows*(cur_y);
     intensity[chip_num*rows + cur_index] = (double)cur_npixels;
     /* delete_tokens(cur_tokenset); */
   }
 
   fclose(currentFile);
+  
+  if (i != rows){
+    return 1;
+  }
 
   return 0;
 }
@@ -1363,11 +1434,26 @@ static int read_gzcel_file_intensities(char *filename, double *intensity, int ch
     cur_y = atoi(get_token(cur_tokenset,1));
     cur_mean = atof(get_token(cur_tokenset,2)); */
     
-    current_token = strtok(buffer," \t");
+    current_token = strtok(buffer," \t"); 
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_x = atoi(current_token);
-    current_token = strtok(NULL," \t");
+    current_token = strtok(NULL," \t"); 
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_y = atoi(current_token);
-    current_token = strtok(NULL," \t");
+    current_token = strtok(NULL," \t"); 
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_mean = atof(current_token);
 
     cur_index = cur_x + chip_dim_rows*(cur_y);
@@ -1376,6 +1462,10 @@ static int read_gzcel_file_intensities(char *filename, double *intensity, int ch
   }
 
   gzclose(currentFile);
+  
+  if (i != rows){
+    return 1;
+  }
 
   return 0;
 }
@@ -1419,13 +1509,33 @@ static int read_gzcel_file_stddev(char *filename, double *intensity, int chip_nu
     cur_mean = atof(get_token(cur_tokenset,2)); */
     
     current_token = strtok(buffer," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_x = atoi(current_token);
-    current_token = strtok(NULL," \t");
+    current_token = strtok(NULL," \t"); 
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_y = atoi(current_token);
-    current_token = strtok(NULL," \t");
+    current_token = strtok(NULL," \t"); 
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_mean = atof(current_token);
   
-    current_token = strtok(NULL," \t");
+    current_token = strtok(NULL," \t"); 
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
+
     cur_stddev = atof(current_token);
     
     cur_index = cur_x + chip_dim_rows*(cur_y);
@@ -1434,6 +1544,11 @@ static int read_gzcel_file_stddev(char *filename, double *intensity, int chip_nu
   }
 
   gzclose(currentFile);
+  
+  if (i != rows){
+    return 1;
+  }
+
 
   return 0;
 }
@@ -1478,16 +1593,36 @@ static int read_gzcel_file_npixels(char *filename, double *intensity, int chip_n
     cur_mean = atof(get_token(cur_tokenset,2)); */
     
     current_token = strtok(buffer," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_x = atoi(current_token);
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_y = atoi(current_token);
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_mean = atof(current_token);
   
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_stddev = atof(current_token);
     
     current_token = strtok(NULL," \t");
+    if (current_token == NULL){
+      Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
+      break;
+    }
     cur_npixels = atoi(current_token);
 
     cur_index = cur_x + chip_dim_rows*(cur_y);
@@ -1496,6 +1631,10 @@ static int read_gzcel_file_npixels(char *filename, double *intensity, int chip_n
   }
 
   gzclose(currentFile);
+  
+  if (i != rows){
+    return 1;
+  }
 
   return 0;
 }
@@ -3351,11 +3490,15 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
       Rprintf("Reading in : %s\n",cur_file_name);
     }
     if (isTextCelFile(cur_file_name)){
-      read_cel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      if(read_cel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1) !=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+      }
       storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
     } else if (isgzTextCelFile(cur_file_name)){
 #if defined HAVE_ZLIB
-      read_gzcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      if(read_gzcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1)!=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+      }
       storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
 #else
       error("Compress option not supported on your platform\n");
