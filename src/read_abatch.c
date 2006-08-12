@@ -133,6 +133,7 @@
  ** Jul 17, 2006 - Fix application of masks and outliers for binary cel files.
  ** Jul 21, 2006 - Binary parser checks for file truncation
  ** Aug 11, 2006 - Additional truncation checks for text files
+ ** Aug 12, 2006 - Build the R construct that holds the CEL file
  **
  *************************************************************/
  
@@ -931,7 +932,7 @@ static void apply_masks(char *filename, double *intensity, int chip_num, int row
  **
  ****************************************************************/
 
-static void get_masks_outliers(char *filename, int *nmasks, short *masks_x, short *masks_y, int *noutliers, short *outliers_x, short *outliers_y){
+static void get_masks_outliers(char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
   
   FILE *currentFile;
   char buffer[BUF_SIZE];
@@ -953,8 +954,8 @@ static void get_masks_outliers(char *filename, int *nmasks, short *masks_x, shor
   
   *nmasks = numcells;
 
-  masks_x = Calloc(numcells,short);
-  masks_y = Calloc(numcells,short);
+  *masks_x = Calloc(numcells,short);
+  *masks_y = Calloc(numcells,short);
 
 
   for (i =0; i < numcells; i++){
@@ -964,8 +965,8 @@ static void get_masks_outliers(char *filename, int *nmasks, short *masks_x, shor
     cur_tokenset = tokenize(buffer," \t");
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
-    masks_x[i] = (short)cur_x;
-    masks_y[i] = (short)cur_y;
+    (*masks_x)[i] = (short)cur_x;
+    (*masks_y)[i] = (short)cur_y;
     
     delete_tokens(cur_tokenset); 
   }
@@ -981,8 +982,8 @@ static void get_masks_outliers(char *filename, int *nmasks, short *masks_x, shor
   findStartsWith(currentFile,"CellHeader=",buffer); 
 
   *noutliers = numcells;
-  outliers_x = Calloc(numcells,short);
-  outliers_y = Calloc(numcells,short);
+  *outliers_x = Calloc(numcells,short);
+  *outliers_y = Calloc(numcells,short);
 
 
   for (i = 0; i < numcells; i++){
@@ -990,9 +991,9 @@ static void get_masks_outliers(char *filename, int *nmasks, short *masks_x, shor
     cur_tokenset = tokenize(buffer," \t");
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
-    Rprintf("%d: %d %d   %d\n",i, cur_x,cur_y, numcells);
-    outliers_x[i] = (short)cur_x;
-    outliers_y[i] = (short)cur_y;
+    /* Rprintf("%d: %d %d   %d\n",i, cur_x,cur_y, numcells); */
+    (*outliers_x)[i] = (short)cur_x;
+    (*outliers_y)[i] = (short)cur_y;
     
     delete_tokens(cur_tokenset); 
   }
@@ -1910,7 +1911,7 @@ static void gz_get_detailed_header_info(char *filename, detailed_header_info *he
  **
  ****************************************************************/
 
-static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, short *masks_y, int *noutliers, short *outliers_x, short *outliers_y){
+static void gz_get_masks_outliers(char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
   
   gzFile *currentFile;
   char buffer[BUF_SIZE];
@@ -1932,8 +1933,8 @@ static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, s
   
   *nmasks = numcells;
 
-  masks_x = Calloc(numcells,short);
-  masks_y = Calloc(numcells,short);
+  *masks_x = Calloc(numcells,short);
+  *masks_y = Calloc(numcells,short);
 
 
   for (i =0; i < numcells; i++){
@@ -1943,8 +1944,8 @@ static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, s
     cur_tokenset = tokenize(buffer," \t");
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
-    masks_x[i] = (short)cur_x;
-    masks_y[i] = (short)cur_y;
+    (*masks_x)[i] = (short)cur_x;
+    (*masks_y)[i] = (short)cur_y;
     
     delete_tokens(cur_tokenset); 
   }
@@ -1960,8 +1961,8 @@ static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, s
   gzfindStartsWith(currentFile,"CellHeader=",buffer); 
 
   *noutliers = numcells;
-  outliers_x = Calloc(numcells,short);
-  outliers_y = Calloc(numcells,short);
+  *outliers_x = Calloc(numcells,short);
+  *outliers_y = Calloc(numcells,short);
 
 
   for (i = 0; i < numcells; i++){
@@ -1970,8 +1971,8 @@ static void gz_get_masks_outliers(char *filename, int *nmasks, short *masks_x, s
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
     /* Rprintf("%d: %d %d   %d\n",i, cur_x,cur_y, numcells); */
-    outliers_x[i] = (short)cur_x;
-    outliers_y[i] = (short)cur_y;
+    (*outliers_x)[i] = (short)cur_x;
+    (*outliers_y)[i] = (short)cur_y;
     
     delete_tokens(cur_tokenset); 
   }
@@ -2945,44 +2946,46 @@ static void binary_apply_masks(char *filename, double *intensity, int chip_num, 
  **
  ****************************************************************/
 
-static void binary_get_masks_outliers(char *filename, int *nmasks, short *masks_x, short *masks_y, int *noutliers, short *outliers_x, short *outliers_y){
+static void binary_get_masks_outliers(char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
 
   
   int i=0;
 
-
+  int sizeofrecords;
 
   outliermask_loc *cur_loc= Calloc(1,outliermask_loc);
   binary_header *my_header;
 
   my_header = read_binary_header(filename,1);
 
-  fseek(my_header->infile,my_header->n_cells*sizeof(celintens_record),SEEK_CUR);
+  sizeofrecords = 2*sizeof(float) + sizeof(short);
+
+  fseek(my_header->infile,my_header->n_cells*sizeofrecords,SEEK_CUR);
  
 
   *nmasks = my_header->n_masks;
-  masks_x = Calloc(my_header->n_masks,short);
-  masks_y = Calloc(my_header->n_masks,short);
+  *masks_x = Calloc(my_header->n_masks,short);
+  *masks_y = Calloc(my_header->n_masks,short);
 
   for (i =0; i < my_header->n_masks; i++){
     fread_int16(&(cur_loc->x),1,my_header->infile);
     fread_int16(&(cur_loc->y),1,my_header->infile);
-    masks_x[i] = (cur_loc->x);
-    masks_y[i] = (cur_loc->y);
+    (*masks_x)[i] = (cur_loc->x);
+    (*masks_y)[i] = (cur_loc->y);
   }
 
 
   *noutliers = my_header->n_outliers;
-  outliers_x = Calloc(my_header->n_outliers,short);
-  outliers_y = Calloc(my_header->n_outliers,short);
+  *outliers_x = Calloc(my_header->n_outliers,short);
+  *outliers_y = Calloc(my_header->n_outliers,short);
   
 
 
   for (i =0; i < my_header->n_outliers; i++){
     fread_int16(&(cur_loc->x),1,my_header->infile);
     fread_int16(&(cur_loc->y),1,my_header->infile);
-    outliers_x[i] = (cur_loc->x);
-    outliers_y[i] = (cur_loc->y);
+    (*outliers_x)[i] = (cur_loc->x);
+    (*outliers_y)[i] = (cur_loc->y);
 
 
   }
@@ -4010,17 +4013,15 @@ CEL *read_cel_file(char *filename){
   /*** Now add masks and outliers ***/
 
   if (isTextCelFile(filename)){
-    get_masks_outliers(filename, &(my_CEL->nmasks), (my_CEL->masks_x), (my_CEL->masks_y), &(my_CEL->noutliers), (my_CEL->outliers_x), (my_CEL->outliers_y));
+    get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
   } else if (isgzTextCelFile(filename)){
 #if defined HAVE_ZLIB
-    gz_get_masks_outliers(filename, &(my_CEL->nmasks), (my_CEL->masks_x), (my_CEL->masks_y), &(my_CEL->noutliers), (my_CEL->outliers_x), (my_CEL->outliers_y));
+    gz_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
 #else
     error("Compress option not supported on your platform\n");
 #endif 
   } else if (isBinaryCelFile(filename)){
-
-
-
+    binary_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
   } else {
 #if defined HAVE_ZLIB
     error("Is %s really a CEL file? tried reading as text, gzipped text and binary\n",filename);
@@ -4049,11 +4050,208 @@ CEL *read_cel_file(char *filename){
 
 SEXP R_read_cel_file(SEXP filename){
 
+  SEXP theCEL;
+  SEXP theCEL_names;
+  SEXP HEADER;
+  SEXP HEADERnames;
+
+  SEXP INTENSITIES;
+  SEXP INTENSITIES_VALUES;
+  SEXP INTENSITIES_STDDEV;
+  SEXP INTENSITIES_NPIXELS;
+  SEXP INTENSITIESnames;
+
+
+  SEXP MASKS;
+  SEXP OUTLIERS;
+
+  SEXP dimnames;
+  
+  
+  SEXP tmp_sexp;
+
+  int i;
+
+
   char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
 
   CEL *myCEL =read_cel_file(cur_file_name);
 
 
-  return filename;
+  PROTECT(theCEL = allocVector(VECSXP,4));
+
+  PROTECT(HEADER = allocVector(VECSXP,9));
+
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.cdfName));
+  SET_VECTOR_ELT(HEADER,0,tmp_sexp);
+  UNPROTECT(1);
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = myCEL->header.cols;   /* This is cols */
+  INTEGER(tmp_sexp)[1] = myCEL->header.rows;   /* this is rows */
+  SET_VECTOR_ELT(HEADER,1,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerULx;   
+  INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerULy;   
+  SET_VECTOR_ELT(HEADER,2,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerURx;   
+  INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerURy;   
+  SET_VECTOR_ELT(HEADER,3,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerLRx;   
+  INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerLRy;   
+  SET_VECTOR_ELT(HEADER,4,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,2));
+  INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerLLx;   
+  INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerLLy;   
+  SET_VECTOR_ELT(HEADER,5,tmp_sexp);
+  UNPROTECT(1);
+   
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.DatHeader));
+  SET_VECTOR_ELT(HEADER,6,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.Algorithm));
+  SET_VECTOR_ELT(HEADER,7,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.AlgorithmParameters));
+  SET_VECTOR_ELT(HEADER,8,tmp_sexp);
+  UNPROTECT(1);
+  
+  SET_VECTOR_ELT(theCEL,0,HEADER);
+  
+  PROTECT(HEADERnames = allocVector(STRSXP,9));
+  SET_VECTOR_ELT(HEADERnames,0,mkChar("cdfName"));
+  
+  SET_VECTOR_ELT(HEADERnames,1,mkChar("CEL dimensions"));
+  SET_VECTOR_ELT(HEADERnames,2,mkChar("GridCornerUL"));
+  SET_VECTOR_ELT(HEADERnames,3,mkChar("GridCornerUR"));
+  SET_VECTOR_ELT(HEADERnames,4,mkChar("GridCornerLR"));
+  SET_VECTOR_ELT(HEADERnames,5,mkChar("GridCornerLL"));
+  SET_VECTOR_ELT(HEADERnames,6,mkChar("DatHeader"));
+  SET_VECTOR_ELT(HEADERnames,7,mkChar("Algorithm"));
+  SET_VECTOR_ELT(HEADERnames,8,mkChar("AlgorithmParameters"));
+
+  setAttrib(HEADER, R_NamesSymbol, HEADERnames);
+  UNPROTECT(2);
+
+
+  PROTECT(INTENSITIES = allocVector(VECSXP,3));
+  
+
+  PROTECT(INTENSITIES_VALUES = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+  PROTECT(INTENSITIES_STDDEV = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+  PROTECT(INTENSITIES_NPIXELS = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+  
+  for (i =0; i < (myCEL->header.cols)*(myCEL->header.rows); i++){
+    REAL(INTENSITIES_VALUES)[i] = myCEL->intensities[i];
+    REAL(INTENSITIES_STDDEV)[i] = myCEL->stddev[i];
+    REAL(INTENSITIES_NPIXELS)[i] = myCEL->npixels[i];
+  }
+
+
+  SET_VECTOR_ELT(INTENSITIES,0,INTENSITIES_VALUES);
+  SET_VECTOR_ELT(INTENSITIES,1,INTENSITIES_STDDEV);
+  SET_VECTOR_ELT(INTENSITIES,2,INTENSITIES_NPIXELS);
+  UNPROTECT(3);
+  
+  PROTECT(INTENSITIESnames=allocVector(STRSXP,3));
+  SET_VECTOR_ELT(INTENSITIESnames,0,mkChar("MEAN"));
+  SET_VECTOR_ELT(INTENSITIESnames,1,mkChar("STDEV"));
+  SET_VECTOR_ELT(INTENSITIESnames,2,mkChar("NPIXELS"));
+  
+  setAttrib(INTENSITIES, R_NamesSymbol, INTENSITIESnames);
+  UNPROTECT(1);
+
+  SET_VECTOR_ELT(theCEL,1,INTENSITIES);
+  UNPROTECT(1);
+
+  PROTECT(MASKS = allocMatrix(INTSXP,myCEL->nmasks,2));
+
+  for (i =0; i < myCEL->nmasks; i++){
+    INTEGER(MASKS)[i] = (int)myCEL->masks_x[i];
+    INTEGER(MASKS)[myCEL->nmasks + i] = (int)myCEL->masks_y[i];
+  }
+  
+  PROTECT(dimnames = allocVector(VECSXP,2));
+  PROTECT(tmp_sexp = allocVector(STRSXP,2));
+
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar("X"));
+  SET_VECTOR_ELT(tmp_sexp,1,mkChar("Y"));
+
+  SET_VECTOR_ELT(dimnames,1,tmp_sexp);
+
+  setAttrib(MASKS, R_DimNamesSymbol, dimnames);
+  UNPROTECT(2);
+  
+  
+  SET_VECTOR_ELT(theCEL,2,MASKS);
+  UNPROTECT(1);
+
+  PROTECT(OUTLIERS = allocMatrix(INTSXP,myCEL->noutliers,2));
+
+  for (i =0; i < myCEL->noutliers; i++){
+    INTEGER(OUTLIERS)[i] = (int)myCEL->outliers_x[i];
+    INTEGER(OUTLIERS)[myCEL->noutliers + i] = (int)myCEL->outliers_y[i];
+  }
+
+  PROTECT(dimnames = allocVector(VECSXP,2));
+  PROTECT(tmp_sexp = allocVector(STRSXP,2));
+
+  SET_VECTOR_ELT(tmp_sexp,0,mkChar("X"));
+  SET_VECTOR_ELT(tmp_sexp,1,mkChar("Y"));
+
+  SET_VECTOR_ELT(dimnames,1,tmp_sexp);
+
+  setAttrib(OUTLIERS, R_DimNamesSymbol, dimnames);
+  UNPROTECT(2);
+  
+
+
+  SET_VECTOR_ELT(theCEL,3,OUTLIERS);
+  UNPROTECT(1);
+
+  PROTECT(theCEL_names = allocVector(STRSXP,4));
+  
+  SET_VECTOR_ELT(theCEL_names,0,mkChar("HEADER"));
+  SET_VECTOR_ELT(theCEL_names,1,mkChar("INTENSITY"));
+  SET_VECTOR_ELT(theCEL_names,2,mkChar("MASKS"));
+  SET_VECTOR_ELT(theCEL_names,3,mkChar("OUTLIERS"));
+  setAttrib(theCEL, R_NamesSymbol,theCEL_names);
+  UNPROTECT(1);
+
+
+  Free(myCEL->header.cdfName);
+  Free(myCEL->header.DatHeader);
+  Free(myCEL->header.Algorithm);
+  Free(myCEL->header.AlgorithmParameters);
+  
+  
+  Free(myCEL->intensities);
+  Free(myCEL->stddev);
+  Free(myCEL->npixels);
+
+  Free(myCEL->masks_x);
+  Free(myCEL->masks_y);
+  Free(myCEL->outliers_x);
+  Free(myCEL->outliers_y);
+  
+  Free(myCEL);
+
+  UNPROTECT(1);
+  return theCEL;
 
 }
