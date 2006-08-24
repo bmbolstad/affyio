@@ -20,6 +20,8 @@
  ** Dec 1, 2005 - Comment cleaning
  ** Feb 28, 2006 - replace C++ comments with ANSI comments for older compilers
  ** May 31, 2006 - fix some compiler warnings
+ ** Aug 23, 2006 - fix a potential (but at current time non-existant) problem
+ **                when there are 0 qcunits or 0 units
  **
  **
  ****************************************************************/
@@ -574,11 +576,24 @@ static int read_cdf_xda(char *filename,cdf_xda *my_cdf){
   my_cdf->qc_start = Calloc(my_cdf->header.n_qc_units,int);
   my_cdf->units_start = Calloc(my_cdf->header.n_units,int);
 
-  if (!fread_int32(my_cdf->qc_start,my_cdf->header.n_qc_units,infile) 
-      || !fread_int32(my_cdf->units_start,my_cdf->header.n_units,infile)){
-    return 0;
+  /*** Old code that might fail if there is 0 QCunits or 0 Units
+       if (!fread_int32(my_cdf->qc_start,my_cdf->header.n_qc_units,infile) 
+       || !fread_int32(my_cdf->units_start,my_cdf->header.n_units,infile)){
+       return 0;
+       }
+  ***/
+
+  if (!fread_int32(my_cdf->qc_start,my_cdf->header.n_qc_units,infile)) {
+    if(my_cdf->header.n_qc_units != 0) {
+      return 0;
+    }
   }
-  
+
+  if(!fread_int32(my_cdf->units_start,my_cdf->header.n_units,infile)) {
+    if(my_cdf->header.n_units != 0) {
+      return 0
+	}
+  }
 
   /* We will read in all the QC and Standard Units, rather than  
      random accessing what we need */
