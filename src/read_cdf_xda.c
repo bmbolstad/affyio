@@ -591,8 +591,8 @@ static int read_cdf_xda(char *filename,cdf_xda *my_cdf){
 
   if(!fread_int32(my_cdf->units_start,my_cdf->header.n_units,infile)) {
     if(my_cdf->header.n_units != 0) {
-      return 0
-	}
+      return 0;
+    }
   }
 
   /* We will read in all the QC and Standard Units, rather than  
