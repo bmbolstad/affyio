@@ -1265,7 +1265,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       SET_VECTOR_ELT(QCUNITSProbeInfoNames,5,mkChar("Index"));
       SET_VECTOR_ELT(QCUNITSProbeInfoNames,6,mkChar("PMFlag"));
       SET_VECTOR_ELT(QCUNITSProbeInfoNames,7,mkChar("BGProbeFlag"));
-    }
+    } 
     setAttrib(TEMPSXP2,R_NamesSymbol,QCUNITSProbeInfoNames);
     UNPROTECT(1);
     PROTECT(QCUNITSProbeInforow_names= allocVector(STRSXP,my_cdf.qc_units[i].n_probes)); 
@@ -1457,7 +1457,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       SET_VECTOR_ELT(UNITSProbeInfoNames,11,mkChar("Index"));
       SET_VECTOR_ELT(UNITSProbeInfoNames,12,mkChar("CodonInd"));
       SET_VECTOR_ELT(UNITSProbeInfoNames,13,mkChar("Codon"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,14,mkChar("Regiontype"));
+      SET_VECTOR_ELT(UNITSProbeInfoNames,14,mkChar("Regiontype")); 
 
 
       setAttrib(TEMPSXP4,R_NamesSymbol,UNITSProbeInfoNames);
