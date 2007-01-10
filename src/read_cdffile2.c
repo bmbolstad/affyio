@@ -1089,9 +1089,9 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
    /* return the full structure */
   PROTECT(CDFInfo = allocVector(VECSXP,3));
   PROTECT(CDFInfoNames = allocVector(STRSXP,3));
-  SET_VECTOR_ELT(CDFInfoNames,0,mkChar("Chip"));
-  SET_VECTOR_ELT(CDFInfoNames,1,mkChar("QC"));
-  SET_VECTOR_ELT(CDFInfoNames,2,mkChar("Unit"));
+  SET_STRING_ELT(CDFInfoNames,0,mkChar("Chip"));
+  SET_STRING_ELT(CDFInfoNames,1,mkChar("QC"));
+  SET_STRING_ELT(CDFInfoNames,2,mkChar("Unit"));
 
   setAttrib(CDFInfo,R_NamesSymbol,CDFInfoNames);
   UNPROTECT(1);
@@ -1099,24 +1099,24 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
   /* Deal with the HEADER */
   PROTECT(HEADER = allocVector(VECSXP,8));
   PROTECT(HEADERNames = allocVector(STRSXP,8));
-  SET_VECTOR_ELT(HEADERNames,0,mkChar("Version"));
-  SET_VECTOR_ELT(HEADERNames,1,mkChar("Name"));
-  SET_VECTOR_ELT(HEADERNames,2,mkChar("Rows"));
-  SET_VECTOR_ELT(HEADERNames,3,mkChar("Cols"));
-  SET_VECTOR_ELT(HEADERNames,4,mkChar("NumberOfUnits"));
-  SET_VECTOR_ELT(HEADERNames,5,mkChar("MaxUnit"));
-  SET_VECTOR_ELT(HEADERNames,6,mkChar("NumQCUnits"));
-  SET_VECTOR_ELT(HEADERNames,7,mkChar("ChipReference"));
+  SET_STRING_ELT(HEADERNames,0,mkChar("Version"));
+  SET_STRING_ELT(HEADERNames,1,mkChar("Name"));
+  SET_STRING_ELT(HEADERNames,2,mkChar("Rows"));
+  SET_STRING_ELT(HEADERNames,3,mkChar("Cols"));
+  SET_STRING_ELT(HEADERNames,4,mkChar("NumberOfUnits"));
+  SET_STRING_ELT(HEADERNames,5,mkChar("MaxUnit"));
+  SET_STRING_ELT(HEADERNames,6,mkChar("NumQCUnits"));
+  SET_STRING_ELT(HEADERNames,7,mkChar("ChipReference"));
   setAttrib(HEADER,R_NamesSymbol,HEADERNames);
   UNPROTECT(1);
   
   PROTECT(TEMPSXP = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(TEMPSXP,0,mkChar(my_cdf.header.version));
+  SET_STRING_ELT(TEMPSXP,0,mkChar(my_cdf.header.version));
   SET_VECTOR_ELT(HEADER,0,TEMPSXP); 
   UNPROTECT(1);
   
   PROTECT(TEMPSXP = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(TEMPSXP,0,mkChar(my_cdf.header.name));
+  SET_STRING_ELT(TEMPSXP,0,mkChar(my_cdf.header.name));
   SET_VECTOR_ELT(HEADER,1,TEMPSXP); 
   UNPROTECT(1);
 
@@ -1201,7 +1201,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       for (j =0; j < my_cdf.qc_units[i].n_probes; j++){
 	INTEGER_POINTER(QCUNITSProbeInfoX)[j] = my_cdf.qc_units[i].qc_probes[j].x;
 	INTEGER_POINTER(QCUNITSProbeInfoY)[j] = my_cdf.qc_units[i].qc_probes[j].y;
-	SET_VECTOR_ELT(QCUNITSProbeInfoPROBE,j,mkChar( my_cdf.qc_units[i].qc_probes[j].probe));
+	SET_STRING_ELT(QCUNITSProbeInfoPROBE,j,mkChar( my_cdf.qc_units[i].qc_probes[j].probe));
 	INTEGER_POINTER(QCUNITSProbeInfoPL)[j] = my_cdf.qc_units[i].qc_probes[j].plen;
 	INTEGER_POINTER(QCUNITSProbeInfoATOM)[j] = my_cdf.qc_units[i].qc_probes[j].atom;
 	INTEGER_POINTER(QCUNITSProbeInfoINDEX)[j] = my_cdf.qc_units[i].qc_probes[j].index;
@@ -1211,7 +1211,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       for (j =0; j < my_cdf.qc_units[i].n_probes; j++){
 	INTEGER_POINTER(QCUNITSProbeInfoX)[j] = my_cdf.qc_units[i].qc_probes[j].x;
 	INTEGER_POINTER(QCUNITSProbeInfoY)[j] = my_cdf.qc_units[i].qc_probes[j].y;
-	SET_VECTOR_ELT(QCUNITSProbeInfoPROBE,j,mkChar( my_cdf.qc_units[i].qc_probes[j].probe));
+	SET_STRING_ELT(QCUNITSProbeInfoPROBE,j,mkChar( my_cdf.qc_units[i].qc_probes[j].probe));
 	INTEGER_POINTER(QCUNITSProbeInfoPL)[j] = my_cdf.qc_units[i].qc_probes[j].plen;
 	INTEGER_POINTER(QCUNITSProbeInfoATOM)[j] = my_cdf.qc_units[i].qc_probes[j].atom;
 	INTEGER_POINTER(QCUNITSProbeInfoINDEX)[j] = my_cdf.qc_units[i].qc_probes[j].index;
@@ -1249,22 +1249,22 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 
     if (tmpsum == 6){
       PROTECT(QCUNITSProbeInfoNames = allocVector(STRSXP,6));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,0,mkChar("x"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,1,mkChar("y"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,2,mkChar("Probe"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,3,mkChar("ProbeLength"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,4,mkChar("Atom"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,5,mkChar("Index"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,0,mkChar("x"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,1,mkChar("y"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,2,mkChar("Probe"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,3,mkChar("ProbeLength"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,4,mkChar("Atom"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,5,mkChar("Index"));
     } else if (tmpsum == 8){
       PROTECT(QCUNITSProbeInfoNames = allocVector(STRSXP,8));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,0,mkChar("x"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,1,mkChar("y"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,2,mkChar("Probe"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,3,mkChar("ProbeLength"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,4,mkChar("Atom"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,5,mkChar("Index"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,6,mkChar("PMFlag"));
-      SET_VECTOR_ELT(QCUNITSProbeInfoNames,7,mkChar("BGProbeFlag"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,0,mkChar("x"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,1,mkChar("y"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,2,mkChar("Probe"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,3,mkChar("ProbeLength"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,4,mkChar("Atom"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,5,mkChar("Index"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,6,mkChar("PMFlag"));
+      SET_STRING_ELT(QCUNITSProbeInfoNames,7,mkChar("BGProbeFlag"));
     } 
     setAttrib(TEMPSXP2,R_NamesSymbol,QCUNITSProbeInfoNames);
     UNPROTECT(1);
@@ -1272,7 +1272,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       
     for (j=0; j < my_cdf.qc_units[i].n_probes; j++){
       sprintf(buf, "%d", j+1);
-      SET_VECTOR_ELT(QCUNITSProbeInforow_names,j,mkChar(buf));
+      SET_STRING_ELT(QCUNITSProbeInforow_names,j,mkChar(buf));
     }
     setAttrib(TEMPSXP2, R_RowNamesSymbol, QCUNITSProbeInforow_names);
     UNPROTECT(1);
@@ -1282,9 +1282,9 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
     UNPROTECT(1);
 
     PROTECT(TEMPSXP2=allocVector(STRSXP,3));
-    SET_VECTOR_ELT(TEMPSXP2,0,mkChar("Type"));
-    SET_VECTOR_ELT(TEMPSXP2,1,mkChar("NumberCells"));
-    SET_VECTOR_ELT(TEMPSXP2,2,mkChar("QCCells"));
+    SET_STRING_ELT(TEMPSXP2,0,mkChar("Type"));
+    SET_STRING_ELT(TEMPSXP2,1,mkChar("NumberCells"));
+    SET_STRING_ELT(TEMPSXP2,2,mkChar("QCCells"));
     setAttrib(TEMPSXP,R_NamesSymbol,TEMPSXP2);
     UNPROTECT(1);
     SET_VECTOR_ELT(QCUNITS,i,TEMPSXP);
@@ -1300,7 +1300,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
     PROTECT(TEMPSXP=allocVector(VECSXP,8));
     PROTECT(TEMPSXP2=allocVector(STRSXP,1));
       
-    SET_VECTOR_ELT(TEMPSXP2,0,mkChar(my_cdf.units[i].name));
+    SET_STRING_ELT(TEMPSXP2,0,mkChar(my_cdf.units[i].name));
     SET_VECTOR_ELT(TEMPSXP,0,TEMPSXP2);
     UNPROTECT(1);
     
@@ -1344,7 +1344,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       
       PROTECT(TEMPSXP4=allocVector(STRSXP,1));
       
-      SET_VECTOR_ELT(TEMPSXP4,0,mkChar(my_cdf.units[i].blocks[j].name));
+      SET_STRING_ELT(TEMPSXP4,0,mkChar(my_cdf.units[i].blocks[j].name));
       SET_VECTOR_ELT(TEMPSXP3,0,TEMPSXP4);
       UNPROTECT(1);
 
@@ -1410,11 +1410,11 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 	INTEGER_POINTER(UNITSProbeInfoCODON)[k]=my_cdf.units[i].blocks[j].probes[k].codon;
 	INTEGER_POINTER(UNITSProbeInfoREGIONTYPE)[k]=my_cdf.units[i].blocks[j].probes[k].regiontype;
 	SET_VECTOR_ELT(UNITSProbeInfoPROBE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].probe));
-	SET_VECTOR_ELT(UNITSProbeInfoFEAT,k,mkChar(my_cdf.units[i].blocks[j].probes[k].feat));
-	SET_VECTOR_ELT(UNITSProbeInfoQUAL,k,mkChar(my_cdf.units[i].blocks[j].probes[k].qual));
-	SET_VECTOR_ELT(UNITSProbeInfoCBASE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].cbase));
-	SET_VECTOR_ELT(UNITSProbeInfoPBASE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].pbase));	
-	SET_VECTOR_ELT(UNITSProbeInfoTBASE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].tbase));
+	SET_STRING_ELT(UNITSProbeInfoFEAT,k,mkChar(my_cdf.units[i].blocks[j].probes[k].feat));
+	SET_STRING_ELT(UNITSProbeInfoQUAL,k,mkChar(my_cdf.units[i].blocks[j].probes[k].qual));
+	SET_STRING_ELT(UNITSProbeInfoCBASE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].cbase));
+	SET_STRING_ELT(UNITSProbeInfoPBASE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].pbase));	
+	SET_STRING_ELT(UNITSProbeInfoTBASE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].tbase));
       }
       
 
@@ -1443,21 +1443,21 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       UNPROTECT(15);
 
       PROTECT(UNITSProbeInfoNames =allocVector(STRSXP,15));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,0,mkChar("x"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,1,mkChar("y"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,2,mkChar("Probe"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,3,mkChar("Feat"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,4,mkChar("Qual"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,5,mkChar("Expos"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,6,mkChar("Pos"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,7,mkChar("cbase"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,8,mkChar("pbase"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,9,mkChar("tbase"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,10,mkChar("Atom"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,11,mkChar("Index"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,12,mkChar("CodonInd"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,13,mkChar("Codon"));
-      SET_VECTOR_ELT(UNITSProbeInfoNames,14,mkChar("Regiontype")); 
+      SET_STRING_ELT(UNITSProbeInfoNames,0,mkChar("x"));
+      SET_STRING_ELT(UNITSProbeInfoNames,1,mkChar("y"));
+      SET_STRING_ELT(UNITSProbeInfoNames,2,mkChar("Probe"));
+      SET_STRING_ELT(UNITSProbeInfoNames,3,mkChar("Feat"));
+      SET_STRING_ELT(UNITSProbeInfoNames,4,mkChar("Qual"));
+      SET_STRING_ELT(UNITSProbeInfoNames,5,mkChar("Expos"));
+      SET_STRING_ELT(UNITSProbeInfoNames,6,mkChar("Pos"));
+      SET_STRING_ELT(UNITSProbeInfoNames,7,mkChar("cbase"));
+      SET_STRING_ELT(UNITSProbeInfoNames,8,mkChar("pbase"));
+      SET_STRING_ELT(UNITSProbeInfoNames,9,mkChar("tbase"));
+      SET_STRING_ELT(UNITSProbeInfoNames,10,mkChar("Atom"));
+      SET_STRING_ELT(UNITSProbeInfoNames,11,mkChar("Index"));
+      SET_STRING_ELT(UNITSProbeInfoNames,12,mkChar("CodonInd"));
+      SET_STRING_ELT(UNITSProbeInfoNames,13,mkChar("Codon"));
+      SET_STRING_ELT(UNITSProbeInfoNames,14,mkChar("Regiontype")); 
 
 
       setAttrib(TEMPSXP4,R_NamesSymbol,UNITSProbeInfoNames);
@@ -1467,7 +1467,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       
       for (l=0; l < my_cdf.units[i].blocks[j].num_cells; l++){
 	sprintf(buf, "%d", l+1);
-	SET_VECTOR_ELT(UNITSProbeInforow_names,l,mkChar(buf));
+	SET_STRING_ELT(UNITSProbeInforow_names,l,mkChar(buf));
       }
       setAttrib(TEMPSXP4, R_RowNamesSymbol, UNITSProbeInforow_names);
       UNPROTECT(1);
@@ -1481,18 +1481,18 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 
 
       PROTECT(TEMPSXP4=allocVector(STRSXP,8));
-      SET_VECTOR_ELT(TEMPSXP4,0,mkChar("Name"));
-      SET_VECTOR_ELT(TEMPSXP4,1,mkChar("BlockNumber"));
-      SET_VECTOR_ELT(TEMPSXP4,2,mkChar("NumAtoms"));
-      SET_VECTOR_ELT(TEMPSXP4,3,mkChar("NumCells"));
-      SET_VECTOR_ELT(TEMPSXP4,4,mkChar("StartPosition"));
-      SET_VECTOR_ELT(TEMPSXP4,5,mkChar("StopPosition"));
-      SET_VECTOR_ELT(TEMPSXP4,6,mkChar("Direction"));
-      SET_VECTOR_ELT(TEMPSXP4,7,mkChar("Unit_Block_Cells"));
+      SET_STRING_ELT(TEMPSXP4,0,mkChar("Name"));
+      SET_STRING_ELT(TEMPSXP4,1,mkChar("BlockNumber"));
+      SET_STRING_ELT(TEMPSXP4,2,mkChar("NumAtoms"));
+      SET_STRING_ELT(TEMPSXP4,3,mkChar("NumCells"));
+      SET_STRING_ELT(TEMPSXP4,4,mkChar("StartPosition"));
+      SET_STRING_ELT(TEMPSXP4,5,mkChar("StopPosition"));
+      SET_STRING_ELT(TEMPSXP4,6,mkChar("Direction"));
+      SET_STRING_ELT(TEMPSXP4,7,mkChar("Unit_Block_Cells"));
       setAttrib(TEMPSXP3,R_NamesSymbol,TEMPSXP4);
       UNPROTECT(1);
 
-      SET_VECTOR_ELT(TEMPSXP2,j,TEMPSXP3);
+      SET_STRING_ELT(TEMPSXP2,j,TEMPSXP3);
       UNPROTECT(1);
     }
 
@@ -1508,14 +1508,14 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 
 
     PROTECT(TEMPSXP2 = allocVector(STRSXP,8));
-    SET_VECTOR_ELT(TEMPSXP2,0,mkChar("Name"));
-    SET_VECTOR_ELT(TEMPSXP2,1,mkChar("Direction"));
-    SET_VECTOR_ELT(TEMPSXP2,2,mkChar("NumAtoms"));
-    SET_VECTOR_ELT(TEMPSXP2,3,mkChar("NumCells"));
-    SET_VECTOR_ELT(TEMPSXP2,4,mkChar("UnitNumber"));
-    SET_VECTOR_ELT(TEMPSXP2,5,mkChar("UnitType"));
-    SET_VECTOR_ELT(TEMPSXP2,6,mkChar("NumberBlocks"));
-    SET_VECTOR_ELT(TEMPSXP2,7,mkChar("Unit_Block"));
+    SET_STRING_ELT(TEMPSXP2,0,mkChar("Name"));
+    SET_STRING_ELT(TEMPSXP2,1,mkChar("Direction"));
+    SET_STRING_ELT(TEMPSXP2,2,mkChar("NumAtoms"));
+    SET_STRING_ELT(TEMPSXP2,3,mkChar("NumCells"));
+    SET_STRING_ELT(TEMPSXP2,4,mkChar("UnitNumber"));
+    SET_STRING_ELT(TEMPSXP2,5,mkChar("UnitType"));
+    SET_STRING_ELT(TEMPSXP2,6,mkChar("NumberBlocks"));
+    SET_STRING_ELT(TEMPSXP2,7,mkChar("Unit_Block"));
     setAttrib(TEMPSXP,R_NamesSymbol,TEMPSXP2);
     UNPROTECT(1);
 
