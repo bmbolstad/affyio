@@ -4000,7 +4000,7 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
     cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
-    SET_VECTOR_ELT(names,i,mkChar(cur_file_name));
+    SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
   setAttrib(intensity, R_DimNamesSymbol, dimnames);
@@ -4066,7 +4066,7 @@ SEXP ReadHeader(SEXP filename){
   }
   
   PROTECT(name = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(name,0,mkChar(cdfName));
+  SET_STRING_ELT(name,0,mkChar(cdfName));
 
   INTEGER(cel_dimensions)[0] = ref_dim_1;   /* This is cols */
   INTEGER(cel_dimensions)[1] = ref_dim_2;   /* this is rows */
@@ -4136,7 +4136,7 @@ SEXP ReadHeaderDetailed(SEXP filename){
   /* Copy everything across into the R data structure */
   
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.cdfName));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(header_info.cdfName));
   SET_VECTOR_ELT(HEADER,0,tmp_sexp);
   UNPROTECT(1);
   PROTECT(tmp_sexp= allocVector(INTSXP,2));
@@ -4170,17 +4170,17 @@ SEXP ReadHeaderDetailed(SEXP filename){
   UNPROTECT(1);
    
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.DatHeader));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(header_info.DatHeader));
   SET_VECTOR_ELT(HEADER,6,tmp_sexp);
   UNPROTECT(1);
 
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.Algorithm));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(header_info.Algorithm));
   SET_VECTOR_ELT(HEADER,7,tmp_sexp);
   UNPROTECT(1);
 
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(header_info.AlgorithmParameters));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(header_info.AlgorithmParameters));
   SET_VECTOR_ELT(HEADER,8,tmp_sexp);
   UNPROTECT(1);
 
@@ -4369,7 +4369,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
     cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
-    SET_VECTOR_ELT(names,i,mkChar(cur_file_name));
+    SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
   if (which_flag >=0){
@@ -4385,18 +4385,18 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
     SET_VECTOR_ELT(output_list,0,PM_intensity);
     SET_VECTOR_ELT(output_list,1,MM_intensity);
     PROTECT(pmmmnames = allocVector(STRSXP,2));
-    SET_VECTOR_ELT(pmmmnames,0,mkChar("pm"));
-    SET_VECTOR_ELT(pmmmnames,1,mkChar("mm"));
+    SET_STRING_ELT(pmmmnames,0,mkChar("pm"));
+    SET_STRING_ELT(pmmmnames,1,mkChar("mm"));
   } else if (which_flag > 0){
     PROTECT(output_list = allocVector(VECSXP,1));
     SET_VECTOR_ELT(output_list,0,PM_intensity);
     PROTECT(pmmmnames = allocVector(STRSXP,1));
-    SET_VECTOR_ELT(pmmmnames,0,mkChar("pm"));
+    SET_STRING_ELT(pmmmnames,0,mkChar("pm"));
   } else {
     PROTECT(output_list = allocVector(VECSXP,1));
     SET_VECTOR_ELT(output_list,0,MM_intensity);
     PROTECT(pmmmnames = allocVector(STRSXP,1));
-    SET_VECTOR_ELT(pmmmnames,0,mkChar("mm"));
+    SET_STRING_ELT(pmmmnames,0,mkChar("mm"));
   }
 
   setAttrib(output_list,R_NamesSymbol,pmmmnames);
@@ -4594,7 +4594,7 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
     cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
-    SET_VECTOR_ELT(names,i,mkChar(cur_file_name));
+    SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
   setAttrib(intensity, R_DimNamesSymbol, dimnames);
@@ -4790,7 +4790,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
     cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
-    SET_VECTOR_ELT(names,i,mkChar(cur_file_name));
+    SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
   setAttrib(intensity, R_DimNamesSymbol, dimnames);
@@ -4964,7 +4964,7 @@ SEXP R_read_cel_file(SEXP filename){
   PROTECT(HEADER = allocVector(VECSXP,9));
 
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.cdfName));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.cdfName));
   SET_VECTOR_ELT(HEADER,0,tmp_sexp);
   UNPROTECT(1);
   PROTECT(tmp_sexp= allocVector(INTSXP,2));
@@ -4998,33 +4998,33 @@ SEXP R_read_cel_file(SEXP filename){
   UNPROTECT(1);
    
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.DatHeader));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.DatHeader));
   SET_VECTOR_ELT(HEADER,6,tmp_sexp);
   UNPROTECT(1);
 
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.Algorithm));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.Algorithm));
   SET_VECTOR_ELT(HEADER,7,tmp_sexp);
   UNPROTECT(1);
 
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar(myCEL->header.AlgorithmParameters));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.AlgorithmParameters));
   SET_VECTOR_ELT(HEADER,8,tmp_sexp);
   UNPROTECT(1);
   
   SET_VECTOR_ELT(theCEL,0,HEADER);
   
   PROTECT(HEADERnames = allocVector(STRSXP,9));
-  SET_VECTOR_ELT(HEADERnames,0,mkChar("cdfName"));
+  SET_STRING_ELT(HEADERnames,0,mkChar("cdfName"));
   
-  SET_VECTOR_ELT(HEADERnames,1,mkChar("CEL dimensions"));
-  SET_VECTOR_ELT(HEADERnames,2,mkChar("GridCornerUL"));
-  SET_VECTOR_ELT(HEADERnames,3,mkChar("GridCornerUR"));
-  SET_VECTOR_ELT(HEADERnames,4,mkChar("GridCornerLR"));
-  SET_VECTOR_ELT(HEADERnames,5,mkChar("GridCornerLL"));
-  SET_VECTOR_ELT(HEADERnames,6,mkChar("DatHeader"));
-  SET_VECTOR_ELT(HEADERnames,7,mkChar("Algorithm"));
-  SET_VECTOR_ELT(HEADERnames,8,mkChar("AlgorithmParameters"));
+  SET_STRING_ELT(HEADERnames,1,mkChar("CEL dimensions"));
+  SET_STRING_ELT(HEADERnames,2,mkChar("GridCornerUL"));
+  SET_STRING_ELT(HEADERnames,3,mkChar("GridCornerUR"));
+  SET_STRING_ELT(HEADERnames,4,mkChar("GridCornerLR"));
+  SET_STRING_ELT(HEADERnames,5,mkChar("GridCornerLL"));
+  SET_STRING_ELT(HEADERnames,6,mkChar("DatHeader"));
+  SET_STRING_ELT(HEADERnames,7,mkChar("Algorithm"));
+  SET_STRING_ELT(HEADERnames,8,mkChar("AlgorithmParameters"));
 
   setAttrib(HEADER, R_NamesSymbol, HEADERnames);
   UNPROTECT(2);
@@ -5050,9 +5050,9 @@ SEXP R_read_cel_file(SEXP filename){
   UNPROTECT(3);
   
   PROTECT(INTENSITIESnames=allocVector(STRSXP,3));
-  SET_VECTOR_ELT(INTENSITIESnames,0,mkChar("MEAN"));
-  SET_VECTOR_ELT(INTENSITIESnames,1,mkChar("STDEV"));
-  SET_VECTOR_ELT(INTENSITIESnames,2,mkChar("NPIXELS"));
+  SET_STRING_ELT(INTENSITIESnames,0,mkChar("MEAN"));
+  SET_STRING_ELT(INTENSITIESnames,1,mkChar("STDEV"));
+  SET_STRING_ELT(INTENSITIESnames,2,mkChar("NPIXELS"));
   
   setAttrib(INTENSITIES, R_NamesSymbol, INTENSITIESnames);
   UNPROTECT(1);
@@ -5070,8 +5070,8 @@ SEXP R_read_cel_file(SEXP filename){
   PROTECT(dimnames = allocVector(VECSXP,2));
   PROTECT(tmp_sexp = allocVector(STRSXP,2));
 
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar("X"));
-  SET_VECTOR_ELT(tmp_sexp,1,mkChar("Y"));
+  SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
+  SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
 
   SET_VECTOR_ELT(dimnames,1,tmp_sexp);
 
@@ -5092,8 +5092,8 @@ SEXP R_read_cel_file(SEXP filename){
   PROTECT(dimnames = allocVector(VECSXP,2));
   PROTECT(tmp_sexp = allocVector(STRSXP,2));
 
-  SET_VECTOR_ELT(tmp_sexp,0,mkChar("X"));
-  SET_VECTOR_ELT(tmp_sexp,1,mkChar("Y"));
+  SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
+  SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
 
   SET_VECTOR_ELT(dimnames,1,tmp_sexp);
 
@@ -5107,10 +5107,10 @@ SEXP R_read_cel_file(SEXP filename){
 
   PROTECT(theCEL_names = allocVector(STRSXP,4));
   
-  SET_VECTOR_ELT(theCEL_names,0,mkChar("HEADER"));
-  SET_VECTOR_ELT(theCEL_names,1,mkChar("INTENSITY"));
-  SET_VECTOR_ELT(theCEL_names,2,mkChar("MASKS"));
-  SET_VECTOR_ELT(theCEL_names,3,mkChar("OUTLIERS"));
+  SET_STRING_ELT(theCEL_names,0,mkChar("HEADER"));
+  SET_STRING_ELT(theCEL_names,1,mkChar("INTENSITY"));
+  SET_STRING_ELT(theCEL_names,2,mkChar("MASKS"));
+  SET_STRING_ELT(theCEL_names,3,mkChar("OUTLIERS"));
   setAttrib(theCEL, R_NamesSymbol,theCEL_names);
   UNPROTECT(1);
 
