@@ -281,7 +281,7 @@ static SEXP ReadBPMAPHeader(FILE *infile){
   PROTECT(Header=allocVector(VECSXP,3));
   
   PROTECT(tmpSXP=allocVector(STRSXP,1));
-  SET_VECTOR_ELT(tmpSXP,0,mkChar(Magicnumber));
+  SET_STRING_ELT(tmpSXP,0,mkChar(Magicnumber));
   SET_VECTOR_ELT(Header,0,tmpSXP);
   UNPROTECT(1);
   
@@ -298,9 +298,9 @@ static SEXP ReadBPMAPHeader(FILE *infile){
   UNPROTECT(1);
 
   PROTECT(tmpSXP=allocVector(STRSXP,3));
-  SET_VECTOR_ELT(tmpSXP,0,mkChar("magic.number"));
-  SET_VECTOR_ELT(tmpSXP,1,mkChar("version"));
-  SET_VECTOR_ELT(tmpSXP,2,mkChar("n.seq"));
+  SET_STRING_ELT(tmpSXP,0,mkChar("magic.number"));
+  SET_STRING_ELT(tmpSXP,1,mkChar("version"));
+  SET_STRING_ELT(tmpSXP,2,mkChar("n.seq"));
   setAttrib(Header,R_NamesSymbol,tmpSXP);
   UNPROTECT(2);
   
@@ -357,32 +357,32 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
     if (version == 3.00){
       PROTECT(CurSequenceDescription=allocVector(VECSXP,8)); 
       PROTECT(tmpSXP=allocVector(STRSXP,7));
-      SET_VECTOR_ELT(tmpSXP,0,mkChar("Name"));
-      SET_VECTOR_ELT(tmpSXP,1,mkChar("ProbeMappingType"));
-      SET_VECTOR_ELT(tmpSXP,2,mkChar("SequenceFileOffset"));
-      SET_VECTOR_ELT(tmpSXP,3,mkChar("n.probepairs"));
-      SET_VECTOR_ELT(tmpSXP,4,mkChar("GroupName"));
-      SET_VECTOR_ELT(tmpSXP,5,mkChar("VersionNumber"));
-      SET_VECTOR_ELT(tmpSXP,6,mkChar("NumberOfParameters"));
-      SET_VECTOR_ELT(tmpSXP,7,mkChar("Parameters"));
+      SET_STRING_ELT(tmpSXP,0,mkChar("Name"));
+      SET_STRING_ELT(tmpSXP,1,mkChar("ProbeMappingType"));
+      SET_STRING_ELT(tmpSXP,2,mkChar("SequenceFileOffset"));
+      SET_STRING_ELT(tmpSXP,3,mkChar("n.probepairs"));
+      SET_STRING_ELT(tmpSXP,4,mkChar("GroupName"));
+      SET_STRING_ELT(tmpSXP,5,mkChar("VersionNumber"));
+      SET_STRING_ELT(tmpSXP,6,mkChar("NumberOfParameters"));
+      SET_STRING_ELT(tmpSXP,7,mkChar("Parameters"));
       setAttrib(CurSequenceDescription,R_NamesSymbol,tmpSXP);
       UNPROTECT(1);
     } else if (version == 2.00){
       PROTECT(CurSequenceDescription=allocVector(VECSXP,6));
       PROTECT(tmpSXP=allocVector(STRSXP,6));
-      SET_VECTOR_ELT(tmpSXP,0,mkChar("Name")); 
-      SET_VECTOR_ELT(tmpSXP,1,mkChar("n.probepairs"));
-      SET_VECTOR_ELT(tmpSXP,2,mkChar("GroupName"));
-      SET_VECTOR_ELT(tmpSXP,3,mkChar("VersionNumber"));
-      SET_VECTOR_ELT(tmpSXP,4,mkChar("NumberOfParameters"));
-      SET_VECTOR_ELT(tmpSXP,5,mkChar("Parameters"));
+      SET_STRING_ELT(tmpSXP,0,mkChar("Name")); 
+      SET_STRING_ELT(tmpSXP,1,mkChar("n.probepairs"));
+      SET_STRING_ELT(tmpSXP,2,mkChar("GroupName"));
+      SET_STRING_ELT(tmpSXP,3,mkChar("VersionNumber"));
+      SET_STRING_ELT(tmpSXP,4,mkChar("NumberOfParameters"));
+      SET_STRING_ELT(tmpSXP,5,mkChar("Parameters"));
       setAttrib(CurSequenceDescription,R_NamesSymbol,tmpSXP);
       UNPROTECT(1);
     } else if (version == 1.00){
       PROTECT(CurSequenceDescription=allocVector(VECSXP,2));
       PROTECT(tmpSXP=allocVector(STRSXP,2));
-      SET_VECTOR_ELT(tmpSXP,0,mkChar("Name"));
-      SET_VECTOR_ELT(tmpSXP,1,mkChar("n.probepairs"));
+      SET_STRING_ELT(tmpSXP,0,mkChar("Name"));
+      SET_STRING_ELT(tmpSXP,1,mkChar("n.probepairs"));
       setAttrib(CurSequenceDescription,R_NamesSymbol,tmpSXP);
       UNPROTECT(1);
 
@@ -392,7 +392,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
     
     
     PROTECT(tmpSXP=allocVector(STRSXP,1));
-    SET_VECTOR_ELT(tmpSXP,0,mkChar(seq_name));
+    SET_STRING_ELT(tmpSXP,0,mkChar(seq_name));
     SET_VECTOR_ELT(CurSequenceDescription,0,tmpSXP);
     UNPROTECT(1);
     Free(seq_name);
@@ -419,7 +419,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       fread_be_char(group_name,group_name_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
-      SET_VECTOR_ELT(tmpSXP,0,mkChar(group_name));
+      SET_STRING_ELT(tmpSXP,0,mkChar(group_name));
       SET_VECTOR_ELT(CurSequenceDescription,2,tmpSXP);
       UNPROTECT(1);
       Free(group_name);
@@ -430,7 +430,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       fread_be_char(version_number,version_number_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
-      SET_VECTOR_ELT(tmpSXP,0,mkChar(version_number));
+      SET_STRING_ELT(tmpSXP,0,mkChar(version_number));
       SET_VECTOR_ELT(CurSequenceDescription,3,tmpSXP);
       UNPROTECT(1);
       Free(version_number);
@@ -450,12 +450,12 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
 	fread_be_uint32(&param_length,1,infile);
 	param_name = (char *)Calloc(param_length,char);
 	fread_be_char(param_name,param_length,infile);
-	SET_VECTOR_ELT(tmpSXP2,0,mkChar(param_name));
+	SET_STRING_ELT(tmpSXP2,0,mkChar(param_name));
 	Free(param_name);
 	fread_be_uint32(&param_length,1,infile);
 	param_name = (char *)Calloc(param_length,char);
 	fread_be_char(param_name,param_length,infile);
-	SET_VECTOR_ELT(tmpSXP2,1,mkChar(param_name));
+	SET_STRING_ELT(tmpSXP2,1,mkChar(param_name));
 	Free(param_name);
 		
 	SET_VECTOR_ELT(tmpSXP,j,tmpSXP2);
@@ -490,7 +490,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       fread_be_char(group_name,group_name_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
-      SET_VECTOR_ELT(tmpSXP,0,mkChar(group_name));
+      SET_STRING_ELT(tmpSXP,0,mkChar(group_name));
       SET_VECTOR_ELT(CurSequenceDescription,4,tmpSXP);
       UNPROTECT(1);
       Free(group_name);
@@ -500,7 +500,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       fread_be_char(version_number,version_number_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
-      SET_VECTOR_ELT(tmpSXP,0,mkChar(version_number));
+      SET_STRING_ELT(tmpSXP,0,mkChar(version_number));
       SET_VECTOR_ELT(CurSequenceDescription,5,tmpSXP);
       UNPROTECT(1);
       Free(version_number);
@@ -521,12 +521,12 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
 	fread_be_uint32(&param_length,1,infile);
 	param_name = (char *)Calloc(param_length,char);
 	fread_be_char(param_name,param_length,infile);
-	SET_VECTOR_ELT(tmpSXP2,0,mkChar(param_name));
+	SET_STRING_ELT(tmpSXP2,0,mkChar(param_name));
 	Free(param_name);
 	fread_be_uint32(&param_length,1,infile);
 	param_name = (char *)Calloc(param_length,char);
 	fread_be_char(param_name,param_length,infile);
-	SET_VECTOR_ELT(tmpSXP2,1,mkChar(param_name));
+	SET_STRING_ELT(tmpSXP2,1,mkChar(param_name));
 	Free(param_name);
 		
 	SET_VECTOR_ELT(tmpSXP,j,tmpSXP2);
@@ -726,8 +726,8 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 
     
     PROTECT(tmpSEXP=allocVector(STRSXP,2));
-    SET_VECTOR_ELT(tmpSEXP,0,mkChar("Header"));
-    SET_VECTOR_ELT(tmpSEXP,1,mkChar("PositionInformation"));
+    SET_STRING_ELT(tmpSEXP,0,mkChar("Header"));
+    SET_STRING_ELT(tmpSEXP,1,mkChar("PositionInformation"));
     setAttrib(curSeqIdPositionInfo,R_NamesSymbol,tmpSEXP);
     UNPROTECT(1);
       
@@ -860,19 +860,19 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 	PROTECT(PositionInfoRowNames = allocVector(STRSXP,nprobes));
 	for (j=0; j < nprobes; j++){
 	  sprintf(buf, "%d", j+1);
-	  SET_VECTOR_ELT(PositionInfoRowNames,j,mkChar(buf));
+	  SET_STRING_ELT(PositionInfoRowNames,j,mkChar(buf));
 	}
 	setAttrib(PositionInfo, R_RowNamesSymbol, PositionInfoRowNames);
 	UNPROTECT(1);
 	
 	PROTECT(tmpSEXP = allocVector(STRSXP,7));
-	SET_VECTOR_ELT(tmpSEXP,0,mkChar("x"));
-	SET_VECTOR_ELT(tmpSEXP,1,mkChar("y"));
-	SET_VECTOR_ELT(tmpSEXP,2,mkChar("PMLength"));
-	SET_VECTOR_ELT(tmpSEXP,3,mkChar("ProbeSeq"));
-	SET_VECTOR_ELT(tmpSEXP,4,mkChar("MatchScore"));
-	SET_VECTOR_ELT(tmpSEXP,5,mkChar("PMPosition"));
-	SET_VECTOR_ELT(tmpSEXP,6,mkChar("TargetStrand"));
+	SET_STRING_ELT(tmpSEXP,0,mkChar("x"));
+	SET_STRING_ELT(tmpSEXP,1,mkChar("y"));
+	SET_STRING_ELT(tmpSEXP,2,mkChar("PMLength"));
+	SET_STRING_ELT(tmpSEXP,3,mkChar("ProbeSeq"));
+	SET_STRING_ELT(tmpSEXP,4,mkChar("MatchScore"));
+	SET_STRING_ELT(tmpSEXP,5,mkChar("PMPosition"));
+	SET_STRING_ELT(tmpSEXP,6,mkChar("TargetStrand"));
 	
 	setAttrib(PositionInfo,R_NamesSymbol,tmpSEXP);
 	UNPROTECT(1);
@@ -1038,9 +1038,9 @@ SEXP ReadBPMAPFileIntoRList(SEXP filename){
   UNPROTECT(1);
   
   PROTECT(tmpSXP=allocVector(STRSXP,3));
-  SET_VECTOR_ELT(tmpSXP,0,mkChar("Header"));
-  SET_VECTOR_ELT(tmpSXP,1,mkChar("SequenceDescription"));
-  SET_VECTOR_ELT(tmpSXP,2,mkChar("SeqHead.PosInfo"));
+  SET_STRING_ELT(tmpSXP,0,mkChar("Header"));
+  SET_STRING_ELT(tmpSXP,1,mkChar("SequenceDescription"));
+  SET_STRING_ELT(tmpSXP,2,mkChar("SeqHead.PosInfo"));
   setAttrib(bpmapRlist,R_NamesSymbol,tmpSXP);
   UNPROTECT(1);
   
