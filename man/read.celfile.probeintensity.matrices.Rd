@@ -8,7 +8,7 @@
 \usage{read.celfile.probeintensity.matrices(filenames, cdfInfo, rm.mask=FALSE, rm.outliers=FALSE, rm.extra=FALSE, verbose=FALSE, which= c("pm","mm","both"))
 }
 \arguments{
-  \item{filenames}{a \code{\link{list}} of filenames}
+  \item{filenames}{a character vector of filenames}
   \item{cdfInfo}{a list with items giving PM and MM locations for
     desired probesets. In same structure as returned by \code{\link[makecdfenv]{make.cdf.package}}}
   \item{rm.mask}{a \code{\link{logical}}. Return these probes as NA if

@@ -15,10 +15,11 @@
 
 read.celfile.probeintensity.matrices <- function(filenames, cdfInfo, rm.mask=FALSE, rm.outliers=FALSE, rm.extra=FALSE, verbose=FALSE, which= c("pm","mm","both")){
   which <- match.arg(which)
-  
+
+  filenames <- as.character(filenames)
   if (verbose)
-    cat("Reading", filenames[[1]], "to get header information.\n")
-  headdetails <- .Call("ReadHeader", filenames[[1]], PACKAGE="affyio")
+    cat("Reading", filenames[1], "to get header information.\n")
+  headdetails <- .Call("ReadHeader", filenames[1], PACKAGE="affyio")
   dim.intensity <- headdetails[[2]]
   ref.cdfName <- headdetails[[1]]
   
