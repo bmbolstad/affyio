@@ -3830,7 +3830,7 @@ static void gzbinary_get_masks_outliers(char *filename, int *nmasks, short **mas
  **                   SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
  **                   SEXP ref_cdfName)
  **
- ** SEXP filenames - an R list of filenames to read
+ ** SEXP filenames - an R character vector of filenames to read
  ** SEXP compress  - logical flag TRUE means files are *.gz
  ** SEXP rm_mask   - if true set MASKS  to NA
  ** SEXP rm_outliers - if true set OUTLIERS to NA
@@ -3864,6 +3864,9 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
 
   SEXP intensity,names,dimnames;
 
+  if (!isString(filenames))
+    error("read_abatch: filenames argument must be a character vector");
+
   ref_dim_1 = INTEGER(ref_dim)[0];
   ref_dim_2 = INTEGER(ref_dim)[1];
   
@@ -3879,7 +3882,7 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
   /* before we do any real reading check that all the files are of the same cdf type */
 
   for (i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames, i));
     if (isTextCelFile(cur_file_name)){
       if (check_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
 	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
@@ -3917,7 +3920,7 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
   */
   
   for (i=0; i < n_files; i++){ 
-      cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+      cur_file_name = CHAR(STRING_ELT(filenames, i));
       if (asInteger(verbose)){
 	Rprintf("Reading in : %s\n",cur_file_name);
       }
@@ -3953,7 +3956,7 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
 
   if (asInteger(rm_mask) || asInteger(rm_outliers) || asInteger(rm_extra)){
     for (i=0; i < n_files; i++){ 
-      cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+      cur_file_name = CHAR(STRING_ELT(filenames,i));
       if (isTextCelFile(cur_file_name)){
 	if (asInteger(rm_extra)){
 	  apply_masks(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1,1,1);
@@ -3999,7 +4002,7 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
   PROTECT(dimnames = allocVector(VECSXP,2));
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames, i));
     SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
@@ -4039,7 +4042,7 @@ SEXP ReadHeader(SEXP filename){
   PROTECT(cel_dimensions= allocVector(INTSXP,2));
   PROTECT(headInfo = allocVector(VECSXP,2));
 
-  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  cur_file_name = CHAR(STRING_ELT(filename, 0));
   
 
 
@@ -4200,7 +4203,7 @@ SEXP ReadHeaderDetailed(SEXP filename){
  **                            SEXP ref_dim, SEXP verbose, SEXP cdfInfo)
  **
  ** 
- ** SEXP filenames - an R list of filenames to read
+ ** SEXP filenames - an R character vector of filenames to read
  ** SEXP compress  - logical flag TRUE means files are *.gz
  ** SEXP rm_mask   - if true set MASKS  to NA
  ** SEXP rm_outliers - if true set OUTLIERS to NA
@@ -4256,6 +4259,9 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   ref_dim_1 = INTEGER(ref_dim)[0];
   ref_dim_2 = INTEGER(ref_dim)[1];
   
+  if (!isString(filenames))
+    error("read_probeintensities: argument 'filenames' must be a character vector");
+
   n_files = GET_LENGTH(filenames);
   
   /* We will read in chip at a time */
@@ -4269,7 +4275,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   /* before we do any real reading check that all the files are of the same cdf type */
 
   for (i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames,i));
     if (isTextCelFile(cur_file_name)){
       if (check_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
 	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
@@ -4330,7 +4336,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   
   
   for (i=0; i < n_files; i++){ 
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames,i));
     if (asInteger(verbose)){
       Rprintf("Reading in : %s\n",cur_file_name);
     }
@@ -4368,7 +4374,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   PROTECT(dimnames = allocVector(VECSXP,2));
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames, i));
     SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
@@ -4424,7 +4430,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
  **                   SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
  **                   SEXP ref_cdfName)
  **
- ** SEXP filenames - an R list of filenames to read
+ ** SEXP filenames - an R character vector of filenames to read
  ** 
  ** SEXP rm_mask   - if true set MASKS  to NA
  ** SEXP rm_outliers - if true set OUTLIERS to NA
@@ -4460,6 +4466,9 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
 
   ref_dim_1 = INTEGER(ref_dim)[0];
   ref_dim_2 = INTEGER(ref_dim)[1];
+
+  if (!isString(filenames))
+    error("read_abatch_stddev: argument 'filenames' must be a character vector");
   
   n_files = GET_LENGTH(filenames);
   
@@ -4473,7 +4482,7 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
   /* before we do any real reading check that all the files are of the same cdf type */
 
   for (i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames, i));
     if (isTextCelFile(cur_file_name)){
       if (check_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
 	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
@@ -4511,7 +4520,7 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
   */
   
   for (i=0; i < n_files; i++){ 
-      cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+      cur_file_name = CHAR(STRING_ELT(filenames, i));
       if (asInteger(verbose)){
 	Rprintf("Reading in : %s\n",cur_file_name);
       }
@@ -4547,7 +4556,7 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
 
   if (asInteger(rm_mask) || asInteger(rm_outliers) || asInteger(rm_extra)){
     for (i=0; i < n_files; i++){ 
-      cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+      cur_file_name = CHAR(STRING_ELT(filenames, i));
       if (isTextCelFile(cur_file_name)){
 	if (asInteger(rm_extra)){
 	  apply_masks(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1,1,1);
@@ -4593,7 +4602,7 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
   PROTECT(dimnames = allocVector(VECSXP,2));
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames, i));
     SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
@@ -4620,7 +4629,7 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
  **                   SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
  **                   SEXP ref_cdfName)
  **
- ** SEXP filenames - an R list of filenames to read
+ ** SEXP filenames - an R character vector of filenames to read
  ** 
  ** SEXP rm_mask   - if true set MASKS  to NA
  ** SEXP rm_outliers - if true set OUTLIERS to NA
@@ -4657,6 +4666,9 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
   ref_dim_1 = INTEGER(ref_dim)[0];
   ref_dim_2 = INTEGER(ref_dim)[1];
   
+  if (!isString(filenames))
+    error("read_abatch_npixels: argument 'filenames' must be a character vector");
+
   n_files = GET_LENGTH(filenames);
   
   PROTECT(intensity = allocMatrix(REALSXP, ref_dim_1*ref_dim_2, n_files));
@@ -4669,7 +4681,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
   /* before we do any real reading check that all the files are of the same cdf type */
 
   for (i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames, i));
     if (isTextCelFile(cur_file_name)){
       if (check_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
 	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
@@ -4707,7 +4719,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
   */
   
   for (i=0; i < n_files; i++){ 
-      cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+      cur_file_name = CHAR(STRING_ELT(filenames, i));
       if (asInteger(verbose)){
 	Rprintf("Reading in : %s\n",cur_file_name);
       }
@@ -4743,7 +4755,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
 
   if (asInteger(rm_mask) || asInteger(rm_outliers) || asInteger(rm_extra)){
     for (i=0; i < n_files; i++){ 
-      cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+      cur_file_name = CHAR(STRING_ELT(filenames, i));
       if (isTextCelFile(cur_file_name)){
 	if (asInteger(rm_extra)){
 	  apply_masks(cur_file_name,intensityMatrix, i, ref_dim_1*ref_dim_2, n_files,ref_dim_1,1,1);
@@ -4789,7 +4801,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
   PROTECT(dimnames = allocVector(VECSXP,2));
   PROTECT(names = allocVector(STRSXP,n_files));
   for ( i =0; i < n_files; i++){
-    cur_file_name = CHAR(VECTOR_ELT(VECTOR_ELT(filenames,i),0));
+    cur_file_name = CHAR(STRING_ELT(filenames, i));
     SET_STRING_ELT(names,i,mkChar(cur_file_name));
   }
   SET_VECTOR_ELT(dimnames,1,names);
