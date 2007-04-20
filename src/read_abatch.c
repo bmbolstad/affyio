@@ -135,6 +135,7 @@
  ** Aug 11, 2006 - Additional truncation checks for text files
  ** Aug 12, 2006 - Build the R construct that holds the CEL file
  ** Nov 3, 2006 - add gzipped binary CEL file support
+ ** Apr 19, 2007 - Deal appropriately with non square CEL files (in binary format, the affymetrix documentation is inconsistent with the reality)
  **
  *************************************************************/
  
@@ -2374,14 +2375,21 @@ static binary_header *read_binary_header(char *filename, int return_stream){  /*
     error("The binary file %s is not version 4. Cannot read\n",filename);
     return 0;
   }
+
+  /*** NOTE THE DOCUMENTATION ON THE WEB IS INCONSISTENT WITH THE TRUTH IF YOU LOOK AT THE FUSION SDK */
+
+  /** DOCS - cols then rows , FUSION - rows then cols */
+  
+  /** We follow FUSION here (in the past we followed the DOCS **/
+
+  if (!fread_int32(&(this_header->rows),1,infile)){
+    error("Binary file corrupted? Could not read any further\n");
+  }
+  
   
   if (!fread_int32(&(this_header->cols),1,infile)){
     error("Binary file corrupted? Could not read any further\n");
     return 0;
-  }
-
-  if (!fread_int32(&(this_header->rows),1,infile)){
-    error("Binary file corrupted? Could not read any further\n");
   }
   
 
@@ -2748,7 +2756,7 @@ static int read_binarycel_file_intensities(char *filename, double *intensity, in
   
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
-      cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
+      cur_index = j + my_header->cols*i; /* i + my_header->rows*j; */
       fread_err = fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
       fread_err+= fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
       fread_err+=fread_int16(&(cur_intensity->npixels),1,my_header->infile);
@@ -2795,7 +2803,7 @@ static int read_binarycel_file_stddev(char *filename, double *intensity, int chi
   
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
-      cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
+      cur_index = j + my_header->cols*i; /* i + my_header->rows*j; */
       fread_err = fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
       fread_err+= fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
       fread_err+= fread_int16(&(cur_intensity->npixels),1,my_header->infile);
@@ -2842,7 +2850,7 @@ static int read_binarycel_file_npixels(char *filename, double *intensity, int ch
   
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
-      cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
+      cur_index = j + my_header->cols*i; /* i + my_header->rows*j; */
       fread_err = fread_float32(&(cur_intensity->cur_intens),1,my_header->infile);
       fread_err+= fread_float32(&(cur_intensity->cur_sd),1,my_header->infile);
       fread_err+= fread_int16(&(cur_intensity->npixels),1,my_header->infile);  
@@ -3209,16 +3217,21 @@ static binary_header *gzread_binary_header(char *filename, int return_stream){  
     error("The binary file %s is not version 4. Cannot read\n",filename);
     return 0;
   }
+    
+  /*** NOTE THE DOCUMENTATION ON THE WEB IS INCONSISTENT WITH THE TRUTH IF YOU LOOK AT THE FUSION SDK */
+
+  /** DOCS - cols then rows , FUSION - rows then cols */
+  
+  /** We follow FUSION here (in the past we followed the DOCS **/
+  
+  if (!gzread_int32(&(this_header->rows),1,infile)){
+    error("Binary file corrupted? Could not read any further\n");
+  }
   
   if (!gzread_int32(&(this_header->cols),1,infile)){
     error("Binary file corrupted? Could not read any further\n");
     return 0;
   }
-
-  if (!gzread_int32(&(this_header->rows),1,infile)){
-    error("Binary file corrupted? Could not read any further\n");
-  }
-  
 
   if (!gzread_int32(&(this_header->n_cells),1,infile)){
     error("Binary file corrupted? Could not read any further\n");
@@ -3572,7 +3585,7 @@ static int gzread_binarycel_file_intensities(char *filename, double *intensity, 
   
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
-      cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
+      cur_index = j + my_header->cols*i; /* i + my_header->rows*j; */
       fread_err = gzread_float32(&(cur_intensity->cur_intens),1,my_header->gzinfile);
       fread_err+= gzread_float32(&(cur_intensity->cur_sd),1,my_header->gzinfile);
       fread_err+= gzread_int16(&(cur_intensity->npixels),1,my_header->gzinfile);
@@ -3619,7 +3632,7 @@ static int gzread_binarycel_file_stddev(char *filename, double *intensity, int c
   
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
-      cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
+      cur_index = j + my_header->cols*i; /* i + my_header->rows*j; */
       fread_err = gzread_float32(&(cur_intensity->cur_intens),1,my_header->gzinfile);
       fread_err+= gzread_float32(&(cur_intensity->cur_sd),1,my_header->gzinfile);
       fread_err+= gzread_int16(&(cur_intensity->npixels),1,my_header->gzinfile);
@@ -3667,7 +3680,7 @@ static int gzread_binarycel_file_npixels(char *filename, double *intensity, int 
   
   for (i = 0; i < my_header->rows; i++){
     for (j =0; j < my_header->cols; j++){
-      cur_index = j + my_header->rows*i; /* i + my_header->rows*j; */
+      cur_index = j + my_header->cols*i; /* i + my_header->rows*j; */
       fread_err = gzread_float32(&(cur_intensity->cur_intens),1,my_header->gzinfile);
       fread_err+= gzread_float32(&(cur_intensity->cur_sd),1,my_header->gzinfile);
       fread_err+= gzread_int16(&(cur_intensity->npixels),1,my_header->gzinfile);  
@@ -4858,7 +4871,7 @@ CEL *read_cel_file(char *filename){
 #endif
   } else if (isBinaryCelFile(filename)){
     binary_get_detailed_header_info(filename,&my_CEL->header);
-  }  else if (isBinaryCelFile(filename)){
+  }  else if (isgzBinaryCelFile(filename)){
     gzbinary_get_detailed_header_info(filename,&my_CEL->header);
   }else {
 #if defined HAVE_ZLIB
@@ -4915,6 +4928,8 @@ CEL *read_cel_file(char *filename){
 #endif 
   } else if (isBinaryCelFile(filename)){
     binary_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
+  } else if (isgzBinaryCelFile(filename)){
+    /****************************/ gzbinary_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
   } else {
 #if defined HAVE_ZLIB
     error("Is %s really a CEL file? tried reading as text, gzipped text, binary and gzipped binary\n",filename);
