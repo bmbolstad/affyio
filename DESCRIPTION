@@ -7,5 +7,5 @@ Depends: methods
 Description: Routines for parsing Affymetrix data files based upon file format information. Primary focus is on accessing the CEL and CDF file formats.
 License: LGPL version 2 or newer
 biocViews: Microarray, DataImport
-SaveImage: yes
+LazyLoad: yes
 
