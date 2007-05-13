@@ -136,6 +136,7 @@
  ** Aug 12, 2006 - Build the R construct that holds the CEL file
  ** Nov 3, 2006 - add gzipped binary CEL file support
  ** Apr 19, 2007 - Deal appropriately with non square CEL files (in binary format, the affymetrix documentation is inconsistent with the reality)
+ ** May 13, 2007 - small fix for gzclose situation
  **
  *************************************************************/
  
@@ -3600,7 +3601,7 @@ static int gzread_binarycel_file_intensities(char *filename, double *intensity, 
     }
   }
   
-  gzclose(my_header->infile);
+  gzclose(my_header->gzinfile);
   delete_binary_header(my_header);
   Free(cur_intensity);
   return(0);
