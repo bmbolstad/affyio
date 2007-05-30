@@ -1239,7 +1239,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 
     }
 
-
+    
     if (tmpsum == 6){
       UNPROTECT(6);
     } else if (tmpsum == 8){
@@ -1492,7 +1492,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
       setAttrib(TEMPSXP3,R_NamesSymbol,TEMPSXP4);
       UNPROTECT(1);
 
-      SET_STRING_ELT(TEMPSXP2,j,TEMPSXP3);
+      SET_VECTOR_ELT(TEMPSXP2,j,TEMPSXP3);
       UNPROTECT(1);
     }
 
