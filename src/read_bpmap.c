@@ -1003,7 +1003,7 @@ SEXP ReadBPMAPFileIntoRList(SEXP filename){
   float version;
 
 
-  char *cur_file_name;
+  const char *cur_file_name;
   cur_file_name = CHAR(VECTOR_ELT(filename,0));
   
 
