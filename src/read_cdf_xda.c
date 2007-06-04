@@ -496,7 +496,7 @@ static void dealloc_cdf_xda(cdf_xda *my_cdf){
 
 /*************************************************************
  **
- ** int read_cdf_xda(char *filename)
+ ** int read_cdf_xda(const char *filename)
  **
  ** filename - Name of the prospective binary cel file
  **
@@ -508,7 +508,7 @@ static void dealloc_cdf_xda(cdf_xda *my_cdf){
  **
  *************************************************************/
 
-static int read_cdf_xda(char *filename,cdf_xda *my_cdf){
+static int read_cdf_xda(const char *filename,cdf_xda *my_cdf){
 
   FILE *infile;
 
@@ -676,7 +676,7 @@ static int read_cdf_xda(char *filename,cdf_xda *my_cdf){
 
 /*************************************************************
  **
- ** static int check_cdf_xda(char *filename)
+ ** static int check_cdf_xda(const char *filename)
  **
  ** Opens the file give by filename and checks it to see if
  ** it looks like a binary CDF file. returns 0 if
@@ -687,7 +687,7 @@ static int read_cdf_xda(char *filename,cdf_xda *my_cdf){
  *************************************************************/
 
 
-static int check_cdf_xda(char *filename){
+static int check_cdf_xda(const char *filename){
 
   FILE *infile;
 
@@ -786,7 +786,7 @@ static int isPM(char pbase,char tbase){
 SEXP CheckCDFXDA(SEXP filename){
   SEXP tmp;
   int good;
-  char *cur_file_name;
+  const char *cur_file_name;
   
   cur_file_name = CHAR(VECTOR_ELT(filename,0));
   
@@ -816,7 +816,7 @@ SEXP ReadCDFFile(SEXP filename){
   SEXP dimnames;
 
   cdf_xda my_cdf;
-  char *cur_file_name;
+  const char *cur_file_name;
   /* char *tmp_name; */
 
   int i,j,k;
@@ -1171,7 +1171,7 @@ SEXP ReadCDFFileIntoRList(SEXP filename,SEXP fullstructure){
   int i,j,k;
 
   cdf_xda my_cdf;
-  char *cur_file_name;
+  const char *cur_file_name;
   cur_file_name = CHAR(VECTOR_ELT(filename,0));
 
   /* Read in the xda style CDF file into memory */

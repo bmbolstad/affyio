@@ -718,7 +718,6 @@ static void read_cdf_unit_block(FILE *infile,  cdf_text *mycdf, char* linebuffer
   
   for (i=0; i < mycdf->units[unit].numberblocks; i++){ 
 
-    mycdf->units[unit].blocks[i].blocknumber;
     findStartsWith(infile,"Name",linebuffer);
     cur_tokenset = tokenize(linebuffer,"=\r\n");
     mycdf->units[unit].blocks[i].name = Calloc(strlen(get_token(cur_tokenset,1))+1,char);
@@ -852,9 +851,9 @@ static void read_cdf_Units(FILE *infile,  cdf_text *mycdf, char* linebuffer){
 
 /*******************************************************************
  **
- ** int read_cdf_text(char *filename, cdf_text *mycdf)
+ ** int read_cdf_text(const char *filename, cdf_text *mycdf)
  **
- ** char *filename - name of text file
+ ** const char *filename - name of text file
  ** cdf_text *mycdf - pointer to root of structure that will contain
  **                   the contents of the CDF file at the conclusion
  **                   of the function.
@@ -866,7 +865,7 @@ static void read_cdf_Units(FILE *infile,  cdf_text *mycdf, char* linebuffer){
  *******************************************************************/
 
 
-static int read_cdf_text(char *filename, cdf_text *mycdf){
+static int read_cdf_text(const char *filename, cdf_text *mycdf){
 
   FILE *infile;
 
@@ -959,9 +958,9 @@ static void dealloc_cdf_text(cdf_text *my_cdf){
 
 /*******************************************************************
  **
- ** static int isTextCDFFile(char *filename)
+ ** static int isTextCDFFile(const char *filename)
  **
- ** char *filename - name of file to check
+ ** const char *filename - name of file to check
  **
  ** checks whether the supplied file is a text CDF file or not.
  ** uses a very simple test.
@@ -972,7 +971,7 @@ static void dealloc_cdf_text(cdf_text *my_cdf){
  **
  ******************************************************************/
 
-static int isTextCDFFile(char *filename){
+static int isTextCDFFile(const char *filename){
 
 
   FILE *infile;
@@ -1075,7 +1074,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 
   cdf_text my_cdf;
 
-  char *cur_file_name;
+  const char *cur_file_name;
   cur_file_name = CHAR(VECTOR_ELT(filename,0));
 
   if(!read_cdf_text(cur_file_name, &my_cdf)){
@@ -1557,7 +1556,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 SEXP CheckCDFtext(SEXP filename){
   SEXP tmp;
   int good;
-  char *cur_file_name;
+  const char *cur_file_name;
   
   cur_file_name = CHAR(VECTOR_ELT(filename,0));
   

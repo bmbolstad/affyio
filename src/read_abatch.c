@@ -422,9 +422,9 @@ static void ReadFileLine(char *buffer, int buffersize, FILE *currentFile){
 
 /****************************************************************
  **
- ** FILE *open_cel_file(char *filename)
+ ** FILE *open_cel_file(const char *filename)
  **
- ** char *filename - name of file to open
+ ** const char *filename - name of file to open
  **
  **
  ** RETURNS a file pointer to the open file
@@ -434,7 +434,7 @@ static void ReadFileLine(char *buffer, int buffersize, FILE *currentFile){
  **
  ***************************************************************/
 
-static FILE *open_cel_file(char *filename){
+static FILE *open_cel_file(const char *filename){
   
   const char *mode = "r";
   FILE *currentFile = NULL; 
@@ -502,10 +502,10 @@ static void AdvanceToSection(FILE *my_file,char *sectiontitle, char *buffer){
 
 /******************************************************************
  ** 
- ** int check_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
+ ** int check_cel_file(const char *filename, const char *ref_cdfName, int ref_dim_1, int ref_dim_2)
  **
- ** char *filename - the file to read
- ** char *ref_cdfName - the reference CDF filename
+ ** const char *filename - the file to read
+ ** const char *ref_cdfName - the reference CDF filename
  ** int ref_dim_1 - 1st dimension of reference cel file
  ** int ref_dim_2 - 2nd dimension of reference cel file
  **
@@ -520,7 +520,7 @@ static void AdvanceToSection(FILE *my_file,char *sectiontitle, char *buffer){
  **
  ******************************************************************/
 
-static int check_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2){
+static int check_cel_file(const char *filename, const char *ref_cdfName, int ref_dim_1, int ref_dim_2){
 
   int i;
   int dim1,dim2;
@@ -565,9 +565,9 @@ static int check_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int 
 
 /************************************************************************
  **
- ** int read_cel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols)
+ ** int read_cel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols)
  **
- ** char *filename - the name of the cel file to read
+ ** const char *filename - the name of the cel file to read
  ** double *intensity  - the intensity matrix to fill
  ** int chip_num - the column of the intensity matrix that we will be filling
  ** int rows - dimension of intensity matrix
@@ -580,7 +580,7 @@ static int check_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int 
  **
  ************************************************************************/
 
-static int read_cel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_cel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
   
   int i, cur_x,cur_y,cur_index;
   double cur_mean;
@@ -646,9 +646,9 @@ static int read_cel_file_intensities(char *filename, double *intensity, int chip
 
 /************************************************************************
  **
- ** int read_cel_file_stddev(char *filename, double *intensity, int chip_num, int rows, int cols)
+ ** int read_cel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols)
  **
- ** char *filename - the name of the cel file to read
+ ** const char *filename - the name of the cel file to read
  ** double *intensity  - the intensity matrix to fill
  ** int chip_num - the column of the intensity matrix that we will be filling
  ** int rows - dimension of intensity matrix
@@ -661,7 +661,7 @@ static int read_cel_file_intensities(char *filename, double *intensity, int chip
  **
  ************************************************************************/
 
-static int read_cel_file_stddev(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_cel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
   
   int i, cur_x,cur_y,cur_index;
   double cur_mean, cur_stddev;
@@ -735,9 +735,9 @@ static int read_cel_file_stddev(char *filename, double *intensity, int chip_num,
 
 /************************************************************************
  **
- ** int read_cel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols)
+ ** int read_cel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols)
  **
- ** char *filename - the name of the cel file to read
+ ** const char *filename - the name of the cel file to read
  ** double *intensity  - the intensity matrix to fill
  ** int chip_num - the column of the intensity matrix that we will be filling
  ** int rows - dimension of intensity matrix
@@ -750,7 +750,7 @@ static int read_cel_file_stddev(char *filename, double *intensity, int chip_num,
  **
  ************************************************************************/
 
-static int read_cel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_cel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
   
   int i, cur_x,cur_y,cur_index,cur_npixels;
   double cur_mean, cur_stddev;
@@ -840,11 +840,11 @@ static int read_cel_file_npixels(char *filename, double *intensity, int chip_num
 
 /****************************************************************
  **
- ** void apply_masks(char *filename, double *intensity, int chip_num, 
+ ** void apply_masks(const char *filename, double *intensity, int chip_num, 
  **                   int rows, int cols,int chip_dim_rows, 
  **                   int rm_mask, int rm_outliers)
  **
- ** char *filename    - name of file to open
+ ** const char *filename    - name of file to open
  ** double *intensity - matrix of probe intensities
  ** int chip_num - the index 0 ...n-1 of the chip we are dealing with
  ** int rows - dimension of the intensity matrix
@@ -858,7 +858,7 @@ static int read_cel_file_npixels(char *filename, double *intensity, int chip_num
  **
  ****************************************************************/
 
-static void apply_masks(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
   
   int i;
   int numcells, cur_x, cur_y, cur_index;
@@ -926,7 +926,7 @@ static void apply_masks(char *filename, double *intensity, int chip_num, int row
 
 /****************************************************************
  **
- ** static void get_masks_outliers(char *filename, 
+ ** static void get_masks_outliers(const char *filename, 
  **                         int *nmasks, short **masks_x, short **masks_y, 
  **                         int *noutliers, short **outliers_x, short **outliers_y
  ** 
@@ -935,7 +935,7 @@ static void apply_masks(char *filename, double *intensity, int chip_num, int row
  **
  ****************************************************************/
 
-static void get_masks_outliers(char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
+static void get_masks_outliers(const char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
   
   FILE *currentFile;
   char buffer[BUF_SIZE];
@@ -1012,9 +1012,9 @@ static void get_masks_outliers(char *filename, int *nmasks, short **masks_x, sho
 
 /*************************************************************************
  **
- ** char *get_header_info(char *filename, int *dim1, int *dim2)
+ ** char *get_header_info(const char *filename, int *dim1, int *dim2)
  **
- ** char *filename - file to open
+ ** const char *filename - file to open
  ** int *dim1 - place to store Cols
  ** int *dim2 - place to store Rows
  **
@@ -1024,7 +1024,7 @@ static void get_masks_outliers(char *filename, int *nmasks, short **masks_x, sho
  **
  ************************************************************************/
 
-static char *get_header_info(char *filename, int *dim1, int *dim2){
+static char *get_header_info(const char *filename, int *dim1, int *dim2){
   
   int i,endpos;
   char *cdfName = NULL;
@@ -1071,9 +1071,9 @@ static char *get_header_info(char *filename, int *dim1, int *dim2){
 
 /*************************************************************************
  **
- ** void get_detailed_header_info(char *filename, detailed_header_info *header_info)
+ ** void get_detailed_header_info(const char *filename, detailed_header_info *header_info)
  **
- ** char *filename - file to open
+ ** const char *filename - file to open
  ** detailed_header_info *header_info - place to store header information
  **
  ** reads the header information from a text cdf file (ignoring some fields
@@ -1081,7 +1081,7 @@ static char *get_header_info(char *filename, int *dim1, int *dim2){
  **
  ************************************************************************/
 
-static void get_detailed_header_info(char *filename, detailed_header_info *header_info){
+static void get_detailed_header_info(const char *filename, detailed_header_info *header_info){
 
   int i,endpos;
   FILE *currentFile; 
@@ -1188,7 +1188,7 @@ static void get_detailed_header_info(char *filename, detailed_header_info *heade
 
 /***************************************************************
  **
- ** int isTextCelFile(char *filename)
+ ** int isTextCelFile(const char *filename)
  **
  ** test whether the file is a valid text cel file
  ** 
@@ -1196,7 +1196,7 @@ static void get_detailed_header_info(char *filename, detailed_header_info *heade
  **************************************************************/
 
 
-static int isTextCelFile(char *filename){
+static int isTextCelFile(const char *filename){
 
   const char *mode = "r";
 
@@ -1253,9 +1253,9 @@ static void ReadgzFileLine(char *buffer, int buffersize, gzFile currentFile){
 
 /****************************************************************
  **
- ** FILE *open_gz_cel_file(char *filename)
+ ** FILE *open_gz_cel_file(const char *filename)
  **
- ** char *filename - name of file to open
+ ** const char *filename - name of file to open
  **
  **
  ** RETURNS a file pointer to the open file
@@ -1265,7 +1265,7 @@ static void ReadgzFileLine(char *buffer, int buffersize, gzFile currentFile){
  **
  ***************************************************************/
 
-static gzFile open_gz_cel_file(char *filename){
+static gzFile open_gz_cel_file(const char *filename){
   
   const char *mode = "rb";
 
@@ -1337,9 +1337,9 @@ static void gzAdvanceToSection(gzFile my_file,char *sectiontitle, char *buffer){
 
 /******************************************************************
  ** 
- ** int check_gzcel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
+ ** int check_gzcel_file(const char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
  **
- ** char *filename - the file to read
+ ** const char *filename - the file to read
  ** char *ref_cdfName - the reference CDF filename
  ** int ref_dim_1 - 1st dimension of reference cel file
  ** int ref_dim_2 - 2nd dimension of reference cel file
@@ -1355,7 +1355,7 @@ static void gzAdvanceToSection(gzFile my_file,char *sectiontitle, char *buffer){
  **
  ******************************************************************/
 
-static int check_gzcel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2){
+static int check_gzcel_file(const char *filename, const char *ref_cdfName, int ref_dim_1, int ref_dim_2){
 
   int i;
   int dim1,dim2;
@@ -1402,9 +1402,9 @@ static int check_gzcel_file(char *filename, char *ref_cdfName, int ref_dim_1, in
 
 /************************************************************************
  **
- ** int read_gzcel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols)
+ ** int read_gzcel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols)
  **
- ** char *filename - the name of the cel file to read
+ ** const char *filename - the name of the cel file to read
  ** double *intensity  - the intensity matrix to fill
  ** int chip_num - the column of the intensity matrix that we will be filling
  ** int rows - dimension of intensity matrix
@@ -1417,7 +1417,7 @@ static int check_gzcel_file(char *filename, char *ref_cdfName, int ref_dim_1, in
  **
  ************************************************************************/
 
-static int read_gzcel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_gzcel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
   
   int i, cur_x,cur_y,cur_index;
   double cur_mean;
@@ -1476,9 +1476,9 @@ static int read_gzcel_file_intensities(char *filename, double *intensity, int ch
 
 /************************************************************************
  **
- ** int read_gzcel_file_stddev(char *filename, double *intensity, int chip_num, int rows, int cols)
+ ** int read_gzcel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols)
  **
- ** char *filename - the name of the cel file to read
+ ** const char *filename - the name of the cel file to read
  ** double *intensity  - the intensity matrix to fill
  ** int chip_num - the column of the intensity matrix that we will be filling
  ** int rows - dimension of intensity matrix
@@ -1491,7 +1491,7 @@ static int read_gzcel_file_intensities(char *filename, double *intensity, int ch
  **
  ************************************************************************/
 
-static int read_gzcel_file_stddev(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_gzcel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
   
   int i, cur_x,cur_y,cur_index;
   double cur_mean, cur_stddev;
@@ -1560,9 +1560,9 @@ static int read_gzcel_file_stddev(char *filename, double *intensity, int chip_nu
 
 /************************************************************************
  **
- ** int read_gzcel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols)
+ ** int read_gzcel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols)
  **
- ** char *filename - the name of the cel file to read
+ ** const char *filename - the name of the cel file to read
  ** double *intensity  - the intensity matrix to fill
  ** int chip_num - the column of the intensity matrix that we will be filling
  ** int rows - dimension of intensity matrix
@@ -1575,7 +1575,7 @@ static int read_gzcel_file_stddev(char *filename, double *intensity, int chip_nu
  **
  ************************************************************************/
 
-static int read_gzcel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_gzcel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
   
   int i, cur_x,cur_y,cur_index,cur_npixels;
   double cur_mean, cur_stddev;
@@ -1647,11 +1647,11 @@ static int read_gzcel_file_npixels(char *filename, double *intensity, int chip_n
 
 /****************************************************************
  **
- ** void gz_apply_masks(char *filename, double *intensity, int chip_num, 
+ ** void gz_apply_masks(const char *filename, double *intensity, int chip_num, 
  **                   int rows, int cols,int chip_dim_rows, 
  **                   int rm_mask, int rm_outliers)
  **
- ** char *filename    - name of file to open
+ ** const char *filename    - name of file to open
  ** double *intensity - matrix of probe intensities
  ** int chip_num - the index 0 ...n-1 of the chip we are dealing with
  ** int rows - dimension of the intensity matrix
@@ -1665,7 +1665,7 @@ static int read_gzcel_file_npixels(char *filename, double *intensity, int chip_n
  **
  ****************************************************************/
 
-static void gz_apply_masks(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void gz_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
   
   int i;
   int numcells, cur_x, cur_y, cur_index;
@@ -1733,9 +1733,9 @@ static void gz_apply_masks(char *filename, double *intensity, int chip_num, int 
 
 /*************************************************************************
  **
- ** char *gz_get_header_info(char *filename, int *dim1, int *dim2)
+ ** char *gz_get_header_info(const char *filename, int *dim1, int *dim2)
  **
- ** char *filename - file to open
+ ** const char *filename - file to open
  ** int *dim1 - place to store Cols
  ** int *dim2 - place to store Rows
  **
@@ -1745,7 +1745,7 @@ static void gz_apply_masks(char *filename, double *intensity, int chip_num, int 
  **
  ************************************************************************/
 
-static char *gz_get_header_info(char *filename, int *dim1, int *dim2){
+static char *gz_get_header_info(const char *filename, int *dim1, int *dim2){
   
   int i,endpos;
   char *cdfName = NULL;
@@ -1794,9 +1794,9 @@ static char *gz_get_header_info(char *filename, int *dim1, int *dim2){
 
 /*************************************************************************
  **
- ** char *gz_get_detailed_header_info(char *filename, detailed_header_info *header_info)
+ ** char *gz_get_detailed_header_info(const char *filename, detailed_header_info *header_info)
  **
- ** char *filename - file to open
+ ** const char *filename - file to open
  ** detailed_header_info *header_info - place to store header information
  **
  ** reads the header information from a gzipped text cdf file (ignoring some fields
@@ -1804,7 +1804,7 @@ static char *gz_get_header_info(char *filename, int *dim1, int *dim2){
  **
  ************************************************************************/
 
-static void gz_get_detailed_header_info(char *filename, detailed_header_info *header_info){
+static void gz_get_detailed_header_info(const char *filename, detailed_header_info *header_info){
 
   int i,endpos;
   gzFile *currentFile; 
@@ -1905,7 +1905,7 @@ static void gz_get_detailed_header_info(char *filename, detailed_header_info *he
 
 /****************************************************************
  **
- ** static void gz_get_masks_outliers(char *filename, 
+ ** static void gz_get_masks_outliers(const char *filename, 
  **                         int *nmasks, short **masks_x, short **masks_y, 
  **                         int *noutliers, short **outliers_x, short **outliers_y
  ** 
@@ -1914,7 +1914,7 @@ static void gz_get_detailed_header_info(char *filename, detailed_header_info *he
  **
  ****************************************************************/
 
-static void gz_get_masks_outliers(char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
+static void gz_get_masks_outliers(const char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
   
   gzFile *currentFile;
   char buffer[BUF_SIZE];
@@ -2001,14 +2001,14 @@ static void gz_get_masks_outliers(char *filename, int *nmasks, short **masks_x, 
 
 /***************************************************************
  **
- ** int isgzTextCelFile(char *filename)
+ ** int isgzTextCelFile(const char *filename)
  **
  ** test whether the file is a valid gzipped text cel file
  ** 
  **
  **************************************************************/
 
-static int isgzTextCelFile(char *filename){
+static int isgzTextCelFile(const char *filename){
   
 #if defined HAVE_ZLIB
   const char *mode = "rb"; 
@@ -2267,7 +2267,7 @@ static size_t fread_char(char *destination, int n, FILE *instream){
 
 /*************************************************************
  **
- ** int isBinaryCelFile(char *filename)
+ ** int isBinaryCelFile(const char *filename)
  **
  ** filename - Name of the prospective binary cel file
  **
@@ -2279,7 +2279,7 @@ static size_t fread_char(char *destination, int n, FILE *instream){
  **
  *************************************************************/
 
-static int isBinaryCelFile(char *filename){
+static int isBinaryCelFile(const char *filename){
 
   FILE *infile;
 
@@ -2336,15 +2336,15 @@ static void delete_binary_header(binary_header *my_header){
 
 /*************************************************************
  **
- ** static binary_header *read_binary_header(char *filename, int return_stream, FILE *infile)
+ ** static binary_header *read_binary_header(const char *filename, int return_stream, FILE *infile)
  **
- ** char *filename - name of binary cel file
+ ** const char *filename - name of binary cel file
  ** int return_stream - if 1 return the stream as part of the header, otherwise close the
  **              file at end of function.
  **
  *************************************************************/
 
-static binary_header *read_binary_header(char *filename, int return_stream){  /* , FILE *infile){ */
+static binary_header *read_binary_header(const char *filename, int return_stream){  /* , FILE *infile){ */
   
   FILE *infile;
 
@@ -2466,14 +2466,14 @@ static binary_header *read_binary_header(char *filename, int return_stream){  /*
 
 /*************************************************************
  **
- ** static char *binary_get_header_info(char *filename, int *dim1, int *dim2)
+ ** static char *binary_get_header_info(const char *filename, int *dim1, int *dim2)
  **
  ** this function pulls out the rows, cols and cdfname
  ** from the header of a binary cel file
  **
  *************************************************************/
 
-static char *binary_get_header_info(char *filename, int *dim1, int *dim2){
+static char *binary_get_header_info(const char *filename, int *dim1, int *dim2){
   
 
   char *cdfName =0;
@@ -2519,9 +2519,9 @@ static char *binary_get_header_info(char *filename, int *dim1, int *dim2){
 
 /*************************************************************************
  **
- ** void binary_get_detailed_header_info(char *filename, detailed_header_info *header_info)
+ ** void binary_get_detailed_header_info(const char *filename, detailed_header_info *header_info)
  **
- ** char *filename - file to open
+ ** const char *filename - file to open
  ** detailed_header_info *header_info - place to store header information
  **
  ** reads the header information from a binary cdf file (ignoring some fields
@@ -2533,7 +2533,7 @@ static char *binary_get_header_info(char *filename, int *dim1, int *dim2){
 
 
 
-static void binary_get_detailed_header_info(char *filename, detailed_header_info *header_info){
+static void binary_get_detailed_header_info(const char *filename, detailed_header_info *header_info){
 
   /* char *cdfName =0; */
   tokenset *my_tokenset;
@@ -2671,14 +2671,14 @@ static void binary_get_detailed_header_info(char *filename, detailed_header_info
 
 /***************************************************************
  **
- ** static int check_binary_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
+ ** static int check_binary_cel_file(const char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
  ** 
  ** This function checks a binary cel file to see if it has the 
  ** expected rows, cols and cdfname
  **
  **************************************************************/
 
-static int check_binary_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2){
+static int check_binary_cel_file(const char *filename, const char *ref_cdfName, int ref_dim_1, int ref_dim_2){
 
 
 
@@ -2735,14 +2735,14 @@ static int check_binary_cel_file(char *filename, char *ref_cdfName, int ref_dim_
 
 /***************************************************************
  **
- ** static int read_binarycel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
+ ** static int read_binarycel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
  **
  ** 
  ** This function reads binary cel file intensities into the data matrix
  **
  **************************************************************/
 
-static int read_binarycel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_binarycel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
 
   int i=0, j=0;
   int cur_index;
@@ -2783,14 +2783,14 @@ static int read_binarycel_file_intensities(char *filename, double *intensity, in
 
 /***************************************************************
  **
- ** static int read_binarycel_file_stdev(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
+ ** static int read_binarycel_file_stdev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
  **
  ** 
  ** This function reads binary cel file stddev values into the data matrix
  **
  **************************************************************/
 
-static int read_binarycel_file_stddev(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_binarycel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
 
   int i=0, j=0;
   int cur_index;
@@ -2830,14 +2830,14 @@ static int read_binarycel_file_stddev(char *filename, double *intensity, int chi
 
 /***************************************************************
  **
- ** static int read_binarycel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
+ ** static int read_binarycel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
  **
  ** 
  ** This function reads binary cel file npixels values into the data matrix
  **
  **************************************************************/
 
-static int read_binarycel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_binarycel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
 
   int i=0, j=0;
   int cur_index;
@@ -2889,13 +2889,13 @@ static int read_binarycel_file_npixels(char *filename, double *intensity, int ch
 
 /***************************************************************
  **
- ** static void binary_apply_masks(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers)
+ ** static void binary_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers)
  **
  ** 
  **
  **************************************************************/
 
-static void binary_apply_masks(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void binary_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
   
   int i=0;
 
@@ -2949,7 +2949,7 @@ static void binary_apply_masks(char *filename, double *intensity, int chip_num, 
 
 /****************************************************************
  **
- ** static void binary_get_masks_outliers(char *filename, 
+ ** static void binary_get_masks_outliers(const char *filename, 
  **                         int *nmasks, short **masks_x, short **masks_y, 
  **                         int *noutliers, short **outliers_x, short **outliers_y
  ** 
@@ -2958,7 +2958,7 @@ static void binary_apply_masks(char *filename, double *intensity, int chip_num, 
  **
  ****************************************************************/
 
-static void binary_get_masks_outliers(char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
+static void binary_get_masks_outliers(const char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
 
   
   int i=0;
@@ -3128,7 +3128,7 @@ static size_t gzread_char(char *destination, int n, gzFile *instream){
 
 /*************************************************************
  **
- ** int isgzBinaryCelFile(char *filename)
+ ** int isgzBinaryCelFile(const char *filename)
  **
  ** filename - Name of the prospective gzipped binary cel file
  **
@@ -3140,7 +3140,7 @@ static size_t gzread_char(char *destination, int n, gzFile *instream){
  **
  *************************************************************/
 
-static int isgzBinaryCelFile(char *filename){
+static int isgzBinaryCelFile(const char *filename){
 
   gzFile *infile;
 
@@ -3178,15 +3178,15 @@ static int isgzBinaryCelFile(char *filename){
 
 /*************************************************************
  **
- ** static binary_header *gzread_binary_header(char *filename, int return_stream, FILE *infile)
+ ** static binary_header *gzread_binary_header(const char *filename, int return_stream, FILE *infile)
  **
- ** char *filename - name of binary cel file
+ ** const char *filename - name of binary cel file
  ** int return_stream - if 1 return the stream as part of the header, otherwise close the
  **              file at end of function.
  **
  *************************************************************/
 
-static binary_header *gzread_binary_header(char *filename, int return_stream){  /* , FILE *infile){ */
+static binary_header *gzread_binary_header(const char *filename, int return_stream){  /* , FILE *infile){ */
   
   gzFile *infile;
 
@@ -3308,14 +3308,14 @@ static binary_header *gzread_binary_header(char *filename, int return_stream){  
 
 /*************************************************************
  **
- ** static char *binary_get_header_info(char *filename, int *dim1, int *dim2)
+ ** static char *binary_get_header_info(const char *filename, int *dim1, int *dim2)
  **
  ** this function pulls out the rows, cols and cdfname
  ** from the header of a binary cel file
  **
  *************************************************************/
 
-static char *gzbinary_get_header_info(char *filename, int *dim1, int *dim2){
+static char *gzbinary_get_header_info(const char *filename, int *dim1, int *dim2){
   
 
   char *cdfName =0;
@@ -3359,9 +3359,9 @@ static char *gzbinary_get_header_info(char *filename, int *dim1, int *dim2){
 
 /*************************************************************************
  **
- ** void gzbinary_get_detailed_header_info(char *filename, detailed_header_info *header_info)
+ ** void gzbinary_get_detailed_header_info(const char *filename, detailed_header_info *header_info)
  **
- ** char *filename - file to open
+ ** const char *filename - file to open
  ** detailed_header_info *header_info - place to store header information
  **
  ** reads the header information from a gzipped binary cdf file (ignoring some fields
@@ -3373,7 +3373,7 @@ static char *gzbinary_get_header_info(char *filename, int *dim1, int *dim2){
 
 
 
-static void gzbinary_get_detailed_header_info(char *filename, detailed_header_info *header_info){
+static void gzbinary_get_detailed_header_info(const char *filename, detailed_header_info *header_info){
 
   /* char *cdfName =0; */
   tokenset *my_tokenset;
@@ -3500,14 +3500,14 @@ static void gzbinary_get_detailed_header_info(char *filename, detailed_header_in
 
 /***************************************************************
  **
- ** static int check_binary_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
+ ** static int check_binary_cel_file(const char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2)
  ** 
  ** This function checks a binary cel file to see if it has the 
  ** expected rows, cols and cdfname
  **
  **************************************************************/
 
-static int check_gzbinary_cel_file(char *filename, char *ref_cdfName, int ref_dim_1, int ref_dim_2){
+static int check_gzbinary_cel_file(const char *filename, const char *ref_cdfName, int ref_dim_1, int ref_dim_2){
 
 
 
@@ -3564,14 +3564,14 @@ static int check_gzbinary_cel_file(char *filename, char *ref_cdfName, int ref_di
 
 /***************************************************************
  **
- ** static int gzread_binarycel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
+ ** static int gzread_binarycel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
  **
  ** 
  ** This function reads gzipped binary cel file intensities into the data matrix
  **
  **************************************************************/
 
-static int gzread_binarycel_file_intensities(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int gzread_binarycel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
 
   int i=0, j=0;
   int cur_index;
@@ -3612,14 +3612,14 @@ static int gzread_binarycel_file_intensities(char *filename, double *intensity, 
 
 /***************************************************************
  **
- ** static int gzread_binarycel_file_stdev(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
+ ** static int gzread_binarycel_file_stdev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
  **
  ** 
  ** This function reads binary cel file stddev values into the data matrix
  **
  **************************************************************/
 
-static int gzread_binarycel_file_stddev(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int gzread_binarycel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
 
   int i=0, j=0;
   int cur_index;
@@ -3660,14 +3660,14 @@ static int gzread_binarycel_file_stddev(char *filename, double *intensity, int c
 
 /***************************************************************
  **
- ** static int read_binarycel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
+ ** static int read_binarycel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows)
  **
  ** 
  ** This function reads binary cel file npixels values into the data matrix
  **
  **************************************************************/
 
-static int gzread_binarycel_file_npixels(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int gzread_binarycel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
 
   int i=0, j=0;
   int cur_index;
@@ -3707,13 +3707,13 @@ static int gzread_binarycel_file_npixels(char *filename, double *intensity, int 
 
 /***************************************************************
  **
- ** static void gz_binary_apply_masks(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers)
+ ** static void gz_binary_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers)
  **
  ** 
  **
  **************************************************************/
 
-static void gz_binary_apply_masks(char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void gz_binary_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
   
   int i=0;
 
@@ -3768,7 +3768,7 @@ static void gz_binary_apply_masks(char *filename, double *intensity, int chip_nu
 
 /****************************************************************
  **
- ** static void gzbinary_get_masks_outliers(char *filename, 
+ ** static void gzbinary_get_masks_outliers(const char *filename, 
  **                         int *nmasks, short **masks_x, short **masks_y, 
  **                         int *noutliers, short **outliers_x, short **outliers_y
  ** 
@@ -3777,7 +3777,7 @@ static void gz_binary_apply_masks(char *filename, double *intensity, int chip_nu
  **
  ****************************************************************/
 
-static void gzbinary_get_masks_outliers(char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
+static void gzbinary_get_masks_outliers(const char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
 
   
   int i=0;
@@ -3872,8 +3872,8 @@ SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, 
   int n_files;
   int ref_dim_1, ref_dim_2;
 
-  char *cur_file_name;
-  char *cdfName;
+  const char *cur_file_name;
+  const char *cdfName;
   double *intensityMatrix;
 
   SEXP intensity,names,dimnames;
@@ -4045,8 +4045,8 @@ SEXP ReadHeader(SEXP filename){
 
   int ref_dim_1=0, ref_dim_2=0;
 
-  char *cur_file_name;
-  char *cdfName=0;
+  const char *cur_file_name;
+  const char *cdfName=0;
 
   SEXP headInfo;
   SEXP name;
@@ -4119,7 +4119,7 @@ SEXP ReadHeaderDetailed(SEXP filename){
   SEXP tmp_sexp;
 
 
-  char *cur_file_name;
+  const char *cur_file_name;
   detailed_header_info header_info;
 
   PROTECT(HEADER = allocVector(VECSXP,9)); /* return as a list */
@@ -4253,8 +4253,8 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
 
   int num_probes;
 
-  char *cur_file_name;
-  char *cdfName;
+  const char *cur_file_name;
+  const char *cdfName;
   double *CurintensityMatrix, *pmMatrix=0, *mmMatrix=0;
 
   SEXP PM_intensity= R_NilValue, MM_intensity= R_NilValue, Current_intensity, names, dimnames;
@@ -4472,8 +4472,8 @@ SEXP read_abatch_stddev(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP rm
   int n_files;
   int ref_dim_1, ref_dim_2;
 
-  char *cur_file_name;
-  char *cdfName;
+  const char *cur_file_name;
+  const char *cdfName;
   double *intensityMatrix;
 
   SEXP intensity,names,dimnames;
@@ -4671,8 +4671,8 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
   int n_files;
   int ref_dim_1, ref_dim_2;
 
-  char *cur_file_name;
-  char *cdfName;
+  const char *cur_file_name;
+  const char *cdfName;
   double *intensityMatrix;
 
   SEXP intensity,names,dimnames;
@@ -4842,7 +4842,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
 
 /************************************************************************
  **
- ** CEL *read_cel_file(char *filename)
+ ** CEL *read_cel_file(const char *filename)
  **  
  ** Reads the contents of the CEL file into a "CEL" structure.
  ** Currently slightly inefficient (should be reimplemented more
@@ -4851,7 +4851,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
  **
  ************************************************************************/
 
-CEL *read_cel_file(char *filename){
+CEL *read_cel_file(const char *filename){
   
   CEL *my_CEL;
 
@@ -4982,7 +4982,7 @@ SEXP R_read_cel_file(SEXP filename){
   int i;
 
 
-  char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  const char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
 
   CEL *myCEL =read_cel_file(cur_file_name);
 
