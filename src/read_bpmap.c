@@ -771,15 +771,15 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
       UNPROTECT(1);
 
       PROTECT(tmpSEXP = allocVector(STRSXP,9));
-      SET_VECTOR_ELT(tmpSEXP,0,mkChar("x"));
-      SET_VECTOR_ELT(tmpSEXP,1,mkChar("y"));
-      SET_VECTOR_ELT(tmpSEXP,2,mkChar("x.mm"));
-      SET_VECTOR_ELT(tmpSEXP,3,mkChar("y.mm"));
-      SET_VECTOR_ELT(tmpSEXP,4,mkChar("PMLength"));
-      SET_VECTOR_ELT(tmpSEXP,5,mkChar("ProbeSeq"));
-      SET_VECTOR_ELT(tmpSEXP,6,mkChar("MatchScore"));
-      SET_VECTOR_ELT(tmpSEXP,7,mkChar("PMPosition"));
-      SET_VECTOR_ELT(tmpSEXP,8,mkChar("TargetStrand"));
+      SET_STRING_ELT(tmpSEXP,0,mkChar("x"));
+      SET_STRING_ELT(tmpSEXP,1,mkChar("y"));
+      SET_STRING_ELT(tmpSEXP,2,mkChar("x.mm"));
+      SET_STRING_ELT(tmpSEXP,3,mkChar("y.mm"));
+      SET_STRING_ELT(tmpSEXP,4,mkChar("PMLength"));
+      SET_STRING_ELT(tmpSEXP,5,mkChar("ProbeSeq"));
+      SET_STRING_ELT(tmpSEXP,6,mkChar("MatchScore"));
+      SET_STRING_ELT(tmpSEXP,7,mkChar("PMPosition"));
+      SET_STRING_ELT(tmpSEXP,8,mkChar("TargetStrand"));
 
       setAttrib(PositionInfo,R_NamesSymbol,tmpSEXP);
       UNPROTECT(1);
@@ -823,15 +823,15 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 	UNPROTECT(1);
 	
 	PROTECT(tmpSEXP = allocVector(STRSXP,9));
-	SET_VECTOR_ELT(tmpSEXP,0,mkChar("x"));
-	SET_VECTOR_ELT(tmpSEXP,1,mkChar("y"));
-	SET_VECTOR_ELT(tmpSEXP,2,mkChar("x.mm"));
-	SET_VECTOR_ELT(tmpSEXP,3,mkChar("y.mm"));
-	SET_VECTOR_ELT(tmpSEXP,4,mkChar("PMLength"));
-	SET_VECTOR_ELT(tmpSEXP,5,mkChar("ProbeSeq"));
-	SET_VECTOR_ELT(tmpSEXP,6,mkChar("MatchScore"));
-	SET_VECTOR_ELT(tmpSEXP,7,mkChar("PMPosition"));
-	SET_VECTOR_ELT(tmpSEXP,8,mkChar("TargetStrand"));
+	SET_STRING_ELT(tmpSEXP,0,mkChar("x"));
+	SET_STRING_ELT(tmpSEXP,1,mkChar("y"));
+	SET_STRING_ELT(tmpSEXP,2,mkChar("x.mm"));
+	SET_STRING_ELT(tmpSEXP,3,mkChar("y.mm"));
+	SET_STRING_ELT(tmpSEXP,4,mkChar("PMLength"));
+	SET_STRING_ELT(tmpSEXP,5,mkChar("ProbeSeq"));
+	SET_STRING_ELT(tmpSEXP,6,mkChar("MatchScore"));
+	SET_STRING_ELT(tmpSEXP,7,mkChar("PMPosition"));
+	SET_STRING_ELT(tmpSEXP,8,mkChar("TargetStrand"));
 	
 	setAttrib(PositionInfo,R_NamesSymbol,tmpSEXP);
 	UNPROTECT(1);
