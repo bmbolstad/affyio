@@ -4,7 +4,7 @@
  **
  ** Implementation by: B. M. Bolstad
  **
- ** Copyright (C) B. M. Bolstad 2006
+ ** Copyright (C) B. M. Bolstad 2006-2007
  **
  ** A parser designed to read bpmap files into an R List structure
  **
@@ -13,6 +13,7 @@
  ** Mar 12, 2006 - add additional support for versions 2 and 3
  ** May 31, 2006 - Fix some compiler warnings
  ** June 12, 2006 - fix naming vector length issue.
+ ** June 12, 2007 - much wailing and grinding of teeth, but finally a fix for reading version number right.
  **
  *******************************************************************/
 
@@ -21,7 +22,6 @@
 
 #include "stdlib.h"
 #include "stdio.h"
-
 
 
 
@@ -88,6 +88,28 @@ static size_t fread_be_uint32(unsigned int *destination, int n, FILE *instream){
 }
 
 
+static size_t fread_uint32(unsigned int *destination, int n, FILE *instream){
+
+
+  size_t result;
+
+  result = fread(destination,sizeof(unsigned int),n,instream);
+
+
+#ifdef WORDS_BIGENDIAN
+  while (n-- > 0){
+    /* bit flip since all Affymetrix binary files are little endian */
+    *destination=(((*destination>>24)&0xff) | ((*destination&0xff)<<24) |
+                  ((*destination>>8)&0xff00) | ((*destination&0xff00)<<8));
+    destination++;
+  }
+
+#endif
+  return result;
+}
+
+
+
 
 static size_t fread_be_int16(short *destination, int n, FILE *instream){
    size_t result;
@@ -126,11 +148,31 @@ static size_t fread_be_uint16(unsigned short *destination, int n, FILE *instream
 
 
 
+
+static void swap_uint_32(unsigned int *tni4)              /* 4 byte integer numbers */
+{
+  
+  *tni4=(((*tni4>>24)&0xff) | ((*tni4&0xff)<<24) |
+       ((*tni4>>8)&0xff00) | ((*tni4&0xff00)<<8));
+
+
+}
+
+
+
+
+
+
+
 static void swap_float_4(float *tnf4)              /* 4 byte floating point numbers */
 {
- int *tni4=(int *)tnf4;
- *tni4=(((*tni4>>24)&0xff) | ((*tni4&0xff)<<24) |
-            ((*tni4>>8)&0xff00) | ((*tni4&0xff00)<<8));
+  int tni = (int)(*tnf4);
+  
+  tni=(((tni>>24)&0xff) | ((tni&0xff)<<24) |
+       ((tni>>8)&0xff00) | ((tni&0xff00)<<8));
+
+  *tnf4 = (float)tni; 
+
 }
 
 
@@ -139,7 +181,7 @@ static size_t fread_be_float32(float *destination, int n, FILE *instream){
 
   size_t result;
 
-
+  
 
   result = fread(destination,sizeof(float),n,instream);
 
@@ -224,11 +266,13 @@ static SEXP ReadBPMAPHeader(FILE *infile){
 
 
   char *Magicnumber = R_alloc(8,sizeof(char));
-  float version_number;
+  float version_number = 0.0;
   int version_number_int;
-  
-  unsigned int n_seq;
+  unsigned int unsigned_version_number_int;
 
+
+  unsigned int n_seq;
+  static double new_version_number;
 
 
 
@@ -240,7 +284,7 @@ static SEXP ReadBPMAPHeader(FILE *infile){
 
 
   /* version number is a little bit funky 
-     need to somer funny things to coax it
+     need to do some funny things to coax it
      into the right format
   */
 
@@ -255,26 +299,33 @@ static SEXP ReadBPMAPHeader(FILE *infile){
   
   version_number_int=(((version_number_int>>24)&0xff) | ((version_number_int&0xff)<<24) |
 		       ((version_number_int>>8)&0xff00) | ((version_number_int&0xff00)<<8));
+ 
   version_number = (float)version_number_int;
-
+ 
 #else
   /* cast to integer, swap bytes, cast to float */ 
-  fread_be_float32(&version_number,1,infile);
-  if ((version_number > 3.0 || version_number < 1.0)){
-    /*    Rprintf("%f\n",version_number); */ 
-    swap_float_4(&version_number);
-    /* Rprintf("%f\n",version_number); */ 
-    
-    version_number_int = (int)version_number;
-    version_number_int=(((version_number_int>>24)&0xff) | ((version_number_int&0xff)<<24) |
-			((version_number_int>>8)&0xff00) | ((version_number_int&0xff00)<<8));
-   /* Rprintf("%d\n",version_number); */ 
-    version_number = (float)version_number_int;
-    /*  Rprintf("%f\n",version_number);  */ 
+  /* fread_be_float32(&version_number,1,infile); */
+  fread_float32(&version_number,1,infile);
+  swap_float_4(&version_number);
+  /* version_number = (float) ntohl((unsigned int)version_number);
+  //fread_uint32(&unsigned_version_number_int,1,infile);
+
+  // swap_uint_32(&unsigned_version_number_int);
+  
+  //memcpy(&version_number,&unsigned_version_number_int, sizeof(float)); */
+
+
+
+  new_version_number = (double)version_number;
+  /*  // Rprintf("A %f\n",version_number);*/ 
+  if ((version_number <=0.5) || (version_number > 3.5)){
+    /* //  Rprintf("Rereading\n"); */
+    fseek(infile,-sizeof(float),SEEK_CUR);
+    fread_be_uint32(&unsigned_version_number_int,1,infile);
+    memcpy(&version_number,&unsigned_version_number_int, sizeof(float));
+    new_version_number = (double)version_number;
   }
 #endif
-
-  
 
   fread_be_uint32(&n_seq,1,infile);
   
@@ -287,7 +338,7 @@ static SEXP ReadBPMAPHeader(FILE *infile){
   
 
   PROTECT(tmpSXP=allocVector(REALSXP,1));
-  REAL(tmpSXP)[0] = version_number;
+  REAL(tmpSXP)[0] = (double)new_version_number;
   SET_VECTOR_ELT(Header,1,tmpSXP);
   UNPROTECT(1);
 
@@ -304,7 +355,7 @@ static SEXP ReadBPMAPHeader(FILE *infile){
   setAttrib(Header,R_NamesSymbol,tmpSXP);
   UNPROTECT(2);
   
-
+  /* Rprintf("D %f %f\n",version_number,new_version_number);  */
   return Header;
     
 }
@@ -349,10 +400,10 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
 
   for (i=0; i < nseq; i++){
     fread_be_uint32(&seq_name_length,1,infile);
-    seq_name = (char *)Calloc(seq_name_length,char);
+    seq_name = (char *)Calloc(seq_name_length+1,char);
     fread_be_char(seq_name,seq_name_length,infile);
     
-  
+ 
 
     if (version == 3.00){
       PROTECT(CurSequenceDescription=allocVector(VECSXP,8)); 
@@ -387,10 +438,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       UNPROTECT(1);
 
     }
-    
-    
-    
-    
+      
     PROTECT(tmpSXP=allocVector(STRSXP,1));
     SET_STRING_ELT(tmpSXP,0,mkChar(seq_name));
     SET_VECTOR_ELT(CurSequenceDescription,0,tmpSXP);
@@ -415,7 +463,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       
 
       fread_be_uint32(&group_name_length,1,infile);
-      group_name = (char *)Calloc(group_name_length,char);
+      group_name = (char *)Calloc(group_name_length+1,char);
       fread_be_char(group_name,group_name_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
@@ -426,7 +474,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       
 
       fread_be_uint32(&version_number_length,1,infile);
-      version_number = (char *)Calloc(version_number_length,char);
+      version_number = (char *)Calloc(version_number_length+1,char);
       fread_be_char(version_number,version_number_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
@@ -448,12 +496,12 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       for (j=0; j < number_parameters; j++){
 	PROTECT(tmpSXP2 = allocVector(STRSXP,2));
 	fread_be_uint32(&param_length,1,infile);
-	param_name = (char *)Calloc(param_length,char);
+	param_name = (char *)Calloc(param_length+1,char);
 	fread_be_char(param_name,param_length,infile);
 	SET_STRING_ELT(tmpSXP2,0,mkChar(param_name));
 	Free(param_name);
 	fread_be_uint32(&param_length,1,infile);
-	param_name = (char *)Calloc(param_length,char);
+	param_name = (char *)Calloc(param_length+1,char);
 	fread_be_char(param_name,param_length,infile);
 	SET_STRING_ELT(tmpSXP2,1,mkChar(param_name));
 	Free(param_name);
@@ -466,7 +514,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
    
 
 
-    } else if (version ==3.0){
+    } else if (version ==3.0){  
       fread_be_uint32(&probe_mapping_type,1,infile);
       PROTECT(tmpSXP=allocVector(INTSXP,1));
       INTEGER(tmpSXP)[0] = probe_mapping_type;
@@ -486,7 +534,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       UNPROTECT(1);
 
       fread_be_uint32(&group_name_length,1,infile);
-      group_name = (char *)Calloc(group_name_length,char);
+      group_name = (char *)Calloc(group_name_length+1,char);
       fread_be_char(group_name,group_name_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
@@ -496,7 +544,7 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       Free(group_name);
       
       fread_be_uint32(&version_number_length,1,infile);
-      version_number = (char *)Calloc(version_number_length,char);
+      version_number = (char *)Calloc(version_number_length+1,char);
       fread_be_char(version_number,version_number_length,infile);
       
       PROTECT(tmpSXP=allocVector(STRSXP,1));
@@ -519,12 +567,12 @@ static SEXP ReadBPMAPSeqDescription(FILE *infile, float version, int nseq){
       for (j=0; j < number_parameters; j++){
 	PROTECT(tmpSXP2 = allocVector(STRSXP,2));
 	fread_be_uint32(&param_length,1,infile);
-	param_name = (char *)Calloc(param_length,char);
+	param_name = (char *)Calloc(param_length+1,char);
 	fread_be_char(param_name,param_length,infile);
 	SET_STRING_ELT(tmpSXP2,0,mkChar(param_name));
 	Free(param_name);
 	fread_be_uint32(&param_length,1,infile);
-	param_name = (char *)Calloc(param_length,char);
+	param_name = (char *)Calloc(param_length+1,char);
 	fread_be_char(param_name,param_length,infile);
 	SET_STRING_ELT(tmpSXP2,1,mkChar(param_name));
 	Free(param_name);
@@ -672,6 +720,8 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
   SEXP curSeqIdPositionInfo;
   SEXP PositionInfo= R_NilValue;
   SEXP PositionInfoRowNames;
+
+
   SEXP tmpSEXP;
 
   SEXP xPM= R_NilValue,yPM= R_NilValue,xMM= R_NilValue,yMM= R_NilValue;
@@ -765,7 +815,7 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
       PROTECT(PositionInfoRowNames = allocVector(STRSXP,nprobes));
       for (j=0; j < nprobes; j++){
 	sprintf(buf, "%d", j+1);
-	SET_VECTOR_ELT(PositionInfoRowNames,j,mkChar(buf));
+	SET_STRING_ELT(PositionInfoRowNames,j,mkChar(buf));
       }
       setAttrib(PositionInfo, R_RowNamesSymbol, PositionInfoRowNames);
       UNPROTECT(1);
@@ -915,10 +965,10 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
 
 
 
-      dest = (char *)Calloc(25,char);
+      dest = (char *)Calloc(25+1,char);
       packedSeqTobaseStr(probeseq,dest);
 
-      SET_VECTOR_ELT(probeSeqString,j,mkChar(dest));
+      SET_STRING_ELT(probeSeqString,j,mkChar(dest));
       Free(dest);
 
 
@@ -959,9 +1009,9 @@ static SEXP readBPMAPSeqIdPositionInfo(FILE *infile, float version, int nseq, SE
       /* Rprintf("strand: %d\n",(int)strand);*/
 
       if ((int)strand ==1){
-	SET_VECTOR_ELT(Strand,j,mkChar("F"));
+	SET_STRING_ELT(Strand,j,mkChar("F"));
       } else {
-	SET_VECTOR_ELT(Strand,j,mkChar("R"));
+	SET_STRING_ELT(Strand,j,mkChar("R"));
       }
 
     
@@ -1029,14 +1079,14 @@ SEXP ReadBPMAPFileIntoRList(SEXP filename){
   n_seq = INTEGER(VECTOR_ELT(bpmapHeader,2))[0];
   UNPROTECT(1);
   
-  /* Rprintf("version nseq: %f %d\n", version, n_seq); */
+  /*  Rprintf("version nseq: %f %d\n", version, n_seq); */
 
 
   PROTECT(bpmapSeqDesc = ReadBPMAPSeqDescription(infile,version,n_seq));
   SET_VECTOR_ELT(bpmapRlist,1,bpmapSeqDesc);
   SET_VECTOR_ELT(bpmapRlist,2,readBPMAPSeqIdPositionInfo(infile,version,n_seq,bpmapSeqDesc));
   UNPROTECT(1);
-  
+
   PROTECT(tmpSXP=allocVector(STRSXP,3));
   SET_STRING_ELT(tmpSXP,0,mkChar("Header"));
   SET_STRING_ELT(tmpSXP,1,mkChar("SequenceDescription"));
