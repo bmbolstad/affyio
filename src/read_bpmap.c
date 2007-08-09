@@ -278,7 +278,7 @@ static SEXP ReadBPMAPHeader(FILE *infile){
 
   fread_be_char(Magicnumber,8,infile);
 
-  if (strcmp(Magicnumber,"PHT7\r\n\032\n") !=0){
+  if (strncmp(Magicnumber,"PHT7",4) !=0){
     error("Based on the magic number which was %s, this does not appear to be a BPMAP file",Magicnumber);
   }
 
