@@ -137,6 +137,7 @@
  ** Nov 3, 2006 - add gzipped binary CEL file support
  ** Apr 19, 2007 - Deal appropriately with non square CEL files (in binary format, the affymetrix documentation is inconsistent with the reality)
  ** May 13, 2007 - small fix for gzclose situation
+ ** Aug 10, 2007 - fix for dangling open files each time a file is checked for binary format (Simon de Bernard, AltraBio)
  **
  *************************************************************/
  
@@ -2293,19 +2294,23 @@ static int isBinaryCelFile(const char *filename){
     }
   
   if (!fread_int32(&magicnumber,1,infile)){
+    fclose(infile);
     return 0;
   }
   
   if (!fread_int32(&version_number,1,infile)){
+    fclose(infile);
     return 0;
   }
 
 
-  if (magicnumber != 64){
+  if (magicnumber != 64){fclose(infile);
+    fclose(infile);
     return 0;
   }
 
   if (version_number != 4){
+    fclose(infile);
     return 0;
   }
 
@@ -2360,20 +2365,24 @@ static binary_header *read_binary_header(const char *filename, int return_stream
   
   if (!fread_int32(&(this_header->magic_number),1,infile)){
     error("The binary file %s does not have the appropriate magic number\n",filename);
+    fclose(infile);
     return 0;
   }
   
   if (this_header->magic_number != 64){
     error("The binary file %s does not have the appropriate magic number\n",filename);
+    fclose(infile);
     return 0;
   }
   
   if (!fread_int32(&(this_header->version_number),1,infile)){
+    fclose(infile);
     return 0;
   }
 
   if (this_header->version_number != 4){
     error("The binary file %s is not version 4. Cannot read\n",filename);
+    fclose(infile);
     return 0;
   }
 
@@ -3154,19 +3163,23 @@ static int isgzBinaryCelFile(const char *filename){
     }
   
   if (!gzread_int32(&magicnumber,1,infile)){
+    gzclose(infile);
     return 0;
   }
   
   if (!gzread_int32(&version_number,1,infile)){
+    gzclose(infile);
     return 0;
   }
 
 
   if (magicnumber != 64){
+    gzclose(infile);
     return 0;
   }
 
   if (version_number != 4){
+    gzclose(infile);
     return 0;
   }
 
