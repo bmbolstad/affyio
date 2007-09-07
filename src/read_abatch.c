@@ -2304,7 +2304,7 @@ static int isBinaryCelFile(const char *filename){
   }
 
 
-  if (magicnumber != 64){fclose(infile);
+  if (magicnumber != 64){
     fclose(infile);
     return 0;
   }
