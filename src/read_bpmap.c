@@ -14,6 +14,7 @@
  ** May 31, 2006 - Fix some compiler warnings
  ** June 12, 2006 - fix naming vector length issue.
  ** June 12, 2007 - much wailing and grinding of teeth, but finally a fix for reading version number right.
+ ** Aug 25, 2007 - Move file reading functions to centralized location
  **
  *******************************************************************/
 
@@ -23,7 +24,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-
+#include "fread_functions.h"
 
 
 
@@ -47,122 +48,6 @@
  ************************************************************************/
 
 
-static size_t fread_be_int32(int *destination, int n, FILE *instream){
-
-  size_t result;
-
-  result = fread(destination,sizeof(int),n,instream);
-
-#ifndef WORDS_BIGENDIAN
-  while (n-- > 0){
-    /* bit flip since on a little endian machine */
-
-    *destination=(((*destination>>24)&0xff) | ((*destination&0xff)<<24) |
-                  ((*destination>>8)&0xff00) | ((*destination&0xff00)<<8));
-    destination++;
-  }
-#endif
-  return result;
-}
-
-
-
-static size_t fread_be_uint32(unsigned int *destination, int n, FILE *instream){
-
-
-  size_t result;
-
-  result = fread(destination,sizeof(unsigned int),n,instream);
-
-
-#ifndef WORDS_BIGENDIAN
-  while (n-- > 0){
-    /* bit flip since all Affymetrix binary files are little endian */
-    *destination=(((*destination>>24)&0xff) | ((*destination&0xff)<<24) |
-                  ((*destination>>8)&0xff00) | ((*destination&0xff00)<<8));
-    destination++;
-  }
-
-#endif
-  return result;
-}
-
-
-static size_t fread_uint32(unsigned int *destination, int n, FILE *instream){
-
-
-  size_t result;
-
-  result = fread(destination,sizeof(unsigned int),n,instream);
-
-
-#ifdef WORDS_BIGENDIAN
-  while (n-- > 0){
-    /* bit flip since all Affymetrix binary files are little endian */
-    *destination=(((*destination>>24)&0xff) | ((*destination&0xff)<<24) |
-                  ((*destination>>8)&0xff00) | ((*destination&0xff00)<<8));
-    destination++;
-  }
-
-#endif
-  return result;
-}
-
-
-
-
-static size_t fread_be_int16(short *destination, int n, FILE *instream){
-   size_t result;
-
-   result = fread(destination,sizeof(short),n,instream);
-
-#ifndef WORDS_BIGENDIAN
-   while (n-- > 0){
-     /* bit flip since all Affymetrix binary files are little endian */
-     *destination=(((*destination>>8)&0xff) | ((*destination&0xff)<<8));
-     destination++;
-  }
-#endif
-   return result;
-
-}
-
-
-
-
-static size_t fread_be_uint16(unsigned short *destination, int n, FILE *instream){
-   size_t result;
-
-   result = fread(destination,sizeof(unsigned short),n,instream);
-
-#ifndef WORDS_BIGENDIAN
-   while( n-- > 0 ){
-     /* bit flip since all Affymetrix binary files are little endian */
-     *destination=(((*destination>>8)&0xff) | ((*destination&0xff)<<8));
-     destination++;
-   }
-#endif
-   return result;
-
-}
-
-
-
-
-static void swap_uint_32(unsigned int *tni4)              /* 4 byte integer numbers */
-{
-  
-  *tni4=(((*tni4>>24)&0xff) | ((*tni4&0xff)<<24) |
-       ((*tni4>>8)&0xff00) | ((*tni4&0xff00)<<8));
-
-
-}
-
-
-
-
-
-
 
 static void swap_float_4(float *tnf4)              /* 4 byte floating point numbers */
 {
@@ -175,85 +60,6 @@ static void swap_float_4(float *tnf4)              /* 4 byte floating point numb
 
 }
 
-
-
-static size_t fread_be_float32(float *destination, int n, FILE *instream){
-
-  size_t result;
-
-  
-
-  result = fread(destination,sizeof(float),n,instream);
-
-#ifndef WORDS_BIGENDIAN
-  while( n-- > 0 ) {
-    swap_float_4(destination);
-    destination++;
-  }
-#endif
-
-  return result;
-}
-
-
-
-static size_t fread_float32(float *destination, int n, FILE *instream){
-
-  size_t result;
-
-
-
-  result = fread(destination,sizeof(float),n,instream);
-
-#ifdef WORDS_BIGENDIAN
-  while( n-- > 0 ) {
-    swap_float_4(destination);
-    destination++;
-  }
-#endif
-
-  return result;
-}
-
-
-
-
-
-
-
-
-
-static size_t fread_be_char(char *destination, int n, FILE *instream){
-
- 
-  size_t result;
-
-  result = fread(destination,sizeof(char),n,instream);
-
-#ifndef WORDS_BIGENDIAN
-  /* Probably don't need to do anything for characters */
-
-#endif
-
-  return result;
-
-}
-
-static size_t fread_be_uchar(unsigned char *destination, int n, FILE *instream){
-
- 
-  size_t result;
-
-  result = fread(destination,sizeof(unsigned char),n,instream);
-
-#ifndef WORDS_BIGENDIAN
-  /* Probably don't need to do anything for characters */
-  /* destination = ~destination; */
-#endif
-
-  return result;
-
-}
 
 
 
