@@ -18,6 +18,7 @@
  **
  ** History
  ** Sept 3, 2007 -Initial version
+ ** Sept 9, 2007 - fix compiler warnings
  **
  *************************************************************/
 #include <R.h>
@@ -89,7 +90,7 @@ char *generic_get_header_info(const char *filename, int *dim1, int *dim2){
 
   int size;
 
-  wchar_t *wchartemp;
+  wchar_t *wchartemp=0;
   
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -148,8 +149,8 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
   int algorithm_paramsize = 0;
   float tempfloat;
 
-  wchar_t *wchartemp;
-  char *chartemp;
+  wchar_t *wchartemp=0;
+  char *chartemp=0;
   
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -523,7 +524,7 @@ int check_generic_cel_file(const char *filename, const char *ref_cdfName, int re
   
   int size;
 
-  wchar_t *wchartemp;
+  wchar_t *wchartemp=0;
   
 
   if ((infile = fopen(filename, "rb")) == NULL)
@@ -1048,8 +1049,8 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
   int algorithm_paramsize = 0;
   float tempfloat;
 
-  wchar_t *wchartemp;
-  char *chartemp;
+  wchar_t *wchartemp = 0;
+  char *chartemp = 0;
   
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
@@ -1427,7 +1428,7 @@ int check_gzgeneric_cel_file(const char *filename, const char *ref_cdfName, int 
   
   int size;
 
-  wchar_t *wchartemp;
+  wchar_t *wchartemp=0;
   
 
   if ((infile = gzopen(filename, "rb")) == NULL)
