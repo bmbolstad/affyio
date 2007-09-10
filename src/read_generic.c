@@ -17,7 +17,8 @@
  **
  **
  ** History
- ** Aug 25, 2007 -Initial version
+ ** Aug 25, 2007 - Initial version
+ ** Sep 9, 2007  - fix some compiler warnings.
  **
  *************************************************************/
 
@@ -145,7 +146,7 @@ static int fread_ASTRING(ASTRING *destination, FILE *instream){
 
 static int fread_AWSTRING(AWSTRING *destination, FILE *instream){
 
-  int16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
+  uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
 
   int i;
 
@@ -736,7 +737,7 @@ static int gzread_ASTRING(ASTRING *destination, gzFile *instream){
 
 static int gzread_AWSTRING(AWSTRING *destination, gzFile *instream){
 
-  int16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
+  uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
 
   int i;
 
