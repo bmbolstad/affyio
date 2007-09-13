@@ -990,7 +990,7 @@ char *gzgeneric_get_header_info(const char *filename, int *dim1, int *dim2){
 
   int size;
 
-  wchar_t *wchartemp;
+  wchar_t *wchartemp=0;
   
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
