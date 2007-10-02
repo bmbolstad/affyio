@@ -1,6 +1,9 @@
 
 
-
+#include <R.h>
+#include <Rdefines.h>
+#include <Rmath.h>
+#include <Rinternals.h>
 
 #include "stdlib.h"
 #include "stdio.h"
