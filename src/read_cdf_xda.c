@@ -34,6 +34,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "fread_functions.h"
+#include <ctype.h>"
 
 						  /* #define READ_CDF_DEBUG */
 						  /* #define READ_CDF_DEBUG_SNP */
