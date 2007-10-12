@@ -19,6 +19,7 @@
  ** History
  ** Sept 3, 2007 -Initial version
  ** Sept 9, 2007 - fix compiler warnings
+ ** Oct 11, 2007 - fix missing DatHeader problem
  **
  *************************************************************/
 #include <R.h>
@@ -219,12 +220,19 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
   
     
   triplet =  find_nvt(&data_header,"affymetrix-dat-header");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    wchartemp = decode_MIME_value(*triplet,cur_mime_type, wchartemp, &size);
+    header_info->DatHeader = Calloc(size + 1, char);
+    wcstombs(header_info->DatHeader, wchartemp, size);
+    Free(wchartemp);
+  } else {
+    header_info->DatHeader = Calloc(2, char);
+  }
 
-  wchartemp = decode_MIME_value(*triplet,cur_mime_type, wchartemp, &size);
-  header_info->DatHeader = Calloc(size + 1, char);
-  wcstombs(header_info->DatHeader, wchartemp, size);
-  Free(wchartemp);
+
 
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-name");
   cur_mime_type = determine_MIMETYPE(*triplet);
