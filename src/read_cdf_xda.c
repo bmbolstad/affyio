@@ -23,6 +23,7 @@
  ** Aug 23, 2006 - fix a potential (but at current time non-existant) problem
  **                when there are 0 qcunits or 0 units
  ** Aug 25, 2007 - Move file reading functions to centralized location
+ ** Oct 27, 2007 - When building a cdfenv set NON identified values to NA (mostly affects MM for PM only arrays)
  **
  **
  ****************************************************************/
@@ -34,9 +35,9 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "fread_functions.h"
-#include <ctype.h>"
+#include <ctype.h>
 
-						  /* #define READ_CDF_DEBUG */
+/* #define READ_CDF_DEBUG */
 						  /* #define READ_CDF_DEBUG_SNP */
 #define READ_CDF_NOSNP
 
@@ -742,6 +743,10 @@ SEXP ReadCDFFile(SEXP filename){
 	
 	curlocs = NUMERIC_POINTER(AS_NUMERIC(CurLocs));
 	
+        for (k=0; k < cur_cells*2; k++){
+	  curlocs[k] = R_NaN;
+	}
+
 	for (k=0; k < cur_cells; k++){
 	  current_cell = &(my_cdf.units[i].unit_block[j].unit_cells[k]);
 	  
