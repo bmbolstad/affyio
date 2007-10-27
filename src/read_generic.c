@@ -19,6 +19,7 @@
  ** History
  ** Aug 25, 2007 - Initial version
  ** Sep 9, 2007  - fix some compiler warnings.
+ ** Oct 25, 2007 - fix error in decode_UINT8_t
  **
  *************************************************************/
 
@@ -252,9 +253,9 @@ static int8_t decode_INT8_t(ASTRING value){
 
 static uint8_t decode_UINT8_t(ASTRING value){
 
-  uint16_t contents;
+  uint8_t contents;
   
-  memcpy(&contents,value.value, sizeof(uint16_t));
+  memcpy(&contents,value.value, sizeof(uint8_t));
 
   //#ifndef WORD_BIGENDIAN 
   //contents=(((contents[i]>>8)&0xff) | ((contents[i]&0xff)<<8));
