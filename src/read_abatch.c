@@ -19,7 +19,7 @@
  **
  ** aim: read in from 1st to nth chips of CEL data
  **
- ** Copyright (C) 2003-2006    B. M. Bolstad
+ ** Copyright (C) 2003-2007    B. M. Bolstad
  **
  ** Created on Jun 13, 2003
  **
@@ -141,6 +141,7 @@
  ** Aug 25, 2007 - Move file reading functions to centralized location
  ** Sep  6, 2007 - add support for generic (aka command console) format cel files
  ** Sep  7, 2007 - add support for gzipped generic (aka command console) format cel files
+ ** Oct 28, 2007 - add pthread based multi-threaded read_probematrix this is based on a submission by Paul Gordon (U Calgary)
  **
  *************************************************************/
  
@@ -161,6 +162,32 @@
 #if defined(HAVE_ZLIB)
 #include <zlib.h>
 #endif
+
+#if USE_PTHREADS
+#include <pthread.h>
+pthread_mutex_t mutex_R;
+int n_probesets;
+int *n_probes = NULL;
+double **cur_indexes = NULL;
+struct thread_data{
+  SEXP filenames;
+  double *CurintensityMatrix;
+  double *pmMatrix;
+  double *mmMatrix;
+  int i;
+  int t;
+  int chunk_size;
+  int ref_dim_1;
+  int ref_dim_2;
+  int n_files;
+  int num_probes;
+  SEXP cdfInfo;
+  const char *refCdfName;
+  int which_flag;
+  SEXP verbose;
+};
+#define THREADS_ENV_VAR "R_THREADS"
+#endif 
 
 #define BUF_SIZE 1024
 
@@ -248,6 +275,9 @@ typedef struct{
 
 static tokenset *tokenize(char *str, char *delimiters){
 
+#if USE_PTHREADS  
+  char *tmp_pointer;
+#endif  
   int i=0;
 
   char *current_token;
@@ -255,8 +285,11 @@ static tokenset *tokenize(char *str, char *delimiters){
   my_tokenset->n=0;
   
   my_tokenset->tokens = NULL;
-
+#if USE_PTHREADS
+  current_token = strtok_r(str,delimiters,&tmp_pointer);
+#else
   current_token = strtok(str,delimiters);
+#endif
   while (current_token != NULL){
     my_tokenset->n++;
     my_tokenset->tokens = Realloc(my_tokenset->tokens,my_tokenset->n,char*);
@@ -264,9 +297,12 @@ static tokenset *tokenize(char *str, char *delimiters){
     strcpy(my_tokenset->tokens[i],current_token);
     my_tokenset->tokens[i][(strlen(current_token))] = '\0';
     i++;
+#if USE_PTHREADS
+    current_token = strtok_r(NULL,delimiters,&tmp_pointer);
+#else
     current_token = strtok(NULL,delimiters);
+#endif
   }
-
   return my_tokenset; 
 }
 
@@ -566,7 +602,10 @@ static int check_cel_file(const char *filename, const char *ref_cdfName, int ref
  ************************************************************************/
 
 static int read_cel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
-  
+#if USE_PTHREADS  
+  char *tmp_pointer;
+#endif  
+
   int i, cur_x,cur_y,cur_index;
   double cur_mean;
   FILE *currentFile; 
@@ -590,22 +629,35 @@ static int read_cel_file_intensities(const char *filename, double *intensity, in
       Rprintf("Warning: found an empty line where not expected in %s.\nThis means that there is a cel intensity missing from the cel file.\nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, i);
       break;
     }
-
+#if USE_PTHREADS
+    current_token = strtok_r(buffer," \t",&tmp_pointer);
+#else
     current_token = strtok(buffer," \t");
+#endif
     if (current_token == NULL){
        Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
 
     cur_x = atoi(current_token);
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
+
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
 
     cur_y = atoi(current_token);
-    current_token = strtok(NULL," \t");  
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
+    current_token = strtok(NULL," \t");
+#endif
+ 
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
@@ -647,7 +699,10 @@ static int read_cel_file_intensities(const char *filename, double *intensity, in
  ************************************************************************/
 
 static int read_cel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
-  
+#if USE_PTHREADS  
+  char *tmp_pointer;
+#endif  
+
   int i, cur_x,cur_y,cur_index;
   double cur_mean, cur_stddev;
   FILE *currentFile; 
@@ -671,29 +726,43 @@ static int read_cel_file_stddev(const char *filename, double *intensity, int chi
       Rprintf("Warning: found an empty line where not expected in %s.\n This means that there is a cel intensity missing from the cel file.\n Sucessfully read to cel intensity %d of %d expected\n", filename, i-1, i);
       break;
     }
-
+#if USE_PTHREADS
+    current_token = strtok_r(buffer," \t",&tmp_pointer);
+#else
     current_token = strtok(buffer," \t");
+#endif
+
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_x = atoi(current_token);
-
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
+
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_y = atoi(current_token);
-    
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
-     if (current_token == NULL){
+#endif
+    if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_mean = atof(current_token);
-
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
@@ -736,7 +805,10 @@ static int read_cel_file_stddev(const char *filename, double *intensity, int chi
  ************************************************************************/
 
 static int read_cel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
-  
+#if USE_PTHREADS  
+  char *tmp_pointer;
+#endif  
+
   int i, cur_x,cur_y,cur_index,cur_npixels;
   double cur_mean, cur_stddev;
   FILE *currentFile; 
@@ -760,35 +832,56 @@ static int read_cel_file_npixels(const char *filename, double *intensity, int ch
       Rprintf("Warning: found an empty line where not expected in %s.\n This means that there is a cel intensity missing from the cel file.\n Sucessfully read to cel intensity %d of %d expected\n", filename, i-1, i);
       break;
     }
-
+#if USE_PTHREADS
+    current_token = strtok_r(buffer," \t",&tmp_pointer);
+#else
     current_token = strtok(buffer," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_x = atoi(current_token);
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
+
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     
-    cur_y = atoi(current_token);
+    cur_y = atoi(current_token); 
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     
     cur_mean = atof(current_token);
+
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif  
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_stddev = atof(current_token);
-    
-    current_token = strtok(NULL," \t");  
+   
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
+    current_token = strtok(NULL," \t");
+#endif  
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
@@ -1403,6 +1496,9 @@ static int check_gzcel_file(const char *filename, const char *ref_cdfName, int r
  ************************************************************************/
 
 static int read_gzcel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+#if USE_PTHREADS  
+  char *tmp_pointer;
+#endif  
   
   int i, cur_x,cur_y,cur_index;
   double cur_mean;
@@ -1422,22 +1518,33 @@ static int read_gzcel_file_intensities(const char *filename, double *intensity, 
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
     cur_mean = atof(get_token(cur_tokenset,2)); */
-    
-    current_token = strtok(buffer," \t"); 
+#if USE_PTHREADS
+    current_token = strtok_r(buffer," \t",&tmp_pointer);
+#else
+    current_token = strtok(buffer," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
 
     cur_x = atoi(current_token);
-    current_token = strtok(NULL," \t"); 
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
+    current_token = strtok(NULL," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
 
     cur_y = atoi(current_token);
-    current_token = strtok(NULL," \t"); 
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
+    current_token = strtok(NULL," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
@@ -1477,6 +1584,9 @@ static int read_gzcel_file_intensities(const char *filename, double *intensity, 
  ************************************************************************/
 
 static int read_gzcel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+#if USE_PTHREADS  
+  char *tmp_pointer;
+#endif  
   
   int i, cur_x,cur_y,cur_index;
   double cur_mean, cur_stddev;
@@ -1496,30 +1606,48 @@ static int read_gzcel_file_stddev(const char *filename, double *intensity, int c
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
     cur_mean = atof(get_token(cur_tokenset,2)); */
-    
+#if USE_PTHREADS
+    current_token = strtok_r(buffer," \t",&tmp_pointer);
+#else
     current_token = strtok(buffer," \t");
+#endif
+    
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
 
     cur_x = atoi(current_token);
-    current_token = strtok(NULL," \t"); 
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
+    current_token = strtok(NULL," \t");
+#endif
+ 
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
 
     cur_y = atoi(current_token);
-    current_token = strtok(NULL," \t"); 
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
+    current_token = strtok(NULL," \t");
+#endif
+
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
 
     cur_mean = atof(current_token);
-  
-    current_token = strtok(NULL," \t"); 
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
+    current_token = strtok(NULL," \t");
+#endif
+    
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
@@ -1561,7 +1689,10 @@ static int read_gzcel_file_stddev(const char *filename, double *intensity, int c
  ************************************************************************/
 
 static int read_gzcel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
-  
+#if USE_PTHREADS  
+  char *tmp_pointer;
+#endif  
+
   int i, cur_x,cur_y,cur_index,cur_npixels;
   double cur_mean, cur_stddev;
   gzFile currentFile; 
@@ -1580,34 +1711,53 @@ static int read_gzcel_file_npixels(const char *filename, double *intensity, int 
     cur_x = atoi(get_token(cur_tokenset,0));
     cur_y = atoi(get_token(cur_tokenset,1));
     cur_mean = atof(get_token(cur_tokenset,2)); */
-    
+#if USE_PTHREADS
+    current_token = strtok_r(buffer," \t",&tmp_pointer);
+#else
     current_token = strtok(buffer," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_x = atoi(current_token);
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
+
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_y = atoi(current_token);
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
+
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_mean = atof(current_token);
-  
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
     cur_stddev = atof(current_token);
-    
+#if USE_PTHREADS
+    current_token = strtok_r(NULL," \t",&tmp_pointer);
+#else
     current_token = strtok(NULL," \t");
+#endif
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
@@ -2067,29 +2217,42 @@ static int CountCDFProbes(SEXP cdfInfo){
 static void storeIntensities(double *CurintensityMatrix, double *pmMatrix, double *mmMatrix, int curcol, int rows, int cols, int tot_n_probes, SEXP cdfInfo, int which){
   
   int i = 0,j=0, currow=0;
+#ifndef USE_PTHREADS
   int n_probes=0;
   int n_probesets = GET_LENGTH(cdfInfo);
   double *cur_index;
 
   SEXP curIndices;
-  
-  for (i=0; i < n_probesets; i++){
+#endif
+
+  for (i=0; i < n_probesets; i++){    
+#ifdef USE_PTHREADS
+    for (j=0; j < n_probes[i]; j++){
+      if (which >= 0){
+	pmMatrix[curcol*tot_n_probes + currow] =  CurintensityMatrix[(int)cur_indexes[i][j] - 1]; 
+      }
+      if (which <= 0){
+	mmMatrix[curcol*tot_n_probes + currow] =  CurintensityMatrix[(int)cur_indexes[i][j+n_probes[i]] - 1];
+      }
+      currow++;
+    }
+#else
     curIndices = VECTOR_ELT(cdfInfo,i);
     n_probes = INTEGER(getAttrib(curIndices,R_DimSymbol))[0];
     cur_index = NUMERIC_POINTER(AS_NUMERIC(curIndices));
-    
+
     for (j=0; j < n_probes; j++){
       if (which >= 0){
 	pmMatrix[curcol*tot_n_probes + currow] =  CurintensityMatrix[(int)cur_index[j] - 1]; 
       }
       if (which <= 0){
-	mmMatrix[curcol*tot_n_probes + currow] =  CurintensityMatrix[(int)cur_index[j+n_probes] - 1];
+	mmMatrix[curcol*tot_n_probes + currow] =  CurintensityMatrix[(int)cur_index[j+n_probes] - 1];	
       }
       currow++;
     }
+#endif
   }
 }
-
 
 
 /****************************************************************
@@ -4033,6 +4196,131 @@ SEXP ReadHeaderDetailed(SEXP filename){
   return HEADER;
 }
 
+/* Refactored from read_probeintensities so both threaded and non-threaded versions can use the same code */
+void readfile(SEXP filenames, double *CurintensityMatrix, double *pmMatrix, double *mmMatrix,
+              int i, int ref_dim_1, int ref_dim_2, int n_files, int num_probes, SEXP cdfInfo, int which_flag, SEXP verbose){
+    const char *cur_file_name;
+#ifdef USE_PTHREADS
+    pthread_mutex_lock (&mutex_R);
+    cur_file_name = CHAR(STRING_ELT(filenames,i));
+    pthread_mutex_unlock (&mutex_R);
+#else
+    cur_file_name = CHAR(STRING_ELT(filenames,i));
+#endif
+
+    if (asInteger(verbose)){
+      Rprintf("Reading in : %s\n",cur_file_name);
+    }
+    if (isTextCelFile(cur_file_name)){
+      if(read_cel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1) !=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+      }
+      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
+    } else if (isgzTextCelFile(cur_file_name)){
+#if defined HAVE_ZLIB
+      if(read_gzcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1)!=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+      }
+      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
+#else
+      error("Compress option not supported on your platform\n");
+#endif
+    } else if (isBinaryCelFile(cur_file_name)){
+      read_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
+    } else if (isgzBinaryCelFile(cur_file_name)){
+      gzread_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
+    } else if (isGenericCelFile(cur_file_name)){
+      read_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
+    }  else if (isgzGenericCelFile(cur_file_name)){
+      gzread_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
+    } else {
+#if defined HAVE_ZLIB
+       error("Is %s really a CEL file? tried reading as text, gzipped text, binary, gzipped binary, command console and gzipped command console formats.\n",cur_file_name);
+#else
+       error("Is %s really a CEL file? tried reading as text and binary. The gzipped text and binary formats are not supported on your platform.\n",cur_file_name);
+#endif
+    }
+}
+
+void checkFileCDF(SEXP filenames, int i, const char *cdfName, int ref_dim_1, int ref_dim_2){
+#ifdef USE_PTHREADS
+    pthread_mutex_lock (&mutex_R);
+    const char *cur_file_name = CHAR(STRING_ELT(filenames,i));
+    pthread_mutex_unlock (&mutex_R);  
+#else
+    const char *cur_file_name = CHAR(STRING_ELT(filenames,i));
+#endif
+    if (isTextCelFile(cur_file_name)){
+      if (check_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
+	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
+      }
+    } else if (isgzTextCelFile(cur_file_name)){
+#if defined HAVE_ZLIB
+      if (check_gzcel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
+	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
+      }
+      
+#else
+       error("Compress option not supported on your platform\n");
+#endif
+    } else if (isBinaryCelFile(cur_file_name)){
+      
+      if (check_binary_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
+	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
+       }
+    }  else if (isgzBinaryCelFile(cur_file_name)){
+      
+       if (check_gzbinary_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
+	 error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
+       }
+    }  else if (isGenericCelFile(cur_file_name)){
+       if (check_generic_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
+	 error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
+       }
+    }  else if (isgzGenericCelFile(cur_file_name)){
+       if (check_gzgeneric_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
+	 error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
+       }
+    } else {  
+#if defined HAVE_ZLIB
+       error("Is %s really a CEL file? tried reading as text, gzipped text, binary, gzipped binary, command console and gzipped command console formats.\n",cur_file_name);
+#else
+       error("Is %s really a CEL file? tried reading as text and binary. The gzipped text and binary formats are not supported on your platform.\n",cur_file_name);
+#endif
+     }
+}
+
+#ifdef USE_PTHREADS
+/* void * definitions are mandated by pthreads */
+void *readfile_group(void *data){
+   int num;
+   struct thread_data *args = (struct thread_data *) data;
+   SEXP Current_intensity;
+
+   args->CurintensityMatrix = Calloc(args->ref_dim_1*args->ref_dim_2, double);
+
+   for(num = args->i; num < args->i+args->chunk_size; num++){
+     readfile(args->filenames, args->CurintensityMatrix, args->pmMatrix, args->mmMatrix, num,
+              args->ref_dim_1, args->ref_dim_2, args->n_files, args->num_probes, args->cdfInfo, args->which_flag, args->verbose);
+   }
+   Free(args->CurintensityMatrix);
+}
+
+void *checkFileCDF_group(void *data){
+  int num;
+  struct thread_data *args = (struct thread_data *) data;
+
+  for(num = args->i; num < args->i+args->chunk_size; num++){
+    checkFileCDF(args->filenames, num, args->refCdfName, args->ref_dim_1, args->ref_dim_2);
+  }
+}
+#endif
+
+
 /*************************************************************************
  **
  ** SEXP read_probeintensities(SEXP filenames, SEXP compress,  SEXP rm_mask, 
@@ -4083,6 +4371,18 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   SEXP PM_intensity= R_NilValue, MM_intensity= R_NilValue, Current_intensity, names, dimnames;
   SEXP output_list,pmmmnames;
   
+#ifdef USE_PTHREADS
+  SEXP curIndices;
+
+  pthread_t *threads;
+  char *nthreads;
+  int returnCode, t, chunk_size, num_threads = 1;
+  double chunk_size_d, chunk_tot_d;
+  pthread_attr_t attr;
+  struct thread_data *args;
+  void *status;
+#endif
+
   if (strcmp(CHAR(STRING_ELT(which,0)),"pm") == 0){
     which_flag= 1;
   } else if (strcmp(CHAR(STRING_ELT(which,0)),"mm") == 0){
@@ -4107,53 +4407,6 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   cdfName = CHAR(STRING_ELT(ref_cdfName,0));
   CurintensityMatrix = NUMERIC_POINTER(AS_NUMERIC(Current_intensity));
   
-  /* First check headers of cel files */
-
-  /* before we do any real reading check that all the files are of the same cdf type */
-
-  for (i =0; i < n_files; i++){
-    cur_file_name = CHAR(STRING_ELT(filenames,i));
-    if (isTextCelFile(cur_file_name)){
-      if (check_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
-	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
-      }
-    } else if (isgzTextCelFile(cur_file_name)){
-#if defined HAVE_ZLIB
-      if (check_gzcel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
-	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
-      }
-      
-#else
-       error("Compress option not supported on your platform\n");
-#endif
-    } else if (isBinaryCelFile(cur_file_name)){
-      
-      if (check_binary_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
-	error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
-       }
-    }  else if (isgzBinaryCelFile(cur_file_name)){
-      
-       if (check_gzbinary_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
-	 error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
-       }
-    }  else if (isGenericCelFile(cur_file_name)){
-       if (check_generic_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
-	 error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
-       }
-    }  else if (isgzGenericCelFile(cur_file_name)){
-       if (check_gzgeneric_cel_file(cur_file_name,cdfName, ref_dim_1, ref_dim_2)){
-	 error("File %s does not seem to have correct dimension or is not of %s chip type.", cur_file_name, cdfName);
-       }
-    } else {  
-#if defined HAVE_ZLIB
-       error("Is %s really a CEL file? tried reading as text, gzipped text, binary, gzipped binary, command console and gzipped command console formats.\n",cur_file_name);
-#else
-       error("Is %s really a CEL file? tried reading as text and binary. The gzipped text and binary formats are not supported on your platform.\n",cur_file_name);
-#endif
-     }
-  }
-  
-
   /* Lets count how many probes we have */
   
   num_probes = CountCDFProbes(cdfInfo);
@@ -4175,52 +4428,145 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   if (which_flag > 0){
     mmMatrix = NULL;
   }
+
+  /* Setup the data required for threading */
+#ifdef USE_PTHREADS
+  nthreads = getenv(THREADS_ENV_VAR);
+  if(nthreads != NULL){
+    num_threads = atoi(nthreads);
+    if(num_threads <= 0){
+      error("The number of threads (enviroment variable %s) must be a positive integer, but the specified value was %s", THREADS_ENV_VAR, nthreads);
+    }
+  }
+  threads = (pthread_t *) Calloc(num_threads, pthread_t);
+
+  /* Initialize and set thread detached attribute */
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+  /* this code works out how many threads to use and allocates ranges of files to each thread */
+  /* The aim is to try to be as fair as possible in dividing up the matrix */
+  /* A special cases to be aware of: 
+    1) Number of files is less than the number of threads
+  */
+  if (num_threads < n_files){
+    chunk_size = n_files/num_threads;
+    chunk_size_d = ((double) n_files)/((double) num_threads);
+  } else {
+    chunk_size = 1;
+    chunk_size_d = 1;
+  }
+
+  if(chunk_size == 0){
+    chunk_size = 1;
+  }
+
+  n_probesets = GET_LENGTH(cdfInfo);
+  n_probes = (int *) Calloc(n_probesets, int);
+  cur_indexes = (double **) Calloc(n_probesets, double *);
+
+  /* Create the data structures required for each thread to independently
+     run the checkFileCDF and readfile functions */
+  for(i=0; i < n_probesets; i++){
+    curIndices = VECTOR_ELT(cdfInfo,i);
+    n_probes[i] = INTEGER(getAttrib(curIndices,R_DimSymbol))[0];
+    cur_indexes[i] = (double *) Calloc(n_probes[i]*2, double);
+    memcpy(cur_indexes[i], NUMERIC_POINTER(AS_NUMERIC(curIndices)), sizeof(double)*n_probes[i]*2);
+  }
+  args = (struct thread_data *) Calloc((n_files < num_threads ? n_files : num_threads), struct thread_data);
+
+  args[0].filenames = filenames;
+  args[0].pmMatrix = pmMatrix;
+  args[0].mmMatrix = mmMatrix;
+  args[0].ref_dim_1 = ref_dim_1;
+  args[0].ref_dim_2 = ref_dim_2,
+  args[0].n_files = n_files;
+  args[0].num_probes = num_probes;
+  args[0].cdfInfo = cdfInfo;
+  args[0].refCdfName = cdfName;
+  args[0].which_flag = which_flag;
+  args[0].verbose = verbose;
+
+  pthread_mutex_init(&mutex_R, NULL);
+  t = 0; /* t = number of actual threads doing work */
+  chunk_tot_d = 0;
+  for (i=0; floor(chunk_tot_d+0.00001) < n_files; i+=chunk_size){
+     if(t != 0){
+       memcpy(&(args[t]), &(args[0]), sizeof(struct thread_data));
+     }
+
+     args[t].i = i;
+     /* take care of distribution of the remainder (when #chips%#threads != 0) */
+     chunk_tot_d += chunk_size_d;
+     // Add 0.00001 in case there was a rounding issue with the division
+     if(i+chunk_size < floor(chunk_tot_d+0.00001)){
+       args[t].chunk_size = chunk_size+1;
+       i++;
+     }
+     else{
+       args[t].chunk_size = chunk_size;
+     }
+     t++;
+  }
+
+  /* First check headers of cel files */
+  /* before we do any real reading check that all the files are of the same cdf type */
+  for (i =0; i < t; i++){
+     returnCode = pthread_create(&threads[i], &attr, checkFileCDF_group, (void *) &(args[i]));
+     if (returnCode){
+         error("ERROR; return code from pthread_create() is %d\n", returnCode);
+     }
+  }
+  /* Wait for the other threads */
+  for(i = 0; i < t; i++){
+      returnCode = pthread_join(threads[i], &status);
+      if (returnCode){
+         error("ERROR; return code from pthread_join(thread #%d) is %d, exit status for thread was %d\n", 
+	       i, returnCode, *((int *) status));
+      }
+  }
+#else
+  /* First check headers of cel files */
+  /* before we do any real reading check that all the files are of the same cdf type */
+  for (i =0; i < n_files; i++){
+    checkFileCDF(filenames, i, cdfName, ref_dim_1, ref_dim_2);
+  }
+#endif
   
   /* now lets read them in and store them in the PM and MM matrices */
 
-  
-  
-  for (i=0; i < n_files; i++){ 
-    cur_file_name = CHAR(STRING_ELT(filenames,i));
-    if (asInteger(verbose)){
-      Rprintf("Reading in : %s\n",cur_file_name);
-    }
-    if (isTextCelFile(cur_file_name)){
-      if(read_cel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1) !=0){
-	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
-      }
-      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
-    } else if (isgzTextCelFile(cur_file_name)){
-#if defined HAVE_ZLIB
-      if(read_gzcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1)!=0){
-	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
-      }
-      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
-#else
-      error("Compress option not supported on your platform\n");
-#endif
-    } else if (isBinaryCelFile(cur_file_name)){
-      read_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
-      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
-    } else if (isgzBinaryCelFile(cur_file_name)){
-      gzread_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
-      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
-    } else if (isGenericCelFile(cur_file_name)){
-      read_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
-      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
-    }  else if (isgzGenericCelFile(cur_file_name)){
-      gzread_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
-      storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
-    } else {
-#if defined HAVE_ZLIB
-       error("Is %s really a CEL file? tried reading as text, gzipped text, binary, gzipped binary, command console and gzipped command console formats.\n",cur_file_name);
-#else
-       error("Is %s really a CEL file? tried reading as text and binary. The gzipped text and binary formats are not supported on your platform.\n",cur_file_name);
-#endif
-    }
-    
+#ifdef USE_PTHREADS
+  for(int i = 0; i < t; i++){
+     returnCode = pthread_create(&threads[i], &attr, readfile_group, (void *) &(args[i]));
+     if (returnCode){
+         error("ERROR; return code from pthread_create() is %d\n", returnCode);
+     }
   }
-  
+  /* Free attribute and wait for the other threads */
+  for(i = 0; i < t; i++){
+      returnCode = pthread_join(threads[i], &status);
+      if (returnCode){
+         error("ERROR; return code from pthread_join(thread #%d) is %d, exit status for thread was %d\n", 
+	       i, returnCode, *((int *) status));
+      }
+  }
+  Free(args);
+  Free(threads);
+  pthread_attr_destroy(&attr);
+  pthread_mutex_destroy(&mutex_R);
+
+  /* clear the old index data */
+  Free(n_probes);
+  for(i = 0; i < n_probesets; i++){
+    Free(cur_indexes[i]);
+  }
+  Free(cur_indexes);
+#else
+  for (i=0; i < n_files; i++){ 
+    readfile(filenames, CurintensityMatrix, pmMatrix, mmMatrix, i, ref_dim_1, ref_dim_2, 
+	     n_files, num_probes, cdfInfo, which_flag, verbose);
+  }
+#endif
 
   PROTECT(dimnames = allocVector(VECSXP,2));
   PROTECT(names = allocVector(STRSXP,n_files));
@@ -4266,14 +4612,6 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   return(output_list);
 
 }
-
-
-
-
-
-
-
-
 
 /************************************************************************
  **
