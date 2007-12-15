@@ -704,7 +704,7 @@ void initialize_pgf_header(pgf_headers *header){
  ***************************************************************/
 
 
-void determine_order_header0(char *header_str, header_0 *header0){
+static void determine_order_header0(char *header_str, header_0 *header0){
 
   tokenset *cur_tokenset;
   int i;
@@ -734,7 +734,7 @@ void determine_order_header0(char *header_str, header_0 *header0){
 
 }
 
-void determine_order_header1(char *header_str, header_1 *header1){
+static void determine_order_header1(char *header_str, header_1 *header1){
 
   tokenset *cur_tokenset;
   int i;
@@ -764,7 +764,7 @@ void determine_order_header1(char *header_str, header_1 *header1){
 
 }
 
-void determine_order_header2(char *header_str, header_2 *header2){
+static void determine_order_header2(char *header_str, header_2 *header2){
 
   tokenset *cur_tokenset;
   int i;
@@ -1145,15 +1145,8 @@ void read_pgf_probesets(FILE *cur_file, char *buffer, probeset_list_header *prob
     } else {
        insert_level0(buffer, probeset_list, header->header0);
     }
-    
+  }
 }
-
-
-}
-
-
-
-
 
 
 void read_pgf_file(char **filename){
