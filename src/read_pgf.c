@@ -10,8 +10,8 @@
  **
  ** History
  ** Nov 4, 2007 - Initial version
- **
- **
+ ** Dec 17. 2007 - add function for counting number of each type of probeset
+ ** Dec 31, 2007 - add function which checks that all required fields are present
  **
  **
  ** 
@@ -806,6 +806,67 @@ static void determine_order_header2(char *header_str, header_2 *header2){
 
 
 /****************************************************************
+ **
+ ** Validate that required headers are present in file. 
+ **
+ ** Return 0 if an expected header is not present.
+ ** Returns 1 otherwise (ie everything looks fine)
+ **
+ ***************************************************************/
+
+static int validate_pgf_header(pgf_headers *header){
+
+
+  /* check that required headers are all there (have been read) */
+  if (header->chip_type == NULL)
+    return 0;
+
+  if (header->lib_set_name == NULL)
+    return 0;
+
+  if (header->lib_set_version == NULL)
+    return 0;
+
+  if (header->pgf_format_version == NULL)
+    return 0;
+
+  if (header->header0_str == NULL)
+    return 0;
+
+  if (header->header1_str == NULL)
+    return 0;
+ 
+  if (header->header2_str == NULL)
+    return 0;
+      
+
+  /* Check that format version is 1.0 (only supported version) */
+
+  if (strcmp( header->pgf_format_version,"1.0") != 0){
+    return 0;
+  }
+
+  /* check that header0, header1, header2 (ie the three levels of headers) have required fields */
+
+  if (header->header0->probeset_id == -1)
+    return 0;
+
+  if (header->header1->atom_id == -1)
+    return 0;
+
+  if (header->header2->probe_id == -1)
+    return 0;
+
+  if (header->header2->type == -1)
+    return 0;
+
+  return 1;
+}
+
+
+
+
+/****************************************************************
  ****************************************************************
  **
  ** Code for actually reading from the file
@@ -826,8 +887,11 @@ static FILE *open_pgf_file(const char *filename){
 
 }
 
-
-
+/****************************************************************
+ **
+ ** Reading the header
+ **
+ ***************************************************************/
 
 void read_pgf_header(FILE *cur_file, char *buffer, pgf_headers *header){
 
@@ -922,6 +986,12 @@ void read_pgf_header(FILE *cur_file, char *buffer, pgf_headers *header){
  
 }
 
+
+/****************************************************************
+ **
+ ** Reading the probesets/body of the file
+ **
+ ***************************************************************/
 
 void initialize_probeset_list(probeset_list_header *probeset_list){
 
@@ -1148,14 +1218,105 @@ void read_pgf_probesets(FILE *cur_file, char *buffer, probeset_list_header *prob
   }
 }
 
+/****************************************************************
+ ****************************************************************
+ **
+ ** Funtionality for counting probeset types
+ **
+ ****************************************************************
+ ****************************************************************/
+
+typedef struct{
+  char *type;
+  int count;
+} probeset_type_list;
+
+
+
+probeset_type_list *pgf_count_probeset_types(pgf_file *my_pgf, int *number){
+
+
+  probeset_type_list *my_type_list = Calloc(1,probeset_type_list);
+
+  char *cur_type;
+  int n;
+
+  /* traverse the probesets. each time examining the probeset type */
+
+
+  if (my_pgf->probesets != NULL){
+    
+    if (my_pgf->probesets->first != NULL){
+      
+      my_pgf->probesets->current = my_pgf->probesets->first;
+      
+      if (my_pgf->probesets->current->type == NULL){
+	my_type_list[0].type = Calloc(5,char);
+	strcpy(my_type_list[0].type,"none");
+	
+      } else {
+	my_type_list[0].type = Calloc(strlen(my_pgf->probesets->current->type) + 1,char);
+	strcpy(my_type_list[0].type,my_pgf->probesets->current->type);
+      }
+      my_type_list[0].count = 1;
+      *number = 1; /* number of different types seen */
+      while (my_pgf->probesets->current->next != NULL){
+	my_pgf->probesets->current= my_pgf->probesets->current->next;
+	if (my_pgf->probesets->current->type == NULL){
+	  cur_type = "none";
+	} else {
+	  cur_type = my_pgf->probesets->current->type;
+	}
+	n = 0;
+	while (n < *number){
+	  if (strcmp(cur_type,my_type_list[n].type) == 0){
+	    break;
+	  }
+	  n++;
+	}
+	if (n == *number){
+	  my_type_list = Realloc(my_type_list,(n+1),probeset_type_list);
+	  my_type_list[n].type = Calloc(strlen(cur_type) + 1,char);
+	  strcpy(my_type_list[n].type,cur_type);
+	  my_type_list[n].count = 1;
+	  *number = *number + 1;
+  	} else {
+	  my_type_list[n].count++;
+	}
+      }
+    }
+  }
+  return  my_type_list;
+}
+
+
+void dealloc_probeset_type_list(probeset_type_list *my_type_list, int length){
+
+  int i;
+
+  for (i = 0; i < length; i++){
+    Free(my_type_list[i].type);
+  }
+
+  Free(my_type_list);
+
+}
+
+/****************************************************************
+ ****************************************************************
+ **
+ ** Functionality for testing the parsers (from R .C interface)
+ **
+ ****************************************************************
+ ****************************************************************/
 
 void read_pgf_file(char **filename){
 
   FILE *cur_file;
   pgf_file my_pgf;
   char *buffer = Calloc(1024, char);
-
-
+  probeset_type_list *my_probeset_types;
+  int ntypes;
   
   cur_file = open_pgf_file(filename[0]);
   
@@ -1163,9 +1324,11 @@ void read_pgf_file(char **filename){
   my_pgf.probesets = Calloc(1, probeset_list_header);
 
   read_pgf_header(cur_file,buffer,my_pgf.headers);
-  
-  read_pgf_probesets(cur_file, buffer, my_pgf.probesets, my_pgf.headers);
-
+  if (validate_pgf_header(my_pgf.headers)){
+    read_pgf_probesets(cur_file, buffer, my_pgf.probesets, my_pgf.headers);
+    my_probeset_types = pgf_count_probeset_types(&my_pgf, &ntypes);
+    dealloc_probeset_type_list(my_probeset_types, ntypes);
+  }
   Free(buffer);
   dealloc_pgf_file(&my_pgf);
   fclose(cur_file);
