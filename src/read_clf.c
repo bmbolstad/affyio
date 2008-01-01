@@ -10,7 +10,7 @@
  **
  ** History
  ** Dec 14, 2007 - Initial version
- **
+ ** Dec 31, 2007 - Add function for checking that required headers were found
  **
  **
  **
@@ -466,6 +466,61 @@ static void determine_order_header0(char *header_str, header_0 *header0){
 
 /****************************************************************
  **
+ ** Validate that required headers are present in file. 
+ **
+ ** Return 0 if an expected header is not present.
+ ** Returns 1 otherwise (ie everything looks fine)
+ **
+ ***************************************************************/
+
+static int validate_clf_header(clf_headers *header){
+
+
+  /* check that required headers are all there (have been read) */
+  if (header->chip_type == NULL)
+    return 0;
+
+  if (header->lib_set_name == NULL)
+    return 0;
+
+  if (header->lib_set_version == NULL)
+    return 0;
+
+  if (header->clf_format_version == NULL)
+    return 0;
+
+  if (header->header0_str == NULL)
+    return 0;
+      
+  if (header->rows == -1)
+    return 0;
+  
+  if (header->cols == -1)
+    return 0;
+
+  /* Check that format version is 1.0 (only supported version) */
+
+  if (strcmp( header->clf_format_version,"1.0") != 0){
+    return 0;
+  }
+
+  /* check that header0, header1, header2 (ie the three levels of headers) have required fields */
+
+  if (header->header0->probe_id == -1)
+    return 0;
+
+  if (header->header0->x == -1)
+    return 0;
+
+  if (header->header0->y == -1)
+    return 0;
+
+
+  return 1;
+}
+
+/****************************************************************
+ **
  ** static FILE *open_clf_file(const char *filename)
  **
  ** Open the CLF to begin reading from it.
@@ -734,8 +789,8 @@ void read_clf_file(char **filename){
   my_clf.data = Calloc(1, clf_data);
 
   read_clf_header(cur_file,buffer,my_clf.headers);
-  
-  read_clf_data(cur_file, buffer, my_clf.data, my_clf.headers);
+  if (validate_clf_header(my_clf.headers))
+    read_clf_data(cur_file, buffer, my_clf.data, my_clf.headers);
 
   Free(buffer);
   dealloc_clf_file(&my_clf);
