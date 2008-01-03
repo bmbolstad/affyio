@@ -4,14 +4,14 @@
  ** 
  ** Aim: implement parsing of CLF format files
  **
- ** Copyright (C) 2007    B. M. Bolstad
+ ** Copyright (C) 2007-2008    B. M. Bolstad
  **
  ** Created on Nov 4, 2007
  **
  ** History
  ** Dec 14, 2007 - Initial version
  ** Dec 31, 2007 - Add function for checking that required headers were found
- **
+ ** Jan 2, 2008 - port x,y to probe_id and probe_id to x,y functions from RMAExpress parsers
  **
  **
  ** 
@@ -768,6 +768,76 @@ void dealloc_clf_file(clf_file* my_clf){
 
 }
 
+/**********************************************************************
+ ***
+ *** A function for getting the probe_id for a given x,y
+ ***
+ ***
+ *********************************************************************/
+
+void clf_get_probe_id(clf_file *clf, int *probe_id, int x, int y){
+ 
+  if (clf->headers->sequential > -1){
+    /* Check if order is "col_major" or "row_major" */
+
+    if (strcmp(clf->headers->order,"col_major") == 0){
+      *probe_id = y*clf->headers->cols + x + clf->headers->sequential;
+    } else if (strcmp(clf->headers->order,"row_major") == 0){
+      *probe_id = x*clf->headers->rows + y + clf->headers->sequential;
+    } else {
+      *probe_id = -1;  /* ie missing */
+    }
+
+  } else {
+
+    *probe_id = clf->data->probe_id[y*clf->headers->rows + x];
+  }
+}
+
+/**********************************************************************
+ ***
+ *** A function for getting the x , y for a given probe_id
+ ***
+ ***
+ *********************************************************************/
+
+void clf_get_x_y(clf_file *clf, int probe_id, int *x, int *y){
+  int ind;
+
+  if (clf->headers->sequential > -1){
+    /* Check if order is "col_major" or "row_major" */
+
+    if (strcmp(clf->headers->order,"col_major") == 0){
+      ind = (probe_id - clf->headers->sequential); 
+      *x = ind%clf->headers->cols;
+      *y = ind/clf->headers->cols;
+    } else if (strcmp(clf->headers->order,"row_major") == 0){
+      ind = (probe_id - clf->headers->sequential); 
+      *x = ind/clf->headers->rows;
+      *y = ind%clf->headers->rows;
+    } else {
+      *x = -1;  /* ie missing */
+      *y = -1;
+    }
+  } else {
+    /* Linear Search (this should be improved for routine use) */
+    ind = 0;
+
+    while (ind < (clf->headers->cols*clf->headers->rows)){
+      if (clf->data->probe_id[ind] == probe_id){
+	break;
+      }
+      ind++;
+    }
+
+    if (ind == (clf->headers->cols*clf->headers->rows)){
+      *x = -1; *y = -1;
+    } else {
+      *x = ind/clf->headers->rows;
+      *y = ind%clf->headers->rows;
+    }
+  }
+}
 
 /*
  * Note this function is only for testing purposes. It provides no methodology for accessing anything
