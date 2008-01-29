@@ -20,6 +20,7 @@
  ** Aug 25, 2007 - Initial version
  ** Sep 9, 2007  - fix some compiler warnings.
  ** Oct 25, 2007 - fix error in decode_UINT8_t
+ ** Jan 28, 2008 - fix read_generic_data_group/gzread_generic_data_group. Change bitwise OR (|) to logical OR (||)
  **
  *************************************************************/
 
@@ -169,8 +170,8 @@ static int fread_AWSTRING(AWSTRING *destination, FILE *instream){
 
 static int fread_nvt_triplet(nvt_triplet *destination, FILE *instream){
 
-  if (!(fread_AWSTRING(&(destination->name),instream)) |
-      !(fread_ASTRING(&(destination->value),instream)) |
+  if (!(fread_AWSTRING(&(destination->name),instream)) ||
+      !(fread_ASTRING(&(destination->value),instream)) ||
       !fread_AWSTRING(&(destination->type),instream)){
     return 0;
   }
@@ -180,8 +181,8 @@ static int fread_nvt_triplet(nvt_triplet *destination, FILE *instream){
 
 static int fread_nvts_triplet(col_nvts_triplet *destination, FILE *instream){
 
-  if (!(fread_AWSTRING(&(destination->name),instream)) |
-      !(fread_be_uchar(&(destination->type), 1, instream)) |
+  if (!(fread_AWSTRING(&(destination->name),instream)) ||
+      !(fread_be_uchar(&(destination->type), 1, instream)) ||
       !(fread_be_int32(&(destination->size), 1, instream))){
     return 0;
   }
@@ -525,9 +526,9 @@ int read_generic_data_header(generic_data_header *data_header, FILE *instream){
   generic_data_header *temp_header;
   
 
-  if (!fread_ASTRING(&(data_header->data_type_id), instream) |
-      !fread_ASTRING(&(data_header->unique_file_id), instream) |
-      !fread_AWSTRING(&(data_header->Date_time), instream) |
+  if (!fread_ASTRING(&(data_header->data_type_id), instream) ||
+      !fread_ASTRING(&(data_header->unique_file_id), instream) ||
+      !fread_AWSTRING(&(data_header->Date_time), instream) ||
       !fread_AWSTRING(&(data_header->locale),instream)){
     return 0;
   }
@@ -567,10 +568,10 @@ int read_generic_data_header(generic_data_header *data_header, FILE *instream){
 
 int read_generic_data_group(generic_data_group *data_group, FILE *instream){
   
-  if (!fread_be_uint32(&(data_group->file_position_nextgroup),1,instream) |
-      fread_be_uint32(&(data_group->file_position_first_data),1,instream) |
-      fread_be_int32(&(data_group->n_data_sets),1,instream) |
-      fread_AWSTRING(&(data_group->data_group_name), instream)){
+  if (!fread_be_uint32(&(data_group->file_position_nextgroup),1,instream) ||
+      !fread_be_uint32(&(data_group->file_position_first_data),1,instream) ||
+      !fread_be_int32(&(data_group->n_data_sets),1,instream) ||
+      !fread_AWSTRING(&(data_group->data_group_name), instream)){
     return 0;
   }
   return 1;
@@ -583,9 +584,9 @@ int read_generic_data_set(generic_data_set *data_set, FILE *instream){
 
   int i;
 
-  if (!fread_be_uint32(&(data_set->file_pos_first),1,instream) |
-      !fread_be_uint32(&(data_set->file_pos_last),1,instream) |
-      !fread_AWSTRING(&(data_set->data_set_name), instream) |
+  if (!fread_be_uint32(&(data_set->file_pos_first),1,instream) ||
+      !fread_be_uint32(&(data_set->file_pos_last),1,instream) ||
+      !fread_AWSTRING(&(data_set->data_set_name), instream) ||
       !fread_be_int32(&(data_set->n_name_type_value),1,instream)){
     return 0;
   }
@@ -760,8 +761,8 @@ static int gzread_AWSTRING(AWSTRING *destination, gzFile *instream){
 
 static int gzread_nvt_triplet(nvt_triplet *destination, gzFile *instream){
 
-  if (!(gzread_AWSTRING(&(destination->name),instream)) |
-      !(gzread_ASTRING(&(destination->value),instream)) |
+  if (!(gzread_AWSTRING(&(destination->name),instream)) ||
+      !(gzread_ASTRING(&(destination->value),instream)) ||
       !(gzread_AWSTRING(&(destination->type),instream))){
     return 0;
   }
@@ -772,8 +773,8 @@ static int gzread_nvt_triplet(nvt_triplet *destination, gzFile *instream){
 
 static int gzread_nvts_triplet(col_nvts_triplet *destination, gzFile *instream){
 
-  if (!(gzread_AWSTRING(&(destination->name),instream)) |
-      !(gzread_be_uchar(&(destination->type), 1, instream)) |
+  if (!(gzread_AWSTRING(&(destination->name),instream)) ||
+      !(gzread_be_uchar(&(destination->type), 1, instream)) ||
       !(gzread_be_int32(&(destination->size), 1, instream))){
     return 0;
   }
@@ -813,9 +814,9 @@ int gzread_generic_data_header(generic_data_header *data_header, gzFile *instrea
   
   int i;
 
-  if (!gzread_ASTRING(&(data_header->data_type_id), instream) |
-      !gzread_ASTRING(&(data_header->unique_file_id), instream) |
-      !gzread_AWSTRING(&(data_header->Date_time), instream) |
+  if (!gzread_ASTRING(&(data_header->data_type_id), instream) ||
+      !gzread_ASTRING(&(data_header->unique_file_id), instream) ||
+      !gzread_AWSTRING(&(data_header->Date_time), instream) ||
       !gzread_AWSTRING(&(data_header->locale),instream)){
     return 0;
   }
@@ -853,10 +854,10 @@ int gzread_generic_data_header(generic_data_header *data_header, gzFile *instrea
 
 int gzread_generic_data_group(generic_data_group *data_group, gzFile *instream){
   
-  if (!gzread_be_uint32(&(data_group->file_position_nextgroup),1,instream) |
-      gzread_be_uint32(&(data_group->file_position_first_data),1,instream) |
-      gzread_be_int32(&(data_group->n_data_sets),1,instream) |
-      gzread_AWSTRING(&(data_group->data_group_name), instream)){
+  if (!gzread_be_uint32(&(data_group->file_position_nextgroup),1,instream) ||
+      !gzread_be_uint32(&(data_group->file_position_first_data),1,instream) ||
+      !gzread_be_int32(&(data_group->n_data_sets),1,instream) ||
+      !gzread_AWSTRING(&(data_group->data_group_name), instream)){
     return 0;
   }
   return 1;
@@ -871,9 +872,9 @@ int gzread_generic_data_set(generic_data_set *data_set, gzFile *instream){
 
   int i;
 
-  if (!gzread_be_uint32(&(data_set->file_pos_first),1,instream) |
-      !gzread_be_uint32(&(data_set->file_pos_last),1,instream) |
-      !gzread_AWSTRING(&(data_set->data_set_name), instream) |
+  if (!gzread_be_uint32(&(data_set->file_pos_first),1,instream) ||
+      !gzread_be_uint32(&(data_set->file_pos_last),1,instream) ||
+      !gzread_AWSTRING(&(data_set->data_set_name), instream) ||
       !gzread_be_int32(&(data_set->n_name_type_value),1,instream)){
     return 0;
   }
