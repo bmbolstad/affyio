@@ -21,6 +21,7 @@
  ** Sep 9, 2007  - fix some compiler warnings.
  ** Oct 25, 2007 - fix error in decode_UINT8_t
  ** Jan 28, 2008 - fix read_generic_data_group/gzread_generic_data_group. Change bitwise OR (|) to logical OR (||)
+ ** Feb 11, 2008 - add #include for inttypes.h in situations that stdint.h might not exist
  **
  *************************************************************/
 
@@ -29,8 +30,12 @@
 #include <Rmath.h>
 #include <Rinternals.h>
 
-
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#elif HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #include <wchar.h>
 
 #include <stdio.h>

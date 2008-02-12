@@ -20,6 +20,7 @@
  ** Sept 3, 2007 -Initial version
  ** Sept 9, 2007 - fix compiler warnings
  ** Oct 11, 2007 - fix missing DatHeader problem
+ ** Feb 11, 2008 - add #include for inttypes.h in situations that stdint.h might not exist
  **
  *************************************************************/
 #include <R.h>
@@ -27,8 +28,11 @@
 #include <Rmath.h>
 #include <Rinternals.h>
 
-
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#elif HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 #include <wchar.h>
 
 #include <stdio.h>
