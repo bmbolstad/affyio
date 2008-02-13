@@ -21,6 +21,7 @@
  ** Sept 9, 2007 - fix compiler warnings
  ** Oct 11, 2007 - fix missing DatHeader problem
  ** Feb 11, 2008 - add #include for inttypes.h in situations that stdint.h might not exist
+ ** Feb 13, 2008 - fix problems with generic_get_detailed_header_info(), gzgeneric_get_detailed_header_info()
  **
  *************************************************************/
 #include <R.h>
@@ -258,29 +259,42 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-Percentile");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 11, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"CellMargin:",11);
   algorithm_paramsize+=11;
 
     
-  triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-CellMargin");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-CellMargin"); 
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 12, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"OutlierHigh:",12);
@@ -288,30 +302,41 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-OutlierHigh");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
+  
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 11, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"OutlierLow:",11);
   algorithm_paramsize+=11;
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-OutlierLow");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 11, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"AlgVersion:",11);
@@ -319,15 +344,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-AlgVersion");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 14, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"FixedCellSize:",14);
@@ -335,15 +365,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FixedCellSize");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 17, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"FullFeatureWidth:",17);
@@ -351,15 +386,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FullFeatureWidth");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-  
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+     Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 18, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"FullFeatureHeight:",18);
@@ -367,15 +407,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FullFeatureHeight");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 26, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"IgnoreOutliersInShiftRows:",26);
@@ -383,14 +428,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-IgnoreOutliersInShiftRows");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
 
@@ -400,14 +451,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FeatureExtraction");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
 
@@ -418,14 +475,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-PoolWidthExtenstion");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 20, char);
@@ -434,43 +497,62 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-PoolHeightExtension");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 12, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"UseSubgrids:",12);
   algorithm_paramsize+=12;
   
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-UseSubgrids");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-  
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 16, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"RandomizePixels:",16);
   algorithm_paramsize+=16;
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-RandomizePixels");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
 
@@ -480,14 +562,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-ErrorBasis");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 8, char);
@@ -496,14 +584,20 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-StdMult");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
   
@@ -1131,12 +1225,18 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
   
     
   triplet =  find_nvt(&data_header,"affymetrix-dat-header");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    wchartemp = decode_MIME_value(*triplet,cur_mime_type, wchartemp, &size);
+    header_info->DatHeader = Calloc(size + 1, char);
+    wcstombs(header_info->DatHeader, wchartemp, size);
+    Free(wchartemp);
+  } else {
+    header_info->DatHeader = Calloc(2, char);
+  }
 
-  wchartemp = decode_MIME_value(*triplet,cur_mime_type, wchartemp, &size);
-  header_info->DatHeader = Calloc(size + 1, char);
-  wcstombs(header_info->DatHeader, wchartemp, size);
-  Free(wchartemp);
+
 
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-name");
   cur_mime_type = determine_MIMETYPE(*triplet);
@@ -1158,29 +1258,42 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-Percentile");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 11, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"CellMargin:",11);
   algorithm_paramsize+=11;
 
     
-  triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-CellMargin");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-CellMargin"); 
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 12, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"OutlierHigh:",12);
@@ -1188,30 +1301,41 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-OutlierHigh");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
+  
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 11, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"OutlierLow:",11);
   algorithm_paramsize+=11;
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-OutlierLow");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 11, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"AlgVersion:",11);
@@ -1219,15 +1343,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-AlgVersion");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 14, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"FixedCellSize:",14);
@@ -1235,15 +1364,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FixedCellSize");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 17, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"FullFeatureWidth:",17);
@@ -1251,15 +1385,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FullFeatureWidth");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-  
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+     Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 18, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"FullFeatureHeight:",18);
@@ -1267,15 +1406,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FullFeatureHeight");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 26, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"IgnoreOutliersInShiftRows:",26);
@@ -1283,14 +1427,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-IgnoreOutliersInShiftRows");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
 
@@ -1300,14 +1450,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-FeatureExtraction");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
 
@@ -1318,14 +1474,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-PoolWidthExtenstion");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 20, char);
@@ -1334,43 +1496,62 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-PoolHeightExtension");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 12, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"UseSubgrids:",12);
   algorithm_paramsize+=12;
   
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-UseSubgrids");
-  cur_mime_type = determine_MIMETYPE(*triplet);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
-  
 
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 16, char);
   strncpy(&header_info->AlgorithmParameters[algorithm_paramsize],"RandomizePixels:",16);
   algorithm_paramsize+=16;
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-RandomizePixels");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
 
@@ -1380,14 +1561,20 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-ErrorBasis");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 8, char);
@@ -1396,26 +1583,28 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
 
     
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-param-StdMult");
-  cur_mime_type = determine_MIMETYPE(*triplet);
-
-  chartemp = decode_MIME_value(*triplet,cur_mime_type, chartemp, &size);
-  header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
-  strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
-  algorithm_paramsize+= size +1;
-  header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
-  Free(chartemp);
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    chartemp = decode_MIME_value_toASCII(*triplet,cur_mime_type, chartemp, &size);
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + size +1, char);
+    strncpy(&header_info->AlgorithmParameters[algorithm_paramsize], chartemp, size);
+    algorithm_paramsize+= size +1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+    Free(chartemp);
+  } else {
+    header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
+    algorithm_paramsize+= 1;
+    header_info->AlgorithmParameters[algorithm_paramsize-1]=';';
+  }
 
 
   
   header_info->AlgorithmParameters = Realloc(header_info->AlgorithmParameters, algorithm_paramsize + 1, char);
   header_info->AlgorithmParameters[algorithm_paramsize] ='\0';
-  
 
   Free_generic_data_header(&data_header);
   gzclose(infile);
-
-
-
 }
 
 

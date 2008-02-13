@@ -117,6 +117,7 @@ typedef enum{
 
 AffyMIMEtypes determine_MIMETYPE(nvt_triplet triplet);
 void *decode_MIME_value(nvt_triplet triplet, AffyMIMEtypes mimetype, void *result, int *size);
+char *decode_MIME_value_toASCII(nvt_triplet triplet, AffyMIMEtypes mimetype, void *result, int *size);
 
 nvt_triplet* find_nvt(generic_data_header *data_header,char *name);
 

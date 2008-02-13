@@ -22,6 +22,7 @@
  ** Oct 25, 2007 - fix error in decode_UINT8_t
  ** Jan 28, 2008 - fix read_generic_data_group/gzread_generic_data_group. Change bitwise OR (|) to logical OR (||)
  ** Feb 11, 2008 - add #include for inttypes.h in situations that stdint.h might not exist
+ ** Feb 13, 2008 - add decode_MIME_value_toASCII which takes any MIME and attempts to convert to a string
  **
  *************************************************************/
 
@@ -455,6 +456,119 @@ void *decode_MIME_value(nvt_triplet triplet, AffyMIMEtypes mimetype, void *resul
   }
   return 0;
 }
+
+
+
+char *decode_MIME_value_toASCII(nvt_triplet triplet, AffyMIMEtypes mimetype, void *result, int *size){
+
+  char *temp;
+  wchar_t *temp2;
+ 
+
+  float temp_float;
+  uint8_t temp_uint8;
+  uint16_t temp_uint16;
+  uint32_t temp_uint32;
+  int8_t temp_int8;
+  int16_t temp_int16;
+  int32_t temp_int32;
+
+  
+
+  if (mimetype == ASCIITEXT){
+    temp = decode_ASCII(triplet.value);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+
+  if (mimetype == PLAINTEXT){
+    temp2 = decode_TEXT(triplet.value);
+    temp = Calloc(triplet.value.len/2 +1, char);
+    wcstombs(temp,temp2,triplet.value.len/2 + 1);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+
+
+  /* 64 here is a bit hackish */
+  temp = Calloc(64,char);
+  if (mimetype == UINT8){
+    temp_uint8 = decode_UINT8_t(triplet.value);
+    sprintf(temp,"%u",temp_uint8);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+  
+  if (mimetype == INT8){ 
+    temp_int8 = decode_INT8_t(triplet.value);
+    sprintf(temp,"%d",temp_int8);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+  
+  if (mimetype == UINT16){ 
+    temp_uint16 = decode_UINT16_t(triplet.value);
+    sprintf(temp,"%u",temp_uint16);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+  
+  if (mimetype == INT16){ 
+    temp_int16 = decode_INT16_t(triplet.value);
+    sprintf(temp,"%d",temp_int16);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+ 
+  if (mimetype == UINT32){ 
+    temp_uint32 = decode_UINT32_t(triplet.value);
+    sprintf(temp,"%u",temp_uint32);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+  
+  if (mimetype == INT32){ 
+    temp_int32 = decode_INT32_t(triplet.value);
+    sprintf(temp,"%d",temp_int32);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+ 
+  if (mimetype == FLOAT32){ 
+    temp_float = decode_float32(triplet.value);
+    sprintf(temp,"%f",temp_float);
+    *size = strlen(temp);
+    result = temp;
+    return temp;
+  }
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
