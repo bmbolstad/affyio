@@ -6,6 +6,6 @@
 
 
 
-read.celfile <- function(filename){
- return(.Call("R_read_cel_file",filename,PACKAGE="affyio"))
+read.celfile <- function(filename,intensity.means.only=FALSE){
+ return(.Call("R_read_cel_file",filename,intensity.means.only,PACKAGE="affyio"))
 }

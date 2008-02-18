@@ -142,6 +142,7 @@
  ** Sep  6, 2007 - add support for generic (aka command console) format cel files
  ** Sep  7, 2007 - add support for gzipped generic (aka command console) format cel files
  ** Oct 28, 2007 - add pthread based multi-threaded read_probematrix this is based on a submission by Paul Gordon (U Calgary)
+ ** Feb 18, 2008 - R_read_cel_file now can be told to read only the mean intensities (rather than also the SD and npixels)
  **
  *************************************************************/
  
@@ -5084,7 +5085,7 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
  **
  ************************************************************************/
 
-CEL *read_cel_file(const char *filename){
+CEL *read_cel_file(const char *filename, int read_intensities_only){
   
   CEL *my_CEL;
 
@@ -5123,37 +5124,53 @@ CEL *read_cel_file(const char *filename){
   /*** Now lets allocate the space for intensities, stdev, npixels ****/
 
   my_CEL->intensities = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
-  my_CEL->stddev = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
-  my_CEL->npixels = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
-
+  if (!read_intensities_only){
+    my_CEL->stddev = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+    my_CEL->npixels = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+  } else {
+    my_CEL->stddev = NULL;
+    my_CEL->npixels = NULL;
+  }
   if (isTextCelFile(filename)){
     read_cel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
-    read_cel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-    read_cel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    if (!read_intensities_only){
+      read_cel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_cel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    }
   }  else if (isgzTextCelFile(filename)){
 #if defined HAVE_ZLIB
-    read_gzcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
-    read_gzcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-    read_gzcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    read_gzcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    if (!read_intensities_only){	
+      read_gzcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_gzcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    }
 #else
     error("Compress option not supported on your platform\n");
 #endif
   } else if (isBinaryCelFile(filename)){
-    read_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
-    read_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-    read_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    read_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    if (!read_intensities_only){
+      read_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    }
   } else if (isgzBinaryCelFile(filename)){
-    gzread_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
-    gzread_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-    gzread_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    gzread_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    if (!read_intensities_only){	
+      gzread_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      gzread_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    }
   } else if (isGenericCelFile(filename)){
-    read_genericcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
-    read_genericcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-    read_genericcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    read_genericcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    if (!read_intensities_only){	
+      read_genericcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_genericcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    }
   } else if (isgzGenericCelFile(filename)){
-    gzread_genericcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
-    gzread_genericcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-    gzread_genericcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    gzread_genericcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    if (!read_intensities_only){	
+      gzread_genericcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      gzread_genericcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    }
   } else {
 #if defined HAVE_ZLIB
     error("Is %s really a CEL file? tried reading as text, gzipped text, binary and gzipped binary\n",filename);
@@ -5206,7 +5223,7 @@ CEL *read_cel_file(const char *filename){
 
 
 
-SEXP R_read_cel_file(SEXP filename){
+SEXP R_read_cel_file(SEXP filename, SEXP intensities_mean_only){
 
   SEXP theCEL;
   SEXP theCEL_names;
@@ -5230,10 +5247,14 @@ SEXP R_read_cel_file(SEXP filename){
 
   int i;
 
+  int read_intensities_only;
 
   const char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
 
-  CEL *myCEL =read_cel_file(cur_file_name);
+
+  read_intensities_only = INTEGER_POINTER(intensities_mean_only)[0];
+
+  CEL *myCEL =read_cel_file(cur_file_name,read_intensities_only);
 
 
   PROTECT(theCEL = allocVector(VECSXP,4));
@@ -5311,21 +5332,32 @@ SEXP R_read_cel_file(SEXP filename){
   
 
   PROTECT(INTENSITIES_VALUES = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
-  PROTECT(INTENSITIES_STDDEV = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
-  PROTECT(INTENSITIES_NPIXELS = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
-  
+  if (!read_intensities_only){
+    PROTECT(INTENSITIES_STDDEV = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+    PROTECT(INTENSITIES_NPIXELS = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+  } else {
+    INTENSITIES_STDDEV = R_NilValue;
+    INTENSITIES_NPIXELS = R_NilValue;
+  }
   for (i =0; i < (myCEL->header.cols)*(myCEL->header.rows); i++){
     REAL(INTENSITIES_VALUES)[i] = myCEL->intensities[i];
-    REAL(INTENSITIES_STDDEV)[i] = myCEL->stddev[i];
-    REAL(INTENSITIES_NPIXELS)[i] = myCEL->npixels[i];
+    if (!read_intensities_only){
+      REAL(INTENSITIES_STDDEV)[i] = myCEL->stddev[i];
+      REAL(INTENSITIES_NPIXELS)[i] = myCEL->npixels[i];
+    }
   }
 
 
   SET_VECTOR_ELT(INTENSITIES,0,INTENSITIES_VALUES);
   SET_VECTOR_ELT(INTENSITIES,1,INTENSITIES_STDDEV);
   SET_VECTOR_ELT(INTENSITIES,2,INTENSITIES_NPIXELS);
-  UNPROTECT(3);
-  
+
+  if (!read_intensities_only){
+    UNPROTECT(3);
+  } else {
+    UNPROTECT(1);
+  }
+
   PROTECT(INTENSITIESnames=allocVector(STRSXP,3));
   SET_STRING_ELT(INTENSITIESnames,0,mkChar("MEAN"));
   SET_STRING_ELT(INTENSITIESnames,1,mkChar("STDEV"));
