@@ -143,7 +143,8 @@
  ** Sep  7, 2007 - add support for gzipped generic (aka command console) format cel files
  ** Oct 28, 2007 - add pthread based multi-threaded read_probematrix this is based on a submission by Paul Gordon (U Calgary)
  ** Feb 18, 2008 - R_read_cel_file now can be told to read only the mean intensities (rather than also the SD and npixels)
- **
+ ** Mar  6, 2008 - Add additional CEL file corruption checking.
+ ** 
  *************************************************************/
  
 #include <R.h>
@@ -663,6 +664,17 @@ static int read_cel_file_intensities(const char *filename, double *intensity, in
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
+
+    if (cur_x < 0 || cur_x >= chip_dim_rows){
+      error("It appears that the file %s is corrupted.",filename);
+      return 1;
+    }
+    if (cur_y < 0 || cur_y >= chip_dim_rows){
+      error("It appears that the file %s is corrupted.",filename);
+      return 1;
+    }
+
+    
 
     cur_mean = atof(current_token);
 
@@ -1549,6 +1561,15 @@ static int read_gzcel_file_intensities(const char *filename, double *intensity, 
     if (current_token == NULL){
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
+    }
+ 
+    if (cur_x < 0 || cur_x >= chip_dim_rows){
+      error("It appears that the file %s is corrupted.",filename);
+      return 1;
+    }
+    if (cur_y < 0 || cur_y >= chip_dim_rows){
+      error("It appears that the file %s is corrupted.",filename);
+      return 1;
     }
 
     cur_mean = atof(current_token);
@@ -2815,6 +2836,12 @@ static int read_binarycel_file_intensities(const char *filename, double *intensi
 	Free(cur_intensity);
 	return 1;
       }
+      if (cur_intensity->cur_intens < 0 || cur_intensity->cur_intens > 65536 || isnan(cur_intensity->cur_intens)){
+	fclose(my_header->infile);
+	delete_binary_header(my_header);
+	Free(cur_intensity);
+	return 1;
+      }
       fread_err=0;
       intensity[chip_num*my_header->n_cells + cur_index] = (double )cur_intensity->cur_intens;
     }
@@ -3542,6 +3569,12 @@ static int gzread_binarycel_file_intensities(const char *filename, double *inten
       fread_err+= gzread_int16(&(cur_intensity->npixels),1,my_header->gzinfile);
       if (fread_err < 3){
 	gzclose(my_header->gzinfile);
+	delete_binary_header(my_header);
+	Free(cur_intensity);
+	return 1;
+      }     
+      if (cur_intensity->cur_intens < 0 || cur_intensity->cur_intens > 65536 || isnan(cur_intensity->cur_intens)){
+	gzclose(my_header->infile);
 	delete_binary_header(my_header);
 	Free(cur_intensity);
 	return 1;
@@ -5148,13 +5181,17 @@ CEL *read_cel_file(const char *filename, int read_intensities_only){
     error("Compress option not supported on your platform\n");
 #endif
   } else if (isBinaryCelFile(filename)){
-    read_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+    if (read_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols)){
+      error("It appears that the file %s is corrupted.",filename);
+    }
     if (!read_intensities_only){
       read_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
       read_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
     }
   } else if (isgzBinaryCelFile(filename)){
-    gzread_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    if (gzread_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols)){
+      error("It appears that the file %s is corrupted.",filename);
+    }  
     if (!read_intensities_only){	
       gzread_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
       gzread_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
