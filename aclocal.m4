@@ -26,7 +26,7 @@ int main() {
   ])
   if test "${have_zlib}" = yes; then
     AC_DEFINE(HAVE_ZLIB)
-    LIBS='-lRzlib '$LIBS
+    LIBS='-lz '$LIBS
   fi
 ])
 
