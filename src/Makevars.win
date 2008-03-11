@@ -1,2 +1,2 @@
-PKG_CPPFLAGS += -I$(RHOME)/src/extra/zlib -DHAVE_ZLIB
-PKG_LIBS +=  -L$(RHOME)/src/extra/zlib -lz
+PKG_CPPFLAGS += -DHAVE_ZLIB
+PKG_LIBS += -lRzlib
