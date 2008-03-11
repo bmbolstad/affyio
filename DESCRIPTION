@@ -1,5 +1,5 @@
 Package: affyio
-Version: 1.7.14
+Version: 1.7.15
 Title: Tools for parsing Affymetrix data files
 Author: Benjamin Milo Bolstad <bmb@bmbolstad.com>
 Maintainer: Benjamin Milo Bolstad <bmb@bmbolstad.com>
@@ -8,4 +8,3 @@ Description: Routines for parsing Affymetrix data files based upon file format i
 License: LGPL version 2 or newer
 biocViews: Microarray, DataImport, Infrastructure
 LazyLoad: yes
-
