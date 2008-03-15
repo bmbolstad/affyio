@@ -15,6 +15,7 @@
  ** June 12, 2006 - fix naming vector length issue.
  ** June 12, 2007 - much wailing and grinding of teeth, but finally a fix for reading version number right.
  ** Aug 25, 2007 - Move file reading functions to centralized location
+ ** Mar 14, 2008 - Fix reading of version number for big endian platforms
  **
  *******************************************************************/
 
@@ -95,35 +96,14 @@ static SEXP ReadBPMAPHeader(FILE *infile){
   */
 
  
-
-#ifdef WORDS_BIGENDIAN
-  /* swap, cast to integer, swap bytes and cast back to float */
-  fread_be_float32(&version_number,1,infile);
-  swap_float_4(&version_number);
-  version_number_int = (int)version_number;
-  
-  
-  version_number_int=(((version_number_int>>24)&0xff) | ((version_number_int&0xff)<<24) |
-		       ((version_number_int>>8)&0xff00) | ((version_number_int&0xff00)<<8));
- 
-  version_number = (float)version_number_int;
- 
-#else
   /* cast to integer, swap bytes, cast to float */ 
   /* fread_be_float32(&version_number,1,infile); */
   fread_float32(&version_number,1,infile);
   swap_float_4(&version_number);
-  /* version_number = (float) ntohl((unsigned int)version_number);
-  //fread_uint32(&unsigned_version_number_int,1,infile);
-
-  // swap_uint_32(&unsigned_version_number_int);
-  
-  //memcpy(&version_number,&unsigned_version_number_int, sizeof(float)); */
-
-
 
   new_version_number = (double)version_number;
   /*  // Rprintf("A %f\n",version_number);*/ 
+
   if ((version_number <=0.5) || (version_number > 3.5)){
     /* //  Rprintf("Rereading\n"); */
     fseek(infile,-sizeof(float),SEEK_CUR);
@@ -131,7 +111,6 @@ static SEXP ReadBPMAPHeader(FILE *infile){
     memcpy(&version_number,&unsigned_version_number_int, sizeof(float));
     new_version_number = (double)version_number;
   }
-#endif
 
   fread_be_uint32(&n_seq,1,infile);
   
