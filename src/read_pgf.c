@@ -12,6 +12,7 @@
  ** Nov 4, 2007 - Initial version
  ** Dec 17. 2007 - add function for counting number of each type of probeset
  ** Dec 31, 2007 - add function which checks that all required fields are present
+ ** Mar 18, 2008 - fix error in read_pgf_header function
  **
  **
  ** 
@@ -976,7 +977,7 @@ void read_pgf_header(FILE *cur_file, char *buffer, pgf_headers *header){
 	temp_str = Calloc(strlen(get_token(cur_tokenset,0)) + 1,char);
 	strcpy(temp_str,get_token(cur_tokenset,0));
 	header->other_headers_keys[header->n_other_headers] = temp_str;
-	header->n_chip_type++;
+	header->n_other_headers++;
 
       }
       
