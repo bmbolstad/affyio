@@ -12,6 +12,7 @@
  ** Dec 14, 2007 - Initial version
  ** Dec 31, 2007 - Add function for checking that required headers were found
  ** Jan 2, 2008 - port x,y to probe_id and probe_id to x,y functions from RMAExpress parsers
+ ** Mar 18, 2008 - fix error in read_clf_header function
  **
  **
  ** 
@@ -630,7 +631,7 @@ void read_clf_header(FILE *cur_file, char *buffer, clf_headers *header){
 	temp_str = Calloc(strlen(get_token(cur_tokenset,0)) + 1,char);
 	strcpy(temp_str,get_token(cur_tokenset,0));
 	header->other_headers_keys[header->n_other_headers] = temp_str;
-	header->n_chip_type++;
+	header->n_other_headers++;
 
       }
       
