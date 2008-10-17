@@ -19,7 +19,7 @@
  **
  ** aim: read in from 1st to nth chips of CEL data
  **
- ** Copyright (C) 2003-2007    B. M. Bolstad
+ ** Copyright (C) 2003-2008    B. M. Bolstad
  **
  ** Created on Jun 13, 2003
  **
@@ -144,6 +144,7 @@
  ** Oct 28, 2007 - add pthread based multi-threaded read_probematrix this is based on a submission by Paul Gordon (U Calgary)
  ** Feb 18, 2008 - R_read_cel_file now can be told to read only the mean intensities (rather than also the SD and npixels)
  ** Mar  6, 2008 - Add additional CEL file corruption checking.
+ ** Oct 16, 2008 - Fix issue with stack exhaustion
  ** 
  *************************************************************/
  
@@ -4415,6 +4416,8 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   pthread_attr_t attr;
   struct thread_data *args;
   void *status;
+  size_t stacksize = PTHREAD_STACK_MIN + 0x4000;
+
 #endif
 
   if (strcmp(CHAR(STRING_ELT(which,0)),"pm") == 0){
@@ -4477,6 +4480,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   /* Initialize and set thread detached attribute */
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setstacksize (&attr, stacksize);
 
   /* this code works out how many threads to use and allocates ranges of files to each thread */
   /* The aim is to try to be as fair as possible in dividing up the matrix */
