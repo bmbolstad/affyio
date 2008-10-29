@@ -145,6 +145,7 @@
  ** Feb 18, 2008 - R_read_cel_file now can be told to read only the mean intensities (rather than also the SD and npixels)
  ** Mar  6, 2008 - Add additional CEL file corruption checking.
  ** Oct 16, 2008 - Fix issue with stack exhaustion
+ ** Oct 28, 2008 - Increase stack space allocated (prevents a crash)
  ** 
  *************************************************************/
  
@@ -4416,7 +4417,7 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   pthread_attr_t attr;
   struct thread_data *args;
   void *status;
-  size_t stacksize = PTHREAD_STACK_MIN + 0x4000;
+  size_t stacksize = PTHREAD_STACK_MIN + 0x40000;
 
 #endif
 
