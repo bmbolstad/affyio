@@ -24,7 +24,7 @@
  **                when there are 0 qcunits or 0 units
  ** Aug 25, 2007 - Move file reading functions to centralized location
  ** Oct 27, 2007 - When building a cdfenv set NON identified values to NA (mostly affects MM for PM only arrays)
- **
+ ** Nov 12, 2008 - Fix crash
  **
  ****************************************************************/
 
@@ -743,7 +743,7 @@ SEXP ReadCDFFile(SEXP filename){
 	
 	curlocs = NUMERIC_POINTER(AS_NUMERIC(CurLocs));
 	
-        for (k=0; k < cur_cells*2; k++){
+        for (k=0; k < cur_atoms*2; k++){
 	  curlocs[k] = R_NaN;
 	}
 
