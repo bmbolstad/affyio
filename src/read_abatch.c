@@ -146,6 +146,7 @@
  ** Mar  6, 2008 - Add additional CEL file corruption checking.
  ** Oct 16, 2008 - Fix issue with stack exhaustion
  ** Oct 28, 2008 - Increase stack space allocated (prevents a crash)
+ ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
  ** 
  *************************************************************/
  
@@ -4143,7 +4144,7 @@ SEXP ReadHeaderDetailed(SEXP filename){
   PROTECT(HEADER = allocVector(VECSXP,9)); /* return as a list */
 
 
-  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  cur_file_name = CHAR(STRING_ELT(filename,0));
  
 
   if (isTextCelFile(cur_file_name)){
@@ -5291,7 +5292,7 @@ SEXP R_read_cel_file(SEXP filename, SEXP intensities_mean_only){
 
   int read_intensities_only;
 
-  const char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  const char *cur_file_name = CHAR(STRING_ELT(filename,0));
 
 
   read_intensities_only = INTEGER_POINTER(intensities_mean_only)[0];

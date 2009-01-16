@@ -23,7 +23,8 @@
  ** Jan 28, 2008 - fix read_generic_data_group/gzread_generic_data_group. Change bitwise OR (|) to logical OR (||)
  ** Feb 11, 2008 - add #include for inttypes.h in situations that stdint.h might not exist
  ** Feb 13, 2008 - add decode_MIME_value_toASCII which takes any MIME and attempts to convert to a string
- ** Jul 29, 2008 - fix preprocessor directive error for WORDS_BIGENDIAN systems
+ ** Jul 29, 2008 - fix preprocessor directive error for WORDS_BIGENDIAN systems 
+ ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
  **
  *************************************************************/
 
@@ -1345,7 +1346,7 @@ SEXP Read_Generic(SEXP filename){
 
   generic_data_set my_data_set;
 
-  const char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  const char *cur_file_name = CHAR(STRING_ELT(filename,0));
 
   /* Pass through all the header information */
   
@@ -1401,7 +1402,7 @@ SEXP gzRead_Generic(SEXP filename){
 
   generic_data_set my_data_set;
 
-  const char *cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  const char *cur_file_name = CHAR(STRING_ELT(filename,0));
 
   /* Pass through all the header information */
   

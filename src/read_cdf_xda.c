@@ -24,7 +24,8 @@
  **                when there are 0 qcunits or 0 units
  ** Aug 25, 2007 - Move file reading functions to centralized location
  ** Oct 27, 2007 - When building a cdfenv set NON identified values to NA (mostly affects MM for PM only arrays)
- ** Nov 12, 2008 - Fix crash
+ ** Nov 12, 2008 - Fix crash 
+ ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
  **
  ****************************************************************/
 
@@ -646,7 +647,7 @@ SEXP CheckCDFXDA(SEXP filename){
   int good;
   const char *cur_file_name;
   
-  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  cur_file_name = CHAR(STRING_ELT(filename,0));
   
   good = check_cdf_xda(cur_file_name);
   
@@ -689,7 +690,7 @@ SEXP ReadCDFFile(SEXP filename){
   /* int nrows, ncols; */
 
  
-  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  cur_file_name = CHAR(STRING_ELT(filename,0));
 
   if (!read_cdf_xda(cur_file_name,&my_cdf)){
     error("Problem reading binary cdf file %s. Possibly corrupted or truncated?\n",cur_file_name);
@@ -1034,7 +1035,7 @@ SEXP ReadCDFFileIntoRList(SEXP filename,SEXP fullstructure){
 
   cdf_xda my_cdf;
   const char *cur_file_name;
-  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  cur_file_name = CHAR(STRING_ELT(filename,0));
 
   /* Read in the xda style CDF file into memory */
   if (!read_cdf_xda(cur_file_name,&my_cdf)){

@@ -28,7 +28,8 @@
  ** Dec 1, 2005 - Some comment cleaning. Added isTextCDFFile,CheckCDFtext
  ** Feb 28, 2006 - replace C++ comments with ANSI comments for older compilers
  ** May 31, 2006 - fix some compiler warnings
- **               
+ ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
+ **  
  **
  *******************************************************************/
 
@@ -1075,7 +1076,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
   cdf_text my_cdf;
 
   const char *cur_file_name;
-  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  cur_file_name = CHAR(STRING_ELT(filename,0));
 
   if(!read_cdf_text(cur_file_name, &my_cdf)){
     error("Problem reading text cdf file %s. Possibly corrupted or truncated?\n",cur_file_name);
@@ -1558,7 +1559,7 @@ SEXP CheckCDFtext(SEXP filename){
   int good;
   const char *cur_file_name;
   
-  cur_file_name = CHAR(VECTOR_ELT(filename,0));
+  cur_file_name = CHAR(STRING_ELT(filename,0));
   
   good = isTextCDFFile(cur_file_name);
   
