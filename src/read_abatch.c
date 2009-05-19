@@ -1269,6 +1269,7 @@ static void get_detailed_header_info(const char *filename, detailed_header_info 
   
   fclose(currentFile);
 
+  header_info->ScanDate = Calloc(2, char);
 }
 
 
@@ -2057,7 +2058,8 @@ static void gz_get_detailed_header_info(const char *filename, detailed_header_in
   strcpy(header_info->AlgorithmParameters,get_token(cur_tokenset,1));
   
   gzclose(currentFile);
-
+ 
+  header_info->ScanDate = Calloc(2, char);
 }
 
 
@@ -2719,7 +2721,8 @@ static void binary_get_detailed_header_info(const char *filename, detailed_heade
       error("Cel file %s does not seem to be have cdf information",filename);
     }
   }
-  
+   
+  header_info->ScanDate = Calloc(2, char);
 
   delete_tokens(my_tokenset);
   delete_binary_header(my_header);
@@ -3469,6 +3472,8 @@ static void gzbinary_get_detailed_header_info(const char *filename, detailed_hea
   }
   
 
+  header_info->ScanDate = Calloc(2, char);
+
   delete_tokens(my_tokenset);
   delete_binary_header(my_header);
   Free(header_copy);
@@ -4141,7 +4146,7 @@ SEXP ReadHeaderDetailed(SEXP filename){
   const char *cur_file_name;
   detailed_header_info header_info;
 
-  PROTECT(HEADER = allocVector(VECSXP,9)); /* return as a list */
+  PROTECT(HEADER = allocVector(VECSXP,10)); /* return as a list */
 
 
   cur_file_name = CHAR(STRING_ELT(filename,0));
@@ -4223,7 +4228,12 @@ SEXP ReadHeaderDetailed(SEXP filename){
   SET_STRING_ELT(tmp_sexp,0,mkChar(header_info.AlgorithmParameters));
   SET_VECTOR_ELT(HEADER,8,tmp_sexp);
   UNPROTECT(1);
-
+  
+  PROTECT(tmp_sexp = allocVector(STRSXP,1));
+  SET_STRING_ELT(tmp_sexp,0,mkChar(header_info.ScanDate));
+  SET_VECTOR_ELT(HEADER,9,tmp_sexp);
+  UNPROTECT(1);
+  
   Free(header_info.Algorithm);
   Free(header_info.AlgorithmParameters);
   Free(header_info.DatHeader);
