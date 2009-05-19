@@ -22,6 +22,7 @@
  ** Oct 11, 2007 - fix missing DatHeader problem
  ** Feb 11, 2008 - add #include for inttypes.h in situations that stdint.h might not exist
  ** Feb 13, 2008 - fix problems with generic_get_detailed_header_info(), gzgeneric_get_detailed_header_info()
+ ** May 18, 2009 - Add Ability to extract scan date from CEL file header
  **
  *************************************************************/
 #include <R.h>
@@ -237,6 +238,18 @@ void generic_get_detailed_header_info(const char *filename, detailed_header_info
     header_info->DatHeader = Calloc(2, char);
   }
 
+ triplet =  find_nvt(&data_header,"affymetrix-scan-date");
+  
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    wchartemp = decode_MIME_value(*triplet,cur_mime_type, wchartemp, &size);
+    header_info->ScanDate = Calloc(size + 1, char);
+    wcstombs(header_info->ScanDate, wchartemp, size);
+    Free(wchartemp);
+  } else {
+    header_info->ScanDate = Calloc(2, char);
+  }
 
 
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-name");
@@ -1236,6 +1249,18 @@ void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_in
     header_info->DatHeader = Calloc(2, char);
   }
 
+  triplet =  find_nvt(&data_header,"affymetrix-scan-date");
+  
+  if (triplet != NULL){
+    cur_mime_type = determine_MIMETYPE(*triplet);
+    
+    wchartemp = decode_MIME_value(*triplet,cur_mime_type, wchartemp, &size);
+    header_info->ScanDate = Calloc(size + 1, char);
+    wcstombs(header_info->ScanDate, wchartemp, size);
+    Free(wchartemp);
+  } else {
+    header_info->ScanDate = Calloc(2, char);
+  }
 
 
   triplet =  find_nvt(&data_header,"affymetrix-algorithm-name");

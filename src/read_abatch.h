@@ -22,6 +22,7 @@ typedef struct{
   char *DatHeader;
   char *Algorithm;
   char *AlgorithmParameters;
+  char *ScanDate;
 } detailed_header_info;
 
 
