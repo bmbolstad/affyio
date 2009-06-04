@@ -147,6 +147,7 @@
  ** Oct 16, 2008 - Fix issue with stack exhaustion
  ** Oct 28, 2008 - Increase stack space allocated (prevents a crash)
  ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
+ ** Jun 3, 2009 - CEL corruption not detected in read.probematrix
  ** 
  *************************************************************/
  
@@ -4273,16 +4274,24 @@ void readfile(SEXP filenames, double *CurintensityMatrix, double *pmMatrix, doub
       error("Compress option not supported on your platform\n");
 #endif
     } else if (isBinaryCelFile(cur_file_name)){
-      read_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+       if(read_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1) !=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+       }
       storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
     } else if (isgzBinaryCelFile(cur_file_name)){
-      gzread_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      if(gzread_binarycel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1) !=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+      }
       storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
     } else if (isGenericCelFile(cur_file_name)){
-      read_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      if(read_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1) !=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+      }
       storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
     }  else if (isgzGenericCelFile(cur_file_name)){
-      gzread_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1);
+      if(gzread_genericcel_file_intensities(cur_file_name,CurintensityMatrix, 0, ref_dim_1*ref_dim_2, n_files,ref_dim_1)!=0){
+	error("The CEL file %s was corrupted. Data not read.\n",cur_file_name);
+      }
       storeIntensities(CurintensityMatrix,pmMatrix,mmMatrix,i,ref_dim_1*ref_dim_2, n_files,num_probes,cdfInfo,which_flag);
     } else {
 #if defined HAVE_ZLIB
