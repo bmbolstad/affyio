@@ -22,7 +22,7 @@ read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
 
     if (nchar(headdetails$ScanDate) == 0){
       # try to extract it from the DatHeader
-      DatHeaderSplit <- strsplit(temp$DatHeader," ")
+      DatHeaderSplit <- strsplit(headdetails$DatHeader," ")
       Which.Date <- grep("[0-9]*/[0-9]*/[0-9]*",DatHeaderSplit[[1]])
       Which.Time <-  grep("[0-9]*:[0-9]*:[0-9]*",DatHeaderSplit[[1]])
       headdetails$ScanDate <- paste(DatHeaderSplit[[1]][Which.Date],DatHeaderSplit[[1]][Which.Time])
