@@ -1,4 +1,9 @@
-
+###
+### File: read.celfile.header.R
+###
+### Aim: read header contents of a given specified CEL file into
+###      an R data structure.
+###
 
 
 read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
@@ -11,8 +16,6 @@ read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
       cat("Reading", filename, "to get header information.\n")
     headdetails <- .Call("ReadHeader", filename, PACKAGE="affyio")
     names(headdetails) <- c("cdfName","CEL dimensions")
-    
-    return(headdetails)
   } else {
     if (verbose)
       cat("Reading", filename, "to get full header information.\n")
@@ -27,12 +30,6 @@ read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
       Which.Time <-  grep("[0-9]*:[0-9]*:[0-9]*",DatHeaderSplit[[1]])
       headdetails$ScanDate <- paste(DatHeaderSplit[[1]][Which.Date],DatHeaderSplit[[1]][Which.Time])
     }
-
-
-    
-    return(headdetails)
   }
-
-
+  return(headdetails)
 }
-  
