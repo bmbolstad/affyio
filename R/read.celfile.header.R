@@ -20,7 +20,9 @@ read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
     if (verbose)
       cat("Reading", filename, "to get full header information.\n")
     ### full returns greater detailed information from the header. Exact details differ depending on the file format.
-    headdetails <- .Call("ReadHeaderDetailed", filename, PACKAGE="affyio")
+    headdetails <- try(.Call("ReadHeaderDetailed", filename, PACKAGE="affyio"))
+    if (is(headdetails, "try-error"))
+        stop("Failed to get full header information for ", filename)
     names(headdetails) <- c("cdfName","CEL dimensions","GridCornerUL","GridCornerUR","GridCornerLR","GridCornerLL","DatHeader","Algorithm","AlgorithmParameters","ScanDate")
 
     if (nchar(headdetails$ScanDate) == 0){
