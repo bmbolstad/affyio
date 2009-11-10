@@ -15,6 +15,10 @@ dnl
 dnl Are things (still) the same ?
 dnl (taken from the 'writing R extensions manual')
 
+
+R_ZLIB
+
+
 AC_CHECK_LIB(pthread, pthread_create)
 
 AC_TRY_LINK_FUNC(pthread_create, [use_pthreads=yes], [use_pthreads=no])
