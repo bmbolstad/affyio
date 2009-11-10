@@ -148,6 +148,7 @@
  ** Oct 28, 2008 - Increase stack space allocated (prevents a crash)
  ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
  ** Jun 3, 2009 - CEL corruption not detected in read.probematrix
+ ** Nov 10, 2009 Pthread on solaris fix
  ** 
  *************************************************************/
  
@@ -171,6 +172,9 @@
 
 #if USE_PTHREADS
 #include <pthread.h>
+#include <limits.h>
+#include <unistd.h>
+
 pthread_mutex_t mutex_R;
 int n_probesets;
 int *n_probes = NULL;
