@@ -1,5 +1,6 @@
 
 #include <zlib.h>
+#include <stdint.h>
 
 /******
  ******
