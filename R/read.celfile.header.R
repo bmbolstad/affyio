@@ -16,6 +16,7 @@ read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
       cat("Reading", filename, "to get header information.\n")
     headdetails <- .Call("ReadHeader", filename, PACKAGE="affyio")
     names(headdetails) <- c("cdfName","CEL dimensions")
+    names(headdetails$"CEL dimensions") <- c("Cols", "Rows")
   } else {
     if (verbose)
       cat("Reading", filename, "to get full header information.\n")
@@ -24,6 +25,8 @@ read.celfile.header <- function(filename,info=c("basic","full"),verbose=FALSE){
     if (is(headdetails, "try-error"))
         stop("Failed to get full header information for ", filename)
     names(headdetails) <- c("cdfName","CEL dimensions","GridCornerUL","GridCornerUR","GridCornerLR","GridCornerLL","DatHeader","Algorithm","AlgorithmParameters","ScanDate")
+    names(headdetails$"CEL dimensions") <- c("Cols", "Rows")
+    
 
     if (nchar(headdetails$ScanDate) == 0){
       # try to extract it from the DatHeader
