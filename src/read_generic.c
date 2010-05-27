@@ -1140,10 +1140,10 @@ int gzread_generic_data_set_rows(generic_data_set *data_set, gzFile *instream){
 
 
 static void print_file_header(generic_file_header header){
-  Rprintf("%d\n",header.magic_number);
-  Rprintf("%d\n",header.version);
-  Rprintf("%d\n",header.n_data_groups);
-  Rprintf("%d\n",header.first_group_file_pos);
+  Rprintf("Magic Number: %d\n",header.magic_number);
+  Rprintf("Header Version: %d\n",header.version);
+  Rprintf("Number of DataGroups: %d\n",header.n_data_groups);
+  Rprintf("FirstGroup Position: %d\n",header.first_group_file_pos);
 }
 
 
@@ -1304,6 +1304,7 @@ static void print_generic_data_group(generic_data_group data_group){
   Rprintf("%d\n",data_group.file_position_nextgroup);
   Rprintf("%d\n",data_group.file_position_first_data);
   Rprintf("%d\n",data_group.n_data_sets);
+  Rprintf("Data Group Name is   :  ");
   print_AWSTRING(data_group.data_group_name);
   Rprintf("\n");
 }
@@ -1334,7 +1335,7 @@ static void print_generic_data_set(generic_data_set data_set){
 
 SEXP Read_Generic(SEXP filename){
 
-  int i,j;
+  int i,j,k;
 
   SEXP return_value = R_NilValue;
 
@@ -1360,27 +1361,30 @@ SEXP Read_Generic(SEXP filename){
   
   read_generic_file_header(&my_header, infile);
   read_generic_data_header(&my_data_header, infile);
-  read_generic_data_group(&my_data_group,infile);
-  // read_generic_data_set(&my_data_set,infile); 
-  //read_generic_data_set_rows(&my_data_set,infile); 
-  
+  Rprintf("========= Printing File Header  =========\n");
   print_file_header(my_header);
+  Rprintf("========= Printing Generic Header  =========\n");
   print_generic_header(my_data_header);
-  print_generic_data_group(my_data_group);
-  for (j=0; j < my_data_group.n_data_sets; j++){
-    read_generic_data_set(&my_data_set,infile); 
-    print_generic_data_set(my_data_set);
-    read_generic_data_set_rows(&my_data_set,infile); 
-    for (i =0; i < 1  ; i++){
-      //printf("%f\n",((float *)my_data_set.Data[0])[i]);
-    }
-    // Free_generic_data_set(&my_data_set);
-    fseek(infile, my_data_set.file_pos_last, SEEK_SET);
-    Free_generic_data_set(&my_data_set);
-  }
 
+  for (k =0; k < my_header.n_data_groups; k++){
+    Rprintf("========= Printing Data Group  =========\n");
+    read_generic_data_group(&my_data_group,infile);
+    print_generic_data_group(my_data_group);
+    for (j=0; j < my_data_group.n_data_sets; j++){
+      read_generic_data_set(&my_data_set,infile); 
+      Rprintf("========= Printing Data Set  =========\n");
+      print_generic_data_set(my_data_set);
+      read_generic_data_set_rows(&my_data_set,infile); 
+      for (i =0; i < 1  ; i++){
+	//printf("%f\n",((float *)my_data_set.Data[0])[i]);
+      }
+      // Free_generic_data_set(&my_data_set);
+      fseek(infile, my_data_set.file_pos_last, SEEK_SET);
+      Free_generic_data_set(&my_data_set);
+    }
+    Free_generic_data_group(&my_data_group);
+  }
   Free_generic_data_header(&my_data_header);
-  Free_generic_data_group(&my_data_group);
 
 
   return return_value;
@@ -1390,7 +1394,7 @@ SEXP Read_Generic(SEXP filename){
 
 SEXP gzRead_Generic(SEXP filename){
 
-  int i,j;
+  int i,j,k;
 
   SEXP return_value = R_NilValue;
 
@@ -1416,27 +1420,34 @@ SEXP gzRead_Generic(SEXP filename){
   
   gzread_generic_file_header(&my_header, infile);
   gzread_generic_data_header(&my_data_header, infile);
-  gzread_generic_data_group(&my_data_group,infile);
-  // read_generic_data_set(&my_data_set,infile); 
-  //read_generic_data_set_rows(&my_data_set,infile); 
-  
-  print_file_header(my_header);
-  print_generic_header(my_data_header);
-  print_generic_data_group(my_data_group);
-  for (j=0; j < my_data_group.n_data_sets; j++){
-    gzread_generic_data_set(&my_data_set,infile); 
-    print_generic_data_set(my_data_set);
-    gzread_generic_data_set_rows(&my_data_set,infile); 
-    for (i =0; i < 1  ; i++){
-      //printf("%f\n",((float *)my_data_set.Data[0])[i]);
-    }
-    // Free_generic_data_set(&my_data_set);
-    gzseek(infile, my_data_set.file_pos_last, SEEK_SET);
-    Free_generic_data_set(&my_data_set);
-  }
 
+  Rprintf("========= Printing File Header  =========\n");
+  print_file_header(my_header);
+  Rprintf("========= Printing Generic Header  =========\n");
+  print_generic_header(my_data_header);
+  
+
+  for (k =0; k < my_header.n_data_groups; k++){
+    Rprintf("========= Printing Data Group  =========\n");
+    gzread_generic_data_group(&my_data_group,infile);
+    // read_generic_data_set(&my_data_set,infile); 
+    //read_generic_data_set_rows(&my_data_set,infile); 
+    print_generic_data_group(my_data_group);
+    for (j=0; j < my_data_group.n_data_sets; j++){
+      gzread_generic_data_set(&my_data_set,infile); 
+      Rprintf("========= Printing Data Set  =========\n");
+      print_generic_data_set(my_data_set);
+      gzread_generic_data_set_rows(&my_data_set,infile); 
+      for (i =0; i < 1  ; i++){
+	//printf("%f\n",((float *)my_data_set.Data[0])[i]);
+      }
+      // Free_generic_data_set(&my_data_set);
+      gzseek(infile, my_data_set.file_pos_last, SEEK_SET);
+      Free_generic_data_set(&my_data_set);
+    }
+    Free_generic_data_group(&my_data_group);
+  }
   Free_generic_data_header(&my_data_header);
-  Free_generic_data_group(&my_data_group);
 
 
   return return_value;

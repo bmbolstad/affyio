@@ -148,7 +148,8 @@
  ** Oct 28, 2008 - Increase stack space allocated (prevents a crash)
  ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
  ** Jun 3, 2009 - CEL corruption not detected in read.probematrix
- ** Nov 10, 2009 Pthread on solaris fix
+ ** Nov 10, 2009 - Pthread on solaris fix
+ ** May 26, 2010 - Multichannel CEL file support initiated 
  ** 
  *************************************************************/
  
@@ -160,7 +161,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "fread_functions.h"
-
+#include "read_multichannel_celfile_generic.h"
 #include "read_celfile_generic.h"
 #include "read_abatch.h"
 
@@ -218,18 +219,22 @@ struct thread_data{
 typedef struct{
   detailed_header_info header;
   
+  int multichannel;
+  
+  char **channelnames;
+
   /** these are for storing the intensities, the sds and the number of pixels **/
-  double *intensities;
-  double *stddev;
-  double *npixels;
+  double **intensities;
+  double **stddev;
+  double **npixels;
 
   /** these are for storing information in the masks and outliers section **/
   
-  int nmasks;
-  int noutliers;
+  int *nmasks;
+  int *noutliers;
 
-  short *masks_x, *masks_y;
-  short *outliers_x, *outliers_y;
+  short **masks_x, **masks_y;
+  short **outliers_x, **outliers_y;
 
 } CEL;
 
@@ -5150,10 +5155,11 @@ SEXP read_abatch_npixels(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP r
 CEL *read_cel_file(const char *filename, int read_intensities_only){
   
   CEL *my_CEL;
-
+  int i,k;
 
   my_CEL = Calloc(1, CEL);
-
+  my_CEL->multichannel = 0;
+  my_CEL->channelnames = NULL;
   
   /** First get the header information **/
 
@@ -5174,6 +5180,20 @@ CEL *read_cel_file(const char *filename, int read_intensities_only){
     generic_get_detailed_header_info(filename,&my_CEL->header);
   }  else if (isgzGenericCelFile(filename)){
     gzgeneric_get_detailed_header_info(filename,&my_CEL->header);
+  } else if (isGenericMultiChannelCelFile(filename)){
+    generic_get_detailed_header_info(filename,&my_CEL->header);
+    my_CEL->multichannel = multichannel_determine_number_channels(filename);
+    my_CEL->channelnames = Calloc(my_CEL->multichannel,char*);
+    for (k = 0; k <  my_CEL->multichannel; k++){
+      my_CEL->channelnames[k] =multichannel_determine_channel_name(filename, k);
+    }
+  }  else if (isgzGenericMultiChannelCelFile(filename)){
+    gzgeneric_get_detailed_header_info(filename,&my_CEL->header);
+    my_CEL->multichannel = gzmultichannel_determine_number_channels(filename);
+    my_CEL->channelnames = Calloc(my_CEL->multichannel,char*);
+    for (k = 0; k <  my_CEL->multichannel; k++){
+      my_CEL->channelnames[k] =gzmultichannel_determine_channel_name(filename, k);
+    }
   } else {
 #if defined HAVE_ZLIB
     error("Is %s really a CEL file? tried reading as text, gzipped text, binary and gzipped binary\n",filename);
@@ -5184,60 +5204,100 @@ CEL *read_cel_file(const char *filename, int read_intensities_only){
 
 
   /*** Now lets allocate the space for intensities, stdev, npixels ****/
-
-  my_CEL->intensities = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
-  if (!read_intensities_only){
-    my_CEL->stddev = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
-    my_CEL->npixels = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
-  } else {
-    my_CEL->stddev = NULL;
-    my_CEL->npixels = NULL;
-  }
-  if (isTextCelFile(filename)){
-    read_cel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
+  if (!my_CEL->multichannel){
+    my_CEL->intensities = Calloc(1,double *);
+    my_CEL->intensities[0] = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
     if (!read_intensities_only){
-      read_cel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-      read_cel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      my_CEL->stddev = Calloc(1,double *);
+      my_CEL->npixels = Calloc(1,double *);
+      my_CEL->stddev[0] = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+      my_CEL->npixels[0] = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+    } else {
+      my_CEL->stddev = NULL;
+      my_CEL->npixels = NULL;
+    }
+  } else {
+    my_CEL->intensities = Calloc(my_CEL->multichannel,double *);
+    for (i=0; i < my_CEL->multichannel; i++){
+      my_CEL->intensities[i] = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+    }
+    if (!read_intensities_only){
+      my_CEL->stddev = Calloc(my_CEL->multichannel,double *);
+      my_CEL->npixels = Calloc(my_CEL->multichannel,double *);
+      for (i=0; i < my_CEL->multichannel; i++){
+	my_CEL->stddev[i] = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+	my_CEL->npixels[i] = Calloc((my_CEL->header.cols)*(my_CEL->header.rows),double);
+      }
+    } else {
+      my_CEL->stddev = NULL;
+      my_CEL->npixels = NULL;
+    }
+
+
+  }
+
+
+  if (isTextCelFile(filename)){
+    read_cel_file_intensities(filename,my_CEL->intensities[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);	
+    if (!read_intensities_only){
+      read_cel_file_stddev(filename,my_CEL->stddev[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_cel_file_npixels(filename,my_CEL->npixels[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
     }
   }  else if (isgzTextCelFile(filename)){
 #if defined HAVE_ZLIB
-    read_gzcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    read_gzcel_file_intensities(filename,my_CEL->intensities[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
     if (!read_intensities_only){	
-      read_gzcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-      read_gzcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_gzcel_file_stddev(filename,my_CEL->stddev[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_gzcel_file_npixels(filename,my_CEL->npixels[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
     }
 #else
     error("Compress option not supported on your platform\n");
 #endif
   } else if (isBinaryCelFile(filename)){
-    if (read_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols)){
+    if (read_binarycel_file_intensities(filename,my_CEL->intensities[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols)){
       error("It appears that the file %s is corrupted.",filename);
     }
     if (!read_intensities_only){
-      read_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-      read_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_binarycel_file_stddev(filename,my_CEL->stddev[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_binarycel_file_npixels(filename,my_CEL->npixels[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
     }
   } else if (isgzBinaryCelFile(filename)){
-    if (gzread_binarycel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols)){
+    if (gzread_binarycel_file_intensities(filename,my_CEL->intensities[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols)){
       error("It appears that the file %s is corrupted.",filename);
     }  
     if (!read_intensities_only){	
-      gzread_binarycel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-      gzread_binarycel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      gzread_binarycel_file_stddev(filename,my_CEL->stddev[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      gzread_binarycel_file_npixels(filename,my_CEL->npixels[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
     }
   } else if (isGenericCelFile(filename)){
-    read_genericcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    read_genericcel_file_intensities(filename,my_CEL->intensities[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
     if (!read_intensities_only){	
-      read_genericcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-      read_genericcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_genericcel_file_stddev(filename,my_CEL->stddev[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      read_genericcel_file_npixels(filename,my_CEL->npixels[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
     }
   } else if (isgzGenericCelFile(filename)){
-    gzread_genericcel_file_intensities(filename,my_CEL->intensities, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
+    gzread_genericcel_file_intensities(filename,my_CEL->intensities[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);  
     if (!read_intensities_only){	
-      gzread_genericcel_file_stddev(filename,my_CEL->stddev, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
-      gzread_genericcel_file_npixels(filename,my_CEL->npixels, 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      gzread_genericcel_file_stddev(filename,my_CEL->stddev[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
+      gzread_genericcel_file_npixels(filename,my_CEL->npixels[0], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols);
     }
-  } else {
+  } else if (isGenericMultiChannelCelFile(filename)){
+    for (i=0; i < my_CEL->multichannel; i++){
+      read_genericcel_file_intensities_multichannel(filename,my_CEL->intensities[i], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols, i);  
+      if (!read_intensities_only){	
+	read_genericcel_file_stddev_multichannel(filename,my_CEL->stddev[i], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols, i);
+	read_genericcel_file_npixels_multichannel(filename,my_CEL->npixels[i], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols, i);
+      }
+    }
+  } else if (isgzGenericMultiChannelCelFile(filename)){
+    for (i=0; i < my_CEL->multichannel; i++){
+      gzread_genericcel_file_intensities_multichannel(filename,my_CEL->intensities[i], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols, i);  
+      if (!read_intensities_only){	
+	gzread_genericcel_file_stddev_multichannel(filename,my_CEL->stddev[i], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols, i);
+	gzread_genericcel_file_npixels_multichannel(filename,my_CEL->npixels[i], 0, (my_CEL->header.cols)*(my_CEL->header.rows), 1,my_CEL->header.cols, i);
+      }
+    }
+  }else {
 #if defined HAVE_ZLIB
     error("Is %s really a CEL file? tried reading as text, gzipped text, binary and gzipped binary\n",filename);
 #else
@@ -5247,22 +5307,47 @@ CEL *read_cel_file(const char *filename, int read_intensities_only){
 
   /*** Now add masks and outliers ***/
 
+
+  if (!my_CEL->multichannel){
+    my_CEL->nmasks = Calloc(1, int);
+    my_CEL->noutliers = Calloc(1, int);
+    my_CEL->masks_x = Calloc(1, short *);
+    my_CEL->masks_y = Calloc(1, short *);
+    my_CEL->outliers_x = Calloc(1, short *);
+    my_CEL->outliers_y = Calloc(1, short *);
+  } else {
+    my_CEL->nmasks = Calloc(my_CEL->multichannel, int);
+    my_CEL->noutliers = Calloc(my_CEL->multichannel, int);
+    my_CEL->masks_x = Calloc(my_CEL->multichannel, short *);
+    my_CEL->masks_y = Calloc(my_CEL->multichannel, short *);
+    my_CEL->outliers_x = Calloc(my_CEL->multichannel, short *);
+    my_CEL->outliers_y = Calloc(my_CEL->multichannel, short *);
+  }
+
   if (isTextCelFile(filename)){
-    get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
+    get_masks_outliers(filename, &(my_CEL->nmasks[0]), &my_CEL->masks_x[0], &my_CEL->masks_y[0], &(my_CEL->noutliers[0]), &my_CEL->outliers_x[0], &my_CEL->outliers_y[0]);
   } else if (isgzTextCelFile(filename)){
 #if defined HAVE_ZLIB
-    gz_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
+    gz_get_masks_outliers(filename, &(my_CEL->nmasks[0]), &my_CEL->masks_x[0], &my_CEL->masks_y[0], &(my_CEL->noutliers[0]), &my_CEL->outliers_x[0], &my_CEL->outliers_y[0]);
 #else
     error("Compress option not supported on your platform\n");
 #endif 
   } else if (isBinaryCelFile(filename)){
-    binary_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
+    binary_get_masks_outliers(filename, &(my_CEL->nmasks[0]), &my_CEL->masks_x[0], &my_CEL->masks_y[0], &(my_CEL->noutliers[0]), &my_CEL->outliers_x[0], &my_CEL->outliers_y[0]);
   } else if (isgzBinaryCelFile(filename)){
-    /****************************/ gzbinary_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
+    /****************************/ gzbinary_get_masks_outliers(filename, &(my_CEL->nmasks[0]), &my_CEL->masks_x[0], &my_CEL->masks_y[0], &(my_CEL->noutliers[0]), &my_CEL->outliers_x[0], &my_CEL->outliers_y[0]);
   } else if (isGenericCelFile(filename)){
-    generic_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
+    generic_get_masks_outliers(filename, &(my_CEL->nmasks[0]), &my_CEL->masks_x[0], &my_CEL->masks_y[0], &(my_CEL->noutliers[0]), &my_CEL->outliers_x[0], &my_CEL->outliers_y[0]);
   } else if (isgzGenericCelFile(filename)){
-    gzgeneric_get_masks_outliers(filename, &(my_CEL->nmasks), &(my_CEL->masks_x), &(my_CEL->masks_y), &(my_CEL->noutliers), &(my_CEL->outliers_x), &(my_CEL->outliers_y));
+    gzgeneric_get_masks_outliers(filename, &(my_CEL->nmasks[0]), &my_CEL->masks_x[0], &my_CEL->masks_y[0], &(my_CEL->noutliers[0]), &my_CEL->outliers_x[0], &my_CEL->outliers_y[0]);
+  }  else if (isGenericMultiChannelCelFile(filename)){
+    for (i=0; i < my_CEL->multichannel; i++){
+      generic_get_masks_outliers_multichannel(filename, &(my_CEL->nmasks[i]), &my_CEL->masks_x[i], &my_CEL->masks_y[i], &(my_CEL->noutliers[i]), &my_CEL->outliers_x[i], &my_CEL->outliers_y[i], i);
+    }
+  } else if (isgzGenericMultiChannelCelFile(filename)){
+    for (i=0; i < my_CEL->multichannel; i++){
+      gzgeneric_get_masks_outliers_multichannel(filename, &(my_CEL->nmasks[i]), &my_CEL->masks_x[i], &my_CEL->masks_y[i], &(my_CEL->noutliers[i]), &my_CEL->outliers_x[i], &my_CEL->outliers_y[i], i);
+    }
   } else {
 #if defined HAVE_ZLIB
     error("Is %s really a CEL file? tried reading as text, gzipped text, binary, gzipped binary, command console and gzipped command console formats.\n",filename);
@@ -5297,21 +5382,26 @@ SEXP R_read_cel_file(SEXP filename, SEXP intensities_mean_only){
   SEXP HEADERnames;
 
   SEXP INTENSITIES;
+  SEXP INTENSITIES_CHANNEL;
   SEXP INTENSITIES_VALUES;
   SEXP INTENSITIES_STDDEV;
   SEXP INTENSITIES_NPIXELS;
   SEXP INTENSITIESnames;
 
 
-  SEXP MASKS;
-  SEXP OUTLIERS;
+  SEXP MASKS; 
+  SEXP MASKS_CHANNEL;
+  SEXP OUTLIERS; 
+  SEXP OUTLIERS_CHANNEL;
 
+  SEXP MULTICHANNELFLAG;
+  SEXP CHANNELNAMES;
   SEXP dimnames;
   
   
   SEXP tmp_sexp;
 
-  int i;
+  int i,k;
 
   int read_intensities_only;
 
@@ -5321,12 +5411,14 @@ SEXP R_read_cel_file(SEXP filename, SEXP intensities_mean_only){
   read_intensities_only = INTEGER_POINTER(intensities_mean_only)[0];
 
   CEL *myCEL =read_cel_file(cur_file_name,read_intensities_only);
-
-
-  PROTECT(theCEL = allocVector(VECSXP,4));
+  if (!myCEL->multichannel){
+    PROTECT(theCEL = allocVector(VECSXP,4));
+  } else {
+    PROTECT(theCEL = allocVector(VECSXP,6));
+  }
 
   PROTECT(HEADER = allocVector(VECSXP,9));
-
+  
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
   SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.cdfName));
   SET_VECTOR_ELT(HEADER,0,tmp_sexp);
@@ -5336,41 +5428,41 @@ SEXP R_read_cel_file(SEXP filename, SEXP intensities_mean_only){
   INTEGER(tmp_sexp)[1] = myCEL->header.rows;   /* this is rows */
   SET_VECTOR_ELT(HEADER,1,tmp_sexp);
   UNPROTECT(1);
-
+  
   PROTECT(tmp_sexp= allocVector(INTSXP,2));
   INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerULx;   
   INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerULy;   
   SET_VECTOR_ELT(HEADER,2,tmp_sexp);
   UNPROTECT(1);
-
+  
   PROTECT(tmp_sexp= allocVector(INTSXP,2));
   INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerURx;   
   INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerURy;   
   SET_VECTOR_ELT(HEADER,3,tmp_sexp);
   UNPROTECT(1);
-
+  
   PROTECT(tmp_sexp= allocVector(INTSXP,2));
   INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerLRx;   
   INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerLRy;   
   SET_VECTOR_ELT(HEADER,4,tmp_sexp);
   UNPROTECT(1);
-
+  
   PROTECT(tmp_sexp= allocVector(INTSXP,2));
   INTEGER(tmp_sexp)[0] = myCEL->header.GridCornerLLx;   
   INTEGER(tmp_sexp)[1] = myCEL->header.GridCornerLLy;   
   SET_VECTOR_ELT(HEADER,5,tmp_sexp);
   UNPROTECT(1);
-   
+  
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
   SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.DatHeader));
   SET_VECTOR_ELT(HEADER,6,tmp_sexp);
   UNPROTECT(1);
-
+  
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
   SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.Algorithm));
   SET_VECTOR_ELT(HEADER,7,tmp_sexp);
   UNPROTECT(1);
-
+  
   PROTECT(tmp_sexp = allocVector(STRSXP,1));
   SET_STRING_ELT(tmp_sexp,0,mkChar(myCEL->header.AlgorithmParameters));
   SET_VECTOR_ELT(HEADER,8,tmp_sexp);
@@ -5389,107 +5481,231 @@ SEXP R_read_cel_file(SEXP filename, SEXP intensities_mean_only){
   SET_STRING_ELT(HEADERnames,6,mkChar("DatHeader"));
   SET_STRING_ELT(HEADERnames,7,mkChar("Algorithm"));
   SET_STRING_ELT(HEADERnames,8,mkChar("AlgorithmParameters"));
-
+  
   setAttrib(HEADER, R_NamesSymbol, HEADERnames);
   UNPROTECT(2);
 
-
-  PROTECT(INTENSITIES = allocVector(VECSXP,3));
+  if (!myCEL->multichannel){
   
-
-  PROTECT(INTENSITIES_VALUES = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
-  if (!read_intensities_only){
-    PROTECT(INTENSITIES_STDDEV = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
-    PROTECT(INTENSITIES_NPIXELS = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
-  } else {
-    INTENSITIES_STDDEV = R_NilValue;
-    INTENSITIES_NPIXELS = R_NilValue;
-  }
-  for (i =0; i < (myCEL->header.cols)*(myCEL->header.rows); i++){
-    REAL(INTENSITIES_VALUES)[i] = myCEL->intensities[i];
+    PROTECT(INTENSITIES = allocVector(VECSXP,3));
+    PROTECT(INTENSITIES_VALUES = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
     if (!read_intensities_only){
-      REAL(INTENSITIES_STDDEV)[i] = myCEL->stddev[i];
-      REAL(INTENSITIES_NPIXELS)[i] = myCEL->npixels[i];
+      PROTECT(INTENSITIES_STDDEV = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+      PROTECT(INTENSITIES_NPIXELS = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+    } else {
+      INTENSITIES_STDDEV = R_NilValue;
+      INTENSITIES_NPIXELS = R_NilValue;
     }
-  }
-
-
-  SET_VECTOR_ELT(INTENSITIES,0,INTENSITIES_VALUES);
-  SET_VECTOR_ELT(INTENSITIES,1,INTENSITIES_STDDEV);
-  SET_VECTOR_ELT(INTENSITIES,2,INTENSITIES_NPIXELS);
-
-  if (!read_intensities_only){
-    UNPROTECT(3);
-  } else {
+    for (i =0; i < (myCEL->header.cols)*(myCEL->header.rows); i++){
+      REAL(INTENSITIES_VALUES)[i] = myCEL->intensities[0][i];
+      if (!read_intensities_only){
+	REAL(INTENSITIES_STDDEV)[i] = myCEL->stddev[0][i];
+	REAL(INTENSITIES_NPIXELS)[i] = myCEL->npixels[0][i];
+      }
+    }
+    
+    
+    SET_VECTOR_ELT(INTENSITIES,0,INTENSITIES_VALUES);
+    SET_VECTOR_ELT(INTENSITIES,1,INTENSITIES_STDDEV);
+    SET_VECTOR_ELT(INTENSITIES,2,INTENSITIES_NPIXELS);
+    
+    if (!read_intensities_only){
+      UNPROTECT(3);
+    } else {
+      UNPROTECT(1);
+    }
+    
+    PROTECT(INTENSITIESnames=allocVector(STRSXP,3));
+    SET_STRING_ELT(INTENSITIESnames,0,mkChar("MEAN"));
+    SET_STRING_ELT(INTENSITIESnames,1,mkChar("STDEV"));
+    SET_STRING_ELT(INTENSITIESnames,2,mkChar("NPIXELS"));
+    
+    setAttrib(INTENSITIES, R_NamesSymbol, INTENSITIESnames);
     UNPROTECT(1);
+    
+    SET_VECTOR_ELT(theCEL,1,INTENSITIES);
+    UNPROTECT(1);
+    
+    PROTECT(MASKS = allocMatrix(INTSXP,myCEL->nmasks[0],2));
+    
+    for (i =0; i < myCEL->nmasks[0]; i++){
+      INTEGER(MASKS)[i] = (int)(myCEL->masks_x[0][i]);
+      INTEGER(MASKS)[myCEL->nmasks[0] + i] = (int)(myCEL->masks_y[0][i]);
+    }
+    
+    PROTECT(dimnames = allocVector(VECSXP,2));
+    PROTECT(tmp_sexp = allocVector(STRSXP,2));
+    
+    SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
+    SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
+    
+    SET_VECTOR_ELT(dimnames,1,tmp_sexp);
+    
+    setAttrib(MASKS, R_DimNamesSymbol, dimnames);
+    UNPROTECT(2);
+    
+    
+    SET_VECTOR_ELT(theCEL,2,MASKS);
+    UNPROTECT(1);
+    
+    PROTECT(OUTLIERS = allocMatrix(INTSXP,myCEL->noutliers[0],2));
+    
+    for (i =0; i < myCEL->noutliers[0]; i++){
+      INTEGER(OUTLIERS)[i] = (int)myCEL->outliers_x[0][i];
+      INTEGER(OUTLIERS)[myCEL->noutliers[0] + i] = (int)myCEL->outliers_y[0][i];
+    }
+    
+    PROTECT(dimnames = allocVector(VECSXP,2));
+    PROTECT(tmp_sexp = allocVector(STRSXP,2));
+    
+    SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
+    SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
+    
+    SET_VECTOR_ELT(dimnames,1,tmp_sexp);
+    
+    setAttrib(OUTLIERS, R_DimNamesSymbol, dimnames);
+    UNPROTECT(2);
+    
+    
+    
+    SET_VECTOR_ELT(theCEL,3,OUTLIERS);
+    UNPROTECT(1);
+    
+    PROTECT(theCEL_names = allocVector(STRSXP,4));
+    
+    SET_STRING_ELT(theCEL_names,0,mkChar("HEADER"));
+    SET_STRING_ELT(theCEL_names,1,mkChar("INTENSITY"));
+    SET_STRING_ELT(theCEL_names,2,mkChar("MASKS"));
+    SET_STRING_ELT(theCEL_names,3,mkChar("OUTLIERS"));
+    setAttrib(theCEL, R_NamesSymbol,theCEL_names);
+    UNPROTECT(1);
+  } else {
+
+
+
+    PROTECT(INTENSITIES = allocVector(VECSXP,myCEL->multichannel));
+    for (k=0; k < myCEL->multichannel; k++){
+      PROTECT(INTENSITIES_CHANNEL = allocVector(VECSXP,3));
+      PROTECT(INTENSITIES_VALUES = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+      if (!read_intensities_only){
+	PROTECT(INTENSITIES_STDDEV = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+	PROTECT(INTENSITIES_NPIXELS = allocVector(REALSXP,(myCEL->header.cols)*(myCEL->header.rows)));
+      } else {
+	INTENSITIES_STDDEV = R_NilValue;
+	INTENSITIES_NPIXELS = R_NilValue;
+      }
+      for (i =0; i < (myCEL->header.cols)*(myCEL->header.rows); i++){
+	REAL(INTENSITIES_VALUES)[i] = myCEL->intensities[k][i];
+	if (!read_intensities_only){
+	  REAL(INTENSITIES_STDDEV)[i] = myCEL->stddev[k][i];
+	  REAL(INTENSITIES_NPIXELS)[i] = myCEL->npixels[k][i];
+	}
+      }
+    
+    
+      SET_VECTOR_ELT(INTENSITIES_CHANNEL,0,INTENSITIES_VALUES);
+      SET_VECTOR_ELT(INTENSITIES_CHANNEL,1,INTENSITIES_STDDEV);
+      SET_VECTOR_ELT(INTENSITIES_CHANNEL,2,INTENSITIES_NPIXELS);
+    
+      if (!read_intensities_only){
+	UNPROTECT(3);
+      } else {
+	UNPROTECT(1);
+      }
+      
+      PROTECT(INTENSITIESnames=allocVector(STRSXP,3));
+      SET_STRING_ELT(INTENSITIESnames,0,mkChar("MEAN"));
+      SET_STRING_ELT(INTENSITIESnames,1,mkChar("STDEV"));
+      SET_STRING_ELT(INTENSITIESnames,2,mkChar("NPIXELS"));
+      
+      setAttrib(INTENSITIES_CHANNEL, R_NamesSymbol, INTENSITIESnames);
+      UNPROTECT(1);
+      SET_VECTOR_ELT(INTENSITIES,k,INTENSITIES_CHANNEL);
+      UNPROTECT(1);
+    }
+    SET_VECTOR_ELT(theCEL,1,INTENSITIES);
+    UNPROTECT(1);
+
+    PROTECT(MASKS= allocVector(VECSXP,myCEL->multichannel));
+    for (k=0; k < myCEL->multichannel; k++){
+      PROTECT(MASKS_CHANNEL = allocMatrix(INTSXP,myCEL->nmasks[k],2));
+    
+      for (i =0; i < myCEL->nmasks[k]; i++){
+	INTEGER(MASKS_CHANNEL)[i] = (int)(myCEL->masks_x[k][i]);
+	INTEGER(MASKS_CHANNEL)[myCEL->nmasks[k] + i] = (int)(myCEL->masks_y[k][i]);
+      }
+    
+      PROTECT(dimnames = allocVector(VECSXP,2));
+      PROTECT(tmp_sexp = allocVector(STRSXP,2));
+      
+      SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
+      SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
+      
+      SET_VECTOR_ELT(dimnames,1,tmp_sexp);
+    
+      setAttrib(MASKS_CHANNEL, R_DimNamesSymbol, dimnames);
+      UNPROTECT(2);
+      SET_VECTOR_ELT(MASKS,k,MASKS_CHANNEL);
+      UNPROTECT(1);
+    }
+    SET_VECTOR_ELT(theCEL,2,MASKS);
+    UNPROTECT(1);
+    
+ 
+
+    PROTECT(OUTLIERS= allocVector(VECSXP,myCEL->multichannel));
+    for (k=0; k < myCEL->multichannel; k++){
+      PROTECT(OUTLIERS_CHANNEL = allocMatrix(INTSXP,myCEL->noutliers[k],2));
+      
+      for (i =0; i < myCEL->noutliers[k]; i++){
+	INTEGER(OUTLIERS_CHANNEL)[i] = (int)myCEL->outliers_x[k][i];
+	INTEGER(OUTLIERS_CHANNEL)[myCEL->noutliers[k] + i] = (int)myCEL->outliers_y[k][i];
+      }
+      
+      PROTECT(dimnames = allocVector(VECSXP,2));
+      PROTECT(tmp_sexp = allocVector(STRSXP,2));
+      
+      SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
+      SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
+      
+      SET_VECTOR_ELT(dimnames,1,tmp_sexp);
+      
+      setAttrib(OUTLIERS_CHANNEL, R_DimNamesSymbol, dimnames);
+      UNPROTECT(2);
+      SET_VECTOR_ELT(OUTLIERS,k,OUTLIERS_CHANNEL);
+      UNPROTECT(1);
+    }
+    SET_VECTOR_ELT(theCEL,3,OUTLIERS);
+    UNPROTECT(1);
+    
+
+
+    
+    PROTECT(MULTICHANNELFLAG=allocVector(LGLSXP,1));
+    SET_VECTOR_ELT(theCEL,4,MULTICHANNELFLAG);
+    UNPROTECT(1);
+ 
+    PROTECT(CHANNELNAMES=allocVector(STRSXP,myCEL->multichannel));
+    for (k =0; k < myCEL->multichannel; k++){
+      SET_STRING_ELT(CHANNELNAMES,k,mkChar(myCEL->channelnames[k])); 
+    }
+    SET_VECTOR_ELT(theCEL,5,CHANNELNAMES);
+    UNPROTECT(1);
+
+
+    PROTECT(theCEL_names = allocVector(STRSXP,6));
+    
+    SET_STRING_ELT(theCEL_names,0,mkChar("HEADER"));
+    SET_STRING_ELT(theCEL_names,1,mkChar("INTENSITY"));
+    SET_STRING_ELT(theCEL_names,2,mkChar("MASKS"));
+    SET_STRING_ELT(theCEL_names,3,mkChar("OUTLIERS"));
+    SET_STRING_ELT(theCEL_names,4,mkChar("MULTICHANNEL"));
+    SET_STRING_ELT(theCEL_names,5,mkChar("CHANNELNAMES"));
+    setAttrib(theCEL, R_NamesSymbol,theCEL_names);
+    UNPROTECT(1);
+
   }
-
-  PROTECT(INTENSITIESnames=allocVector(STRSXP,3));
-  SET_STRING_ELT(INTENSITIESnames,0,mkChar("MEAN"));
-  SET_STRING_ELT(INTENSITIESnames,1,mkChar("STDEV"));
-  SET_STRING_ELT(INTENSITIESnames,2,mkChar("NPIXELS"));
   
-  setAttrib(INTENSITIES, R_NamesSymbol, INTENSITIESnames);
-  UNPROTECT(1);
-
-  SET_VECTOR_ELT(theCEL,1,INTENSITIES);
-  UNPROTECT(1);
-
-  PROTECT(MASKS = allocMatrix(INTSXP,myCEL->nmasks,2));
-
-  for (i =0; i < myCEL->nmasks; i++){
-    INTEGER(MASKS)[i] = (int)myCEL->masks_x[i];
-    INTEGER(MASKS)[myCEL->nmasks + i] = (int)myCEL->masks_y[i];
-  }
-  
-  PROTECT(dimnames = allocVector(VECSXP,2));
-  PROTECT(tmp_sexp = allocVector(STRSXP,2));
-
-  SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
-  SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
-
-  SET_VECTOR_ELT(dimnames,1,tmp_sexp);
-
-  setAttrib(MASKS, R_DimNamesSymbol, dimnames);
-  UNPROTECT(2);
-  
-  
-  SET_VECTOR_ELT(theCEL,2,MASKS);
-  UNPROTECT(1);
-
-  PROTECT(OUTLIERS = allocMatrix(INTSXP,myCEL->noutliers,2));
-
-  for (i =0; i < myCEL->noutliers; i++){
-    INTEGER(OUTLIERS)[i] = (int)myCEL->outliers_x[i];
-    INTEGER(OUTLIERS)[myCEL->noutliers + i] = (int)myCEL->outliers_y[i];
-  }
-
-  PROTECT(dimnames = allocVector(VECSXP,2));
-  PROTECT(tmp_sexp = allocVector(STRSXP,2));
-
-  SET_STRING_ELT(tmp_sexp,0,mkChar("X"));
-  SET_STRING_ELT(tmp_sexp,1,mkChar("Y"));
-
-  SET_VECTOR_ELT(dimnames,1,tmp_sexp);
-
-  setAttrib(OUTLIERS, R_DimNamesSymbol, dimnames);
-  UNPROTECT(2);
-  
-
-
-  SET_VECTOR_ELT(theCEL,3,OUTLIERS);
-  UNPROTECT(1);
-
-  PROTECT(theCEL_names = allocVector(STRSXP,4));
-  
-  SET_STRING_ELT(theCEL_names,0,mkChar("HEADER"));
-  SET_STRING_ELT(theCEL_names,1,mkChar("INTENSITY"));
-  SET_STRING_ELT(theCEL_names,2,mkChar("MASKS"));
-  SET_STRING_ELT(theCEL_names,3,mkChar("OUTLIERS"));
-  setAttrib(theCEL, R_NamesSymbol,theCEL_names);
-  UNPROTECT(1);
-
-
   Free(myCEL->header.cdfName);
   Free(myCEL->header.DatHeader);
   Free(myCEL->header.Algorithm);
