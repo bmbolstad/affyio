@@ -5711,10 +5711,35 @@ SEXP R_read_cel_file(SEXP filename, SEXP intensities_mean_only){
   Free(myCEL->header.Algorithm);
   Free(myCEL->header.AlgorithmParameters);
   
-  
+  if (!myCEL->multichannel){
+    Free(myCEL->intensities[0]);
+    Free(myCEL->stddev[0]);
+    Free(myCEL->npixels[0]);
+  } else {
+    for (k =0; k < myCEL->multichannel; k++){
+      Free(myCEL->intensities[k]);
+      Free(myCEL->stddev[k]);
+      Free(myCEL->npixels[k]);
+    }
+  }
+
   Free(myCEL->intensities);
   Free(myCEL->stddev);
   Free(myCEL->npixels);
+
+  if (!myCEL->multichannel){
+    Free(myCEL->masks_x[0]);
+    Free(myCEL->masks_y[0]);
+    Free(myCEL->outliers_x[0]);
+    Free(myCEL->outliers_y[0]);
+  } else {
+    for (k =0; k < myCEL->multichannel; k++){
+         Free(myCEL->masks_x[k]);
+	 Free(myCEL->masks_y[k]);
+	 Free(myCEL->outliers_x[k]);
+	 Free(myCEL->outliers_y[k]);
+    }
+  }
 
   Free(myCEL->masks_x);
   Free(myCEL->masks_y);
