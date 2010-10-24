@@ -116,6 +116,8 @@ int multichannel_determine_number_channels(const char *filename){
   
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
+
 
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -126,18 +128,21 @@ int multichannel_determine_number_channels(const char *filename){
   read_generic_file_header(&my_header, infile);
   read_generic_data_header(&my_data_header, infile);
 
-  for (k =0; k < my_header.n_data_groups; k++){
-    read_generic_data_group(&my_data_group,infile);
+  do {
+    read_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup;
     for (j=0; j < my_data_group.n_data_sets; j++){
       read_generic_data_set(&my_data_set,infile);
       if (!compare_AWSTRING_Intensity(my_data_set.data_set_name)){
 	returnvalue++;
+        break;
       }
       read_generic_data_set_rows(&my_data_set,infile); 
       Free_generic_data_set(&my_data_set);
     }
     Free_generic_data_group(&my_data_group);
-  }
+    fseek(infile,next_group,SEEK_SET);
+  } while (next_group > 0);	
   
   fclose(infile);
   Free_generic_data_header(&my_data_header);
@@ -167,6 +172,8 @@ char *multichannel_determine_channel_name(const char *filename, int channelindex
   
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
+
 
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -178,12 +185,9 @@ char *multichannel_determine_channel_name(const char *filename, int channelindex
   read_generic_data_header(&my_data_header, infile);
 
   while (k < channelindex){
-    read_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      read_generic_data_set(&my_data_set,infile);
-      read_generic_data_set_rows(&my_data_set,infile); 
-      Free_generic_data_set(&my_data_set);
-    }
+    read_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    fseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -226,6 +230,8 @@ int read_genericcel_file_intensities_multichannel(const char *filename, double *
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
+
 
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -240,12 +246,9 @@ int read_genericcel_file_intensities_multichannel(const char *filename, double *
 
   /* skip merrily through the file (optimise this with file pointers later) */
   while (k < channelindex){
-    read_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      read_generic_data_set(&my_data_set,infile); 
-      read_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+    read_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    fseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -284,6 +287,8 @@ int read_genericcel_file_stddev_multichannel(const char *filename, double *inten
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
+
 
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -298,14 +303,11 @@ int read_genericcel_file_stddev_multichannel(const char *filename, double *inten
 
   /* skip merrily through the file (optimise this with file pointers later) */
   while (k < channelindex){
-    read_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      read_generic_data_set(&my_data_set,infile); 
-      read_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+    read_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    fseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
-    k++;
+    k++;	
   }
 
   read_generic_data_group(&my_data_group,infile);
@@ -349,6 +351,8 @@ int read_genericcel_file_npixels_multichannel(const char *filename, double *inte
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
+
 
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -363,13 +367,10 @@ int read_genericcel_file_npixels_multichannel(const char *filename, double *inte
 
 
   /* skip merrily through the file (optimise this with file pointers later) */
-  while (k < channelindex){
-    read_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      read_generic_data_set(&my_data_set,infile); 
-      read_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+  while (k < channelindex){   
+    read_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    fseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -424,6 +425,8 @@ void generic_get_masks_outliers_multichannel(const char *filename, int *nmasks, 
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
+
 
   if ((infile = fopen(filename, "rb")) == NULL)
     {
@@ -438,13 +441,10 @@ void generic_get_masks_outliers_multichannel(const char *filename, int *nmasks, 
 
 
   /* skip merrily through the file (optimise this with file pointers later) */
-  while (k < channelindex){
-    read_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      read_generic_data_set(&my_data_set,infile); 
-      read_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+  while (k < channelindex){  
+    read_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    fseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -649,6 +649,12 @@ int isgzGenericMultiChannelCelFile(const char *filename){
 }
 
 
+
+
+/* basic idea is to count how many datagroups have a dataset called "Intensity" */
+
+
+
 int gzmultichannel_determine_number_channels(const char *filename){
   
   int i=0, j=0, k=0;
@@ -665,6 +671,8 @@ int gzmultichannel_determine_number_channels(const char *filename){
   
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
+
 
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
@@ -674,23 +682,27 @@ int gzmultichannel_determine_number_channels(const char *filename){
   
   gzread_generic_file_header(&my_header, infile);
   gzread_generic_data_header(&my_data_header, infile);
-
-  for (k =0; k < my_header.n_data_groups; k++){
-    gzread_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      gzread_generic_data_set(&my_data_set,infile);
-      if (!compare_AWSTRING_Intensity(my_data_set.data_set_name)){
-	returnvalue++;
-      }
-      gzread_generic_data_set_rows(&my_data_set,infile); 
-      Free_generic_data_set(&my_data_set);
+ 
+	
+ 
+  do {
+      gzread_generic_data_group(&my_data_group,infile);    
+      next_group = my_data_group.file_position_nextgroup;	
+      for (j=0; j < my_data_group.n_data_sets; j++){
+         gzread_generic_data_set(&my_data_set,infile);
+         if (!compare_AWSTRING_Intensity(my_data_set.data_set_name)){
+	   returnvalue++;
+ 	   break;
+       }
+       gzread_generic_data_set_rows(&my_data_set,infile); 
+       Free_generic_data_set(&my_data_set);
     }
     Free_generic_data_group(&my_data_group);
-  }
+    gzseek(infile,next_group,SEEK_SET);
+  }  while (next_group > 0);	
   
   gzclose(infile);
   Free_generic_data_header(&my_data_header);
-  
   return(returnvalue);
 
 }
@@ -712,6 +724,7 @@ char *gzmultichannel_determine_channel_name(const char *filename, int channelind
   
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
 
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
@@ -723,12 +736,9 @@ char *gzmultichannel_determine_channel_name(const char *filename, int channelind
   gzread_generic_data_header(&my_data_header, infile);
 
   while (k < channelindex){
-    gzread_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      gzread_generic_data_set(&my_data_set,infile);
-      gzread_generic_data_set_rows(&my_data_set,infile); 
-      Free_generic_data_set(&my_data_set);
-    }
+    gzread_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    gzseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -763,6 +773,7 @@ int gzread_genericcel_file_intensities_multichannel(const char *filename, double
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
 
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
@@ -777,12 +788,9 @@ int gzread_genericcel_file_intensities_multichannel(const char *filename, double
 
   /* skip merrily through the file (optimise this with file pointers later) */
   while (k < channelindex){
-    gzread_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      gzread_generic_data_set(&my_data_set,infile); 
-      gzread_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+    gzread_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    gzseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -821,6 +829,7 @@ int gzread_genericcel_file_stddev_multichannel(const char *filename, double *int
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
 
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
@@ -834,13 +843,10 @@ int gzread_genericcel_file_stddev_multichannel(const char *filename, double *int
   gzread_generic_data_header(&my_data_header, infile);
 
   /* skip merrily through the file (optimise this with file pointers later) */
-  while (k < channelindex){
-    gzread_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      gzread_generic_data_set(&my_data_set,infile); 
-      gzread_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+  while (k < channelindex){    
+    gzread_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    gzseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -885,6 +891,7 @@ int gzread_genericcel_file_npixels_multichannel(const char *filename, double *in
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
 
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
@@ -900,12 +907,9 @@ int gzread_genericcel_file_npixels_multichannel(const char *filename, double *in
 
   /* skip merrily through the file (optimise this with file pointers later) */
   while (k < channelindex){
-    gzread_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      gzread_generic_data_set(&my_data_set,infile); 
-      gzread_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+    gzread_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    gzseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
@@ -956,6 +960,7 @@ void gzgeneric_get_masks_outliers_multichannel(const char *filename, int *nmasks
 
   generic_data_set my_data_set;
 
+  uint32_t next_group =1;  
 
   if ((infile = gzopen(filename, "rb")) == NULL)
     {
@@ -971,12 +976,9 @@ void gzgeneric_get_masks_outliers_multichannel(const char *filename, int *nmasks
 
   /* skip merrily through the file (optimise this with file pointers later) */
   while (k < channelindex){
-    gzread_generic_data_group(&my_data_group,infile);
-    for (j=0; j < my_data_group.n_data_sets; j++){
-      gzread_generic_data_set(&my_data_set,infile); 
-      gzread_generic_data_set_rows(&my_data_set,infile);
-      Free_generic_data_set(&my_data_set);
-    }
+    gzread_generic_data_group(&my_data_group,infile); 
+    next_group = my_data_group.file_position_nextgroup; 
+    gzseek(infile,next_group,SEEK_SET);
     Free_generic_data_group(&my_data_group);
     k++;
   }
