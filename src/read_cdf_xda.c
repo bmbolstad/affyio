@@ -752,9 +752,9 @@ SEXP ReadCDFFile(SEXP filename){
 	  current_cell = &(my_cdf.units[i].unit_block[j].unit_cells[k]);
 	  
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
+	    curlocs[current_cell->atomnumber] =  current_cell->x + current_cell->y*(my_cdf.header.cols) + 1;   /*  current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; */          /* "y*", sizex, "+x+1"; */
 	  } else {
-	    curlocs[current_cell->atomnumber+ cur_atoms] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
+	    curlocs[current_cell->atomnumber+ cur_atoms] =   current_cell->x + current_cell->y*(my_cdf.header.cols) + 1;                /* current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; */
 	  }
 	}
 	
@@ -788,9 +788,9 @@ SEXP ReadCDFFile(SEXP filename){
 	  current_cell = &(my_cdf.units[i].unit_block[0].unit_cells[k]);
 	  
 	  if(isPM(current_cell->pbase,current_cell->tbase)){
-	    curlocs[current_cell->atomnumber] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;           /* "y*", sizex, "+x+1"; */
+	    curlocs[current_cell->atomnumber] =   current_cell->x + current_cell->y*(my_cdf.header.cols) + 1;   /* current_cell->x + current_cell->y*(my_cdf.header.rows) + 1;    */       /* "y*", sizex, "+x+1"; */
 	  } else {
-	    curlocs[current_cell->atomnumber+ cur_atoms] = current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; 
+	    curlocs[current_cell->atomnumber+ cur_atoms] =   current_cell->x + current_cell->y*(my_cdf.header.cols) + 1;                /* current_cell->x + current_cell->y*(my_cdf.header.rows) + 1; */
 	  }
 	}
 	
