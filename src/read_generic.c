@@ -755,11 +755,11 @@ int read_generic_data_set(generic_data_set *data_set, FILE *instream){
       break;
     case 6: data_set->Data[i] = Calloc(data_set->nrows,float);
       break;
-    case 7: data_set->Data[i] = Calloc(data_set->nrows,double);
+/*    case 7: data_set->Data[i] = Calloc(data_set->nrows,double);
+      break; */
+    case 7: data_set->Data[i] = Calloc(data_set->nrows,ASTRING);
       break;
-    case 8: data_set->Data[i] = Calloc(data_set->nrows,ASTRING);
-      break;
-    case 9: data_set->Data[i] = Calloc(data_set->nrows,AWSTRING);
+    case 8: data_set->Data[i] = Calloc(data_set->nrows,AWSTRING);
       break;
     }
     
@@ -810,17 +810,17 @@ int read_generic_data_set_rows(generic_data_set *data_set, FILE *instream){
 	  return 0;
 	} 
 	break;
-      case 7: 	
+/*      case 7: 	
 	if (!fread_be_double64(&((double *)data_set->Data[j])[i],1,instream)){
 	  return 0;
 	} 
-	break;
-      case 8: 	
+	break; */
+      case 7: 	
 	if (!fread_ASTRING(&((ASTRING *)data_set->Data[j])[i], instream)){
 	  return 0;
 	} 
 	break;
-      case 9: 	
+      case 8: 	
 	if (!fread_AWSTRING(&((AWSTRING *)data_set->Data[j])[i], instream)){
 	  return 0;
 	};
@@ -1043,11 +1043,11 @@ int gzread_generic_data_set(generic_data_set *data_set, gzFile *instream){
       break;
     case 6: data_set->Data[i] = Calloc(data_set->nrows,float);
       break;
-    case 7: data_set->Data[i] = Calloc(data_set->nrows,double);
+/*    case 7: data_set->Data[i] = Calloc(data_set->nrows,double);
+      break; */
+    case 7: data_set->Data[i] = Calloc(data_set->nrows,ASTRING);
       break;
-    case 8: data_set->Data[i] = Calloc(data_set->nrows,ASTRING);
-      break;
-    case 9: data_set->Data[i] = Calloc(data_set->nrows,AWSTRING);
+    case 8: data_set->Data[i] = Calloc(data_set->nrows,AWSTRING);
       break;
     }
     
@@ -1100,17 +1100,17 @@ int gzread_generic_data_set_rows(generic_data_set *data_set, gzFile *instream){
 	  return 0;
 	} 
 	break;
-      case 7: 	
+/*      case 7: 	
 	if (!gzread_be_double64(&((double *)data_set->Data[j])[i],1,instream)){
 	  return 0;
 	} 
-	break;
-      case 8: 	
+	break; */
+      case 7: 	
 	if (!gzread_ASTRING(&((ASTRING *)data_set->Data[j])[i], instream)){
 	  return 0;
 	} 
 	break;
-      case 9: 	
+      case 8: 	
 	if (!gzread_AWSTRING(&((AWSTRING *)data_set->Data[j])[i], instream)){
 	  return 0;
 	};
@@ -1243,12 +1243,6 @@ static void print_decode_nvt_triplet(nvt_triplet triplet){
   if (!wcscmp(triplet.type.value,L"text/x-calvin-unsigned-integer-8")){
     Rprintf("Its a uint8_t  value is %d\n",decode_UINT8_t(triplet.value));
   }
-	
-  
-
-
-
-
 }
 
 
@@ -1453,3 +1447,504 @@ SEXP gzRead_Generic(SEXP filename){
   return return_value;
 
 }
+
+
+
+
+static SEXP file_header_R_List(generic_file_header *my_header){
+
+  SEXP return_value, return_names;	
+  SEXP tmp_sexp;
+
+  PROTECT(return_value = allocVector(VECSXP,3));	
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,1));
+  INTEGER(tmp_sexp)[0] = (int32_t)my_header->magic_number; 
+  SET_VECTOR_ELT(return_value,0,tmp_sexp);
+  UNPROTECT(1);
+
+   
+  PROTECT(tmp_sexp= allocVector(INTSXP,1));
+  INTEGER(tmp_sexp)[0] =  (int32_t)my_header->version;
+  SET_VECTOR_ELT(return_value,1,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,1));
+  INTEGER(tmp_sexp)[0] =  (int32_t)my_header->n_data_groups;
+  SET_VECTOR_ELT(return_value,2,tmp_sexp);
+  UNPROTECT(1);
+  
+  PROTECT(return_names = allocVector(STRSXP,3));
+  SET_STRING_ELT(return_names,0,mkChar("MagicNumber"));
+  SET_STRING_ELT(return_names,1,mkChar("Version"));
+  SET_STRING_ELT(return_names,2,mkChar("NumberDataGroups"));
+   
+  setAttrib(return_value, R_NamesSymbol, return_names); 
+  UNPROTECT(2);
+  return return_value;
+}
+
+
+
+
+
+
+
+
+
+static SEXP decode_nvt_triplet(nvt_triplet triplet){
+  
+  wchar_t *temp;
+  char *temp2;
+
+  int size;
+
+  int temp32;
+  float tempfloat;
+ 
+  SEXP return_value;
+
+  if (!wcscmp(triplet.type.value,L"text/x-calvin-float")){
+
+    decode_MIME_value(triplet, determine_MIMETYPE(triplet),&tempfloat,&size);
+
+    PROTECT(return_value=allocVector(REALSXP,1));
+    NUMERIC_POINTER(return_value)[0] = (double)tempfloat;
+    UNPROTECT(1);
+    return(return_value);	
+  } 
+  if (!wcscmp(triplet.type.value,L"text/ascii")){
+    temp2 = decode_MIME_value(triplet, determine_MIMETYPE(triplet),temp2,&size);
+    
+    PROTECT(return_value=allocVector(STRSXP,1));
+    SET_STRING_ELT(return_value,0,mkChar(temp2));
+    UNPROTECT(1);
+    Free(temp2);
+     return(return_value);	
+  }
+  
+  if (!wcscmp(triplet.type.value,L"text/plain")){
+    temp = (wchar_t *)decode_MIME_value(triplet, determine_MIMETYPE(triplet),temp,&size);
+    temp2 = Calloc(size +1, char);
+    wcstombs(temp2,temp,size);
+ 
+    PROTECT(return_value=allocVector(STRSXP,1));
+    SET_STRING_ELT(return_value,0,mkChar(temp2));
+    UNPROTECT(1);
+
+    Free(temp2);
+    Free(temp); 
+    return(return_value);	
+  }
+
+  if (!wcscmp(triplet.type.value,L"text/x-calvin-integer-32")){
+    decode_MIME_value(triplet, determine_MIMETYPE(triplet),&temp32,&size);
+    PROTECT(return_value=allocVector(INTSXP,1));
+    INTEGER_POINTER(return_value)[0] = (int32_t)temp32;
+    UNPROTECT(1);
+    return(return_value);	
+  }
+
+  if (!wcscmp(triplet.type.value,L"text/x-calvin-integer-16")){
+    PROTECT(return_value=allocVector(INTSXP,1));
+    INTEGER_POINTER(return_value)[0] = (int32_t)decode_INT16_t(triplet.value);
+    UNPROTECT(1); 
+    return(return_value);	
+  }
+
+  if (!wcscmp(triplet.type.value,L"text/x-calvin-unsigned-integer-32")){
+    PROTECT(return_value=allocVector(INTSXP,1));
+    INTEGER_POINTER(return_value)[0] = (int32_t)decode_UINT32_t(triplet.value);
+    UNPROTECT(1);  
+    return(return_value);	
+  }
+
+  if (!wcscmp(triplet.type.value,L"text/x-calvin-unsigned-integer-16")){
+    PROTECT(return_value=allocVector(INTSXP,1));
+    INTEGER_POINTER(return_value)[0] = (int32_t)decode_UINT16_t(triplet.value);
+    UNPROTECT(1);  
+    return(return_value);	
+  }
+
+  if (!wcscmp(triplet.type.value,L"text/x-calvin-integer-8")){
+    PROTECT(return_value=allocVector(INTSXP,1));
+    INTEGER_POINTER(return_value)[0] = (int32_t)decode_UINT8_t(triplet.value);
+    UNPROTECT(1);
+    return(return_value);	
+  }
+
+  if (!wcscmp(triplet.type.value,L"text/x-calvin-unsigned-integer-8")){
+    PROTECT(return_value=allocVector(INTSXP,1));
+    INTEGER_POINTER(return_value)[0] = (int32_t)decode_UINT8_t(triplet.value);
+    UNPROTECT(1);  
+    return(return_value);	
+  }
+}
+
+
+static SEXP data_header_R_List(generic_data_header *my_data_header){
+
+  SEXP return_value, return_names;	
+  SEXP tmp_sexp, tmp_names;
+  char *temp;
+  int i;
+
+  PROTECT(return_value = allocVector(VECSXP,8));	
+
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));
+  if (my_data_header->data_type_id.len > 0){
+    SET_STRING_ELT(tmp_sexp,0,mkChar(my_data_header->data_type_id.value));
+  }
+  SET_VECTOR_ELT(return_value,0,tmp_sexp);
+  UNPROTECT(1); 	
+
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));  
+  if (my_data_header->unique_file_id.len > 0){
+    SET_STRING_ELT(tmp_sexp,0,mkChar(my_data_header->unique_file_id.value));
+  }
+  SET_VECTOR_ELT(return_value,1,tmp_sexp);
+  UNPROTECT(1); 	
+
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));
+  if (my_data_header->Date_time.len > 0){
+    temp = Calloc(my_data_header->Date_time.len+1,char);
+    wcstombs(temp, my_data_header->Date_time.value, my_data_header->Date_time.len);
+    SET_STRING_ELT(tmp_sexp,0,mkChar(temp));  
+    Free(temp);
+  }
+  SET_VECTOR_ELT(return_value,2,tmp_sexp);
+  UNPROTECT(1); 
+ 
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));
+  if (my_data_header->locale.len > 0){
+    temp = Calloc(my_data_header->locale.len+1,char);
+    wcstombs(temp, my_data_header->locale.value, my_data_header->locale.len);
+    SET_STRING_ELT(tmp_sexp,0,mkChar(temp));  
+    Free(temp);
+  }
+  SET_VECTOR_ELT(return_value,3,tmp_sexp);
+  UNPROTECT(1); 
+   
+  PROTECT(tmp_sexp= allocVector(INTSXP,1));
+  INTEGER(tmp_sexp)[0] =  (int32_t)my_data_header->n_name_type_value;
+  SET_VECTOR_ELT(return_value,4,tmp_sexp);
+  UNPROTECT(1); 
+
+  PROTECT(tmp_sexp= allocVector(VECSXP,my_data_header->n_name_type_value));
+  PROTECT(tmp_names =  allocVector(STRSXP,my_data_header->n_name_type_value));
+  for (i=0; i < my_data_header->n_name_type_value; i++){
+     SET_VECTOR_ELT(tmp_sexp,i,decode_nvt_triplet(my_data_header->name_type_value[i]));
+     temp = Calloc(my_data_header->name_type_value[i].name.len+1,char);
+     wcstombs(temp, my_data_header->name_type_value[i].name.value, my_data_header->name_type_value[i].name.len);
+     SET_STRING_ELT(tmp_names,i,mkChar(temp));
+  } 
+  setAttrib(tmp_sexp, R_NamesSymbol, tmp_names); 
+  SET_VECTOR_ELT(return_value,5,tmp_sexp);
+  UNPROTECT(2); 
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,1));
+  INTEGER(tmp_sexp)[0] =  (int32_t)my_data_header->n_parent_headers;
+  SET_VECTOR_ELT(return_value,6,tmp_sexp);
+  UNPROTECT(1); 
+  
+  PROTECT(tmp_sexp= allocVector(VECSXP,my_data_header->n_parent_headers)); 
+  if (my_data_header->n_parent_headers > 0){
+   for (i =0; i < my_data_header->n_parent_headers; i++){
+      SET_VECTOR_ELT(tmp_sexp,i,data_header_R_List(my_data_header->parent_headers[i]));
+    }
+  }
+  SET_VECTOR_ELT(return_value,7,tmp_sexp);
+  UNPROTECT(1); 
+
+
+  PROTECT(return_names = allocVector(STRSXP,8));
+  SET_STRING_ELT(return_names,0,mkChar("DataTypeID"));
+  SET_STRING_ELT(return_names,1,mkChar("UniqueFileID"));
+  SET_STRING_ELT(return_names,2,mkChar("DateTime"));
+  SET_STRING_ELT(return_names,3,mkChar("Locale"));
+  SET_STRING_ELT(return_names,4,mkChar("NumberOfNameValueType"));
+  SET_STRING_ELT(return_names,5,mkChar("NVTList"));
+  SET_STRING_ELT(return_names,6,mkChar("NumberOfParentHeaders"));
+  SET_STRING_ELT(return_names,7,mkChar("ParentHeaders"));
+  setAttrib(return_value, R_NamesSymbol, return_names); 
+  UNPROTECT(2);
+  return return_value;
+}
+
+
+
+
+static SEXP data_group_R_list(generic_data_group *my_data_group){
+
+  SEXP return_value;
+  SEXP tmp_sexp, return_names;
+  char *temp;
+
+  PROTECT(return_value =  allocVector(VECSXP,2));
+  if (my_data_group->data_group_name.len > 0){
+     PROTECT(tmp_sexp= allocVector(STRSXP,1)); 
+     temp = Calloc(my_data_group->data_group_name.len+1,char);
+     wcstombs(temp, my_data_group->data_group_name.value, my_data_group->data_group_name.len);
+     SET_STRING_ELT(tmp_sexp,0,mkChar(temp));  
+     Free(temp);
+  }	
+  SET_VECTOR_ELT(return_value,0,tmp_sexp);
+  UNPROTECT(1);
+   
+
+
+  SET_VECTOR_ELT(return_value,1,allocVector(VECSXP,my_data_group->n_data_sets));
+  PROTECT(return_names = allocVector(STRSXP,2));
+  SET_STRING_ELT(return_names,0,mkChar("Name"));
+  SET_STRING_ELT(return_names,1,mkChar("Datasets"));
+  setAttrib(return_value, R_NamesSymbol, return_names); 
+  UNPROTECT(2);
+  return return_value;   
+}
+
+
+
+static SEXP generic_data_set_R_List(generic_data_set *my_data_set){
+
+  SEXP return_value, return_names;
+  SEXP tmp_sexp, tmp_names;
+  int i;
+  char *temp;
+
+  PROTECT(return_value =  allocVector(VECSXP,3));
+  
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));  
+  if (my_data_set->data_set_name.len > 0){
+    temp = Calloc(my_data_set->data_set_name.len+1,char);
+    wcstombs(temp, my_data_set->data_set_name.value, my_data_set->data_set_name.len);
+    SET_STRING_ELT(tmp_sexp,0,mkChar(temp));  
+    Free(temp);
+  }
+  SET_VECTOR_ELT(return_value,0,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(VECSXP,my_data_set->n_name_type_value));
+  PROTECT(tmp_names =  allocVector(STRSXP,my_data_set->n_name_type_value));
+  for (i=0; i < my_data_set->n_name_type_value; i++){
+    //print_nvt_triplet(data_set.name_type_value[i]);
+    SET_VECTOR_ELT(tmp_sexp,i,decode_nvt_triplet(my_data_set->name_type_value[i]));
+    temp = Calloc(my_data_set->name_type_value[i].name.len+1,char);
+    wcstombs(temp, my_data_set->name_type_value[i].name.value, my_data_set->name_type_value[i].name.len);
+    SET_STRING_ELT(tmp_names,i,mkChar(temp));
+    Free(temp);
+  } 
+  setAttrib(tmp_sexp, R_NamesSymbol, tmp_names); 
+  SET_VECTOR_ELT(return_value,1,tmp_sexp);
+  UNPROTECT(2); 
+
+  PROTECT(tmp_sexp= allocVector(VECSXP,my_data_set->ncols));  
+  SET_VECTOR_ELT(return_value,2,tmp_sexp);
+  PROTECT(tmp_names =  allocVector(STRSXP,my_data_set->ncols));
+  for (i=0; i < my_data_set->ncols; i++){
+     temp = Calloc(my_data_set->col_name_type_value[i].name.len+1,char);
+     wcstombs(temp, my_data_set->col_name_type_value[i].name.value, my_data_set->col_name_type_value[i].name.len);
+     SET_STRING_ELT(tmp_names,i,mkChar(temp));
+     Free(temp);
+  }
+  setAttrib(tmp_sexp, R_NamesSymbol, tmp_names); 
+  UNPROTECT(2);
+
+  PROTECT(return_names = allocVector(STRSXP,3));
+  SET_STRING_ELT(return_names,0,mkChar("Name"));
+  SET_STRING_ELT(return_names,1,mkChar("NVTList"));
+  SET_STRING_ELT(return_names,2,mkChar("DataColumns"));
+  setAttrib(return_value, R_NamesSymbol, return_names); 
+  UNPROTECT(2);
+  return return_value;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+static SEXP generic_data_set_rows_R_List(generic_data_set *data_set, int col){
+
+  SEXP return_value;
+  int i,j;
+  char *temp;  
+
+  j = col;
+
+  switch(data_set->col_name_type_value[j].type){ 
+  case 0:
+     PROTECT(return_value = allocVector(INTSXP, data_set->nrows)); 
+     for (i=0; i < data_set->nrows; i++){
+       INTEGER_POINTER(return_value)[i] = (int32_t)((char *)data_set->Data[j])[i];
+     }
+     break;
+  case 1:	
+     PROTECT(return_value = allocVector(INTSXP, data_set->nrows));   
+     for (i=0; i < data_set->nrows; i++){
+       INTEGER_POINTER(return_value)[i] = (int32_t)((unsigned char *)data_set->Data[j])[i];
+     }
+     break;
+  case 2:	
+     PROTECT(return_value = allocVector(INTSXP, data_set->nrows));
+     for (i=0; i < data_set->nrows; i++){
+       INTEGER_POINTER(return_value)[i] = (int32_t)((short *)data_set->Data[j])[i];
+     }
+     break;
+  case 3:	
+     PROTECT(return_value = allocVector(INTSXP, data_set->nrows));  
+     for (i=0; i < data_set->nrows; i++){
+       INTEGER_POINTER(return_value)[i] = (int32_t)((unsigned short *)data_set->Data[j])[i];
+     }
+     break;  
+  case 4:	
+     PROTECT(return_value = allocVector(INTSXP, data_set->nrows));  
+     for (i=0; i < data_set->nrows; i++){
+       INTEGER_POINTER(return_value)[i] = (int32_t)((int32_t *)data_set->Data[j])[i];
+     }
+     break;
+  case 5:	
+     PROTECT(return_value = allocVector(INTSXP, data_set->nrows));
+     for (i=0; i < data_set->nrows; i++){
+       INTEGER_POINTER(return_value)[i] = (int32_t)((uint32_t *)data_set->Data[j])[i];
+     }
+   
+     break;
+  case 6:	
+    PROTECT( return_value = allocVector(REALSXP, data_set->nrows));  
+    for (i=0; i < data_set->nrows; i++){
+       NUMERIC_POINTER(return_value)[i] = (double)((float *)data_set->Data[j])[i];
+     }
+     break;
+/*  case 7:	
+     PROTECT(return_value = allocVector(REALSXP, data_set->nrows));  
+     for (i=0; i < data_set->nrows; i++){
+       NUMERIC_POINTER(return_value)[i] = (double)((double *)data_set->Data[j])[i];
+     }
+     break; */
+  case 7:	
+     PROTECT(return_value = allocVector(STRSXP, data_set->nrows));
+     for (i=0; i < data_set->nrows; i++){
+	temp = (char *)((ASTRING *)data_set->Data[j])[i].value;
+	SET_STRING_ELT(return_value,i,mkChar(temp));
+     }
+     break;
+  case 8:	
+     PROTECT(return_value = allocVector(STRSXP, data_set->nrows));
+     for (i=0; i < data_set->nrows; i++){
+       temp = Calloc(((AWSTRING *)data_set->Data[j])[i].len+1,char);
+       wcstombs(temp, ((AWSTRING *)data_set->Data[j])[i].value,((AWSTRING *)data_set->Data[j])[i].len);
+       SET_STRING_ELT(return_value,i,mkChar(temp));
+       Free(temp);
+     }
+     break;
+  }
+  UNPROTECT(1);
+  return return_value;
+}
+
+
+
+
+SEXP Read_Generic_R_List(SEXP filename){
+
+  int i,j,k;
+
+  SEXP return_value = R_NilValue;
+  SEXP return_names;
+  SEXP temp_sxp,temp_sxp2,temp_names,temp_names2;	
+  FILE *infile;
+
+  char *temp;
+
+  generic_file_header my_header;
+  generic_data_header my_data_header;
+  generic_data_group my_data_group;
+
+  generic_data_set my_data_set;
+
+  const char *cur_file_name = CHAR(STRING_ELT(filename,0));
+
+  /* Pass through all the header information */
+  
+  if ((infile = fopen(cur_file_name, "rb")) == NULL)
+    {
+      error("Unable to open the file %s\n",cur_file_name);
+      return 0;
+    }
+  
+
+  /* Read the two header sections first */
+  read_generic_file_header(&my_header, infile);
+  read_generic_data_header(&my_data_header, infile);
+  	
+  PROTECT(return_value = allocVector(VECSXP,3));
+
+  /* File Header is First Element of Return List */
+	
+  SET_VECTOR_ELT(return_value,0,file_header_R_List(&my_header));
+
+  /* Data Header is Second Element of Return List */
+  SET_VECTOR_ELT(return_value,1,data_header_R_List(&my_data_header));
+
+  /* Data Groups are it Third Element of Return List */	
+  /* Now Read Data groups */	
+  
+  PROTECT(temp_sxp = allocVector(VECSXP,my_header.n_data_groups));	
+  SET_VECTOR_ELT(return_value,2,temp_sxp);
+  UNPROTECT(1);
+  PROTECT(temp_names = allocVector(STRSXP,my_header.n_data_groups));	
+  for (k =0; k < my_header.n_data_groups; k++){
+    read_generic_data_group(&my_data_group,infile);
+    SET_VECTOR_ELT(temp_sxp,k,data_group_R_list(&my_data_group));
+             
+    temp = Calloc(my_data_group.data_group_name.len+1,char);
+    wcstombs(temp, my_data_group.data_group_name.value, my_data_group.data_group_name.len);
+    SET_STRING_ELT(temp_names,k,mkChar(temp));  
+    Free(temp);
+    
+    PROTECT(temp_names2 = allocVector(STRSXP,my_data_group.n_data_sets));	
+    for (j=0; j < my_data_group.n_data_sets; j++){
+      read_generic_data_set(&my_data_set,infile); 
+      temp_sxp2 = generic_data_set_R_List(&my_data_set);
+      SET_VECTOR_ELT(VECTOR_ELT(VECTOR_ELT(temp_sxp,k),1),j,temp_sxp2);
+
+      temp = Calloc(my_data_set.data_set_name.len+1,char);
+      wcstombs(temp, my_data_set.data_set_name.value, my_data_set.data_set_name.len);
+      SET_STRING_ELT(temp_names2,j,mkChar(temp));  
+      Free(temp);	
+
+      read_generic_data_set_rows(&my_data_set,infile); 
+
+      for (i =0; i < my_data_set.ncols; i++){
+	SET_VECTOR_ELT(VECTOR_ELT(temp_sxp2,2),i,generic_data_set_rows_R_List(&my_data_set, i));
+      }
+    
+      fseek(infile, my_data_set.file_pos_last, SEEK_SET);
+      Free_generic_data_set(&my_data_set);
+    }
+    setAttrib(VECTOR_ELT(VECTOR_ELT(temp_sxp,k),1), R_NamesSymbol, temp_names2); 
+    UNPROTECT(1);	
+
+    Free_generic_data_group(&my_data_group);
+  }
+  Free_generic_data_header(&my_data_header);
+  setAttrib(temp_sxp, R_NamesSymbol, temp_names); 
+  UNPROTECT(1);
+
+  PROTECT(return_names = allocVector(STRSXP,3));
+  SET_STRING_ELT(return_names,0,mkChar("FileHeader"));
+  SET_STRING_ELT(return_names,1,mkChar("DataHeader"));
+  SET_STRING_ELT(return_names,2,mkChar("DataGroup"));
+  setAttrib(return_value, R_NamesSymbol, return_names); 
+  UNPROTECT(2);
+  return return_value;
+
+}
+
