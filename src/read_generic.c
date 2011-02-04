@@ -25,6 +25,7 @@
  ** Feb 13, 2008 - add decode_MIME_value_toASCII which takes any MIME and attempts to convert to a string
  ** Jul 29, 2008 - fix preprocessor directive error for WORDS_BIGENDIAN systems 
  ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
+ ** Feb, 2011 - Some debugging code for checking Generic file format parsing
  **
  *************************************************************/
 
@@ -117,25 +118,36 @@ void Free_generic_data_group(generic_data_group *data_group){
 
 void Free_generic_data_set(generic_data_set *data_set){
 
-  int i;
+  int j,i;
 
-  Free_AWSTRING(&(data_set->data_set_name));
+  for (j= 0; j < data_set->ncols; j++){
 
-  for (i =0; i <  data_set->n_name_type_value; i++){
-    Free_nvt_triplet(&(data_set->name_type_value[i]));
-  }
-  Free(data_set->name_type_value);
-
-  for (i=0; i < data_set->ncols; i++){
-    Free_nvts_triplet(&(data_set->col_name_type_value[i]));
-  }
-  Free(data_set->col_name_type_value);
-
-  for (i= 0; i < data_set->ncols; i++){
-    Free(data_set->Data[i]);
+    if (data_set->col_name_type_value[j].type == 7){  
+         for (i=0; i < data_set->nrows; i++){
+        /* ASTRING */
+        Free_ASTRING(&((ASTRING *)data_set->Data[j])[i]);
+	}	
+    } else if (data_set->col_name_type_value[j].type == 8){  
+         for (i=0; i < data_set->nrows; i++){
+        /* AWSTRING */
+        Free_AWSTRING(&((AWSTRING *)data_set->Data[j])[i]);
+	}	
+    }
+    Free(data_set->Data[j]);
   }
   Free(data_set->Data);
 
+  for (j=0; j < data_set->ncols; j++){
+    Free_nvts_triplet(&(data_set->col_name_type_value[j]));
+  }
+  Free(data_set->col_name_type_value);
+
+  for (j =0; j <  data_set->n_name_type_value; j++){
+    Free_nvt_triplet(&(data_set->name_type_value[j]));
+  }
+  Free(data_set->name_type_value);
+
+  Free_AWSTRING(&(data_set->data_set_name));
   
 }
   
@@ -1637,6 +1649,7 @@ static SEXP data_header_R_List(generic_data_header *my_data_header){
      temp = Calloc(my_data_header->name_type_value[i].name.len+1,char);
      wcstombs(temp, my_data_header->name_type_value[i].name.value, my_data_header->name_type_value[i].name.len);
      SET_STRING_ELT(tmp_names,i,mkChar(temp));
+     Free(temp);
   } 
   setAttrib(tmp_sexp, R_NamesSymbol, tmp_names); 
   SET_VECTOR_ELT(return_value,5,tmp_sexp);
