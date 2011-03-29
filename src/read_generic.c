@@ -1506,8 +1506,8 @@ static SEXP file_header_R_List(generic_file_header *my_header){
 
 static SEXP decode_nvt_triplet(nvt_triplet triplet){
   
-  wchar_t *temp;
-  char *temp2;
+  wchar_t *temp=0;
+  char *temp2=0;
 
   int size;
 
