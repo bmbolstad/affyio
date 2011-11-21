@@ -26,6 +26,7 @@
  ** Jul 29, 2008 - fix preprocessor directive error for WORDS_BIGENDIAN systems 
  ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
  ** Feb, 2011 - Some debugging code for checking Generic file format parsing
+ ** Nov, 2011 - Some additional fixed to deal with fixed width fields for strings in dataset rows
  **
  *************************************************************/
 
@@ -166,6 +167,22 @@ static int fread_ASTRING(ASTRING *destination, FILE *instream){
 
 
 
+static int fread_ASTRING_fw(ASTRING *destination, FILE *instream, int length){
+
+  fread_be_int32(&(destination->len),1,instream);
+  if (destination->len > 0){
+    destination->value = Calloc(destination->len+1,char);
+    fread_be_char(destination->value,destination->len,instream);
+    if (length > destination->len){
+	fseek(instream, length-destination->len, SEEK_CUR);
+    }
+  } else {
+    destination->value = 0;
+  }
+  return 1;
+}
+
+
 static int fread_AWSTRING(AWSTRING *destination, FILE *instream){
 
   uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
@@ -186,6 +203,36 @@ static int fread_AWSTRING(AWSTRING *destination, FILE *instream){
   
   return 1;
 }
+
+
+static int fread_AWSTRING_fw(AWSTRING *destination, FILE *instream, int length){
+
+  uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
+
+  int i;
+
+  fread_be_int32(&(destination->len),1,instream);
+  if ((destination->len) > 0){
+    destination->value = Calloc(destination->len+1,wchar_t);
+  
+    for (i=0; i < destination->len; i++){
+      fread_be_uint16(&temp,1,instream);
+      destination->value[i] = (wchar_t)temp;
+    }  
+    if (length > 2*destination->len){
+	fseek(instream, length-2*destination->len, SEEK_CUR);
+    }
+  } else {
+    destination->value = 0;
+  }
+  
+  return 1;
+}
+
+
+
+
+
 
 
 static int fread_nvt_triplet(nvt_triplet *destination, FILE *instream){
@@ -828,12 +875,12 @@ int read_generic_data_set_rows(generic_data_set *data_set, FILE *instream){
 	} 
 	break; */
       case 7: 	
-	if (!fread_ASTRING(&((ASTRING *)data_set->Data[j])[i], instream)){
+	if (!fread_ASTRING_fw(&((ASTRING *)data_set->Data[j])[i], instream, data_set->col_name_type_value[j].size-4)){
 	  return 0;
 	} 
 	break;
       case 8: 	
-	if (!fread_AWSTRING(&((AWSTRING *)data_set->Data[j])[i], instream)){
+	if (!fread_AWSTRING_fw(&((AWSTRING *)data_set->Data[j])[i], instream, data_set->col_name_type_value[j].size-4)){
 	  return 0;
 	};
 	break;
@@ -870,6 +917,22 @@ static int gzread_ASTRING(ASTRING *destination, gzFile *instream){
 
 
 
+static int gzread_ASTRING_fw(ASTRING *destination, gzFile *instream, int length){
+
+  gzread_be_int32(&(destination->len),1,instream);
+  if (destination->len > 0){
+    destination->value = Calloc(destination->len+1,char);
+    gzread_be_char(destination->value,destination->len,instream);  
+    if (length > destination->len){
+	gzseek(instream, length-destination->len, SEEK_CUR);
+    }
+  } else {
+    destination->value = 0;
+  }
+  return 1;
+}
+
+
 static int gzread_AWSTRING(AWSTRING *destination, gzFile *instream){
 
   uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
@@ -884,6 +947,32 @@ static int gzread_AWSTRING(AWSTRING *destination, gzFile *instream){
       gzread_be_uint16(&temp,1,instream);
       destination->value[i] = (wchar_t)temp;
     }
+  } else {
+    destination->value = 0;
+  }
+  
+  return 1;
+}
+
+
+static int gzread_AWSTRING_fw(AWSTRING *destination, gzFile *instream, int length){
+
+  uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
+
+  int i;
+
+  gzread_be_int32(&(destination->len),1,instream);
+  if ((destination->len) > 0){
+    destination->value = Calloc(destination->len+1,wchar_t);
+  
+    for (i=0; i < destination->len; i++){
+      gzread_be_uint16(&temp,1,instream);
+      destination->value[i] = (wchar_t)temp;
+    }    
+    if (length > 2*destination->len){
+	gzseek(instream, length-2*destination->len, SEEK_CUR);
+    }
+
   } else {
     destination->value = 0;
   }
@@ -1118,12 +1207,12 @@ int gzread_generic_data_set_rows(generic_data_set *data_set, gzFile *instream){
 	} 
 	break; */
       case 7: 	
-	if (!gzread_ASTRING(&((ASTRING *)data_set->Data[j])[i], instream)){
+	if (!gzread_ASTRING_fw(&((ASTRING *)data_set->Data[j])[i], instream,data_set->col_name_type_value[j].size-4)){
 	  return 0;
 	} 
 	break;
       case 8: 	
-	if (!gzread_AWSTRING(&((AWSTRING *)data_set->Data[j])[i], instream)){
+	if (!gzread_AWSTRING_fw(&((AWSTRING *)data_set->Data[j])[i], instream, data_set->col_name_type_value[j].size-4)){
 	  return 0;
 	};
 	break;
@@ -1957,7 +2046,7 @@ SEXP Read_Generic_R_List(SEXP filename){
   SET_STRING_ELT(return_names,2,mkChar("DataGroup"));
   setAttrib(return_value, R_NamesSymbol, return_names); 
   UNPROTECT(2);
+  fclose(infile);
   return return_value;
-
 }
 
