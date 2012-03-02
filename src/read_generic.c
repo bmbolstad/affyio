@@ -305,60 +305,60 @@ static wchar_t *decode_TEXT(ASTRING value){
 
 static int8_t decode_INT8_t(ASTRING value){
 
-  int8_t contents;
+  int32_t contents;
   
-  memcpy(&contents,value.value, sizeof(int8_t));
+  memcpy(&contents,value.value, sizeof(int32_t));
 
-  //#ifndef WORDS_BIGENDIAN 
-  //  contents=(((contents[i]>>8)&0xff) | ((contents[i]&0xff)<<8));//
-  //#endif 
+  #ifndef WORDS_BIGENDIAN 
+    content=(((contents>>24)&0xff));
+  #endif 
 
-
-  return contents;
+  return (int8_t)contents;
 
 }
 
 
 static uint8_t decode_UINT8_t(ASTRING value){
 
-  uint8_t contents;
+  uint32_t contents;
   
-  memcpy(&contents,value.value, sizeof(uint8_t));
+  memcpy(&contents,value.value, sizeof(uint32_t));
 
-  //#ifndef WORDS_BIGENDIAN 
-  //contents=(((contents[i]>>8)&0xff) | ((contents[i]&0xff)<<8));
-  //#endif 
-  return contents;
+  #ifndef WORDS_BIGENDIAN 
+    contents=(((contents>>24)&0xff));
+  #endif 
+
+  return (uint8_t)contents;
 
 }
 
 
 static int16_t decode_INT16_t(ASTRING value){
 
-  int16_t contents;
+  int32_t contents;
   
-  memcpy(&contents,value.value, sizeof(int16_t));
+  memcpy(&contents,value.value, sizeof(int32_t));
 
 #ifndef WORDS_BIGENDIAN 
-  contents=(((contents>>8)&0xff) | ((contents&0xff)<<8));
+  contents=(((contents>>24)&0xff) | ((contents>>8)&0xff00));
 #endif 
 
 
-  return contents;
+  return (int16_t)contents;
 
 }
 
 
 static uint16_t decode_UINT16_t(ASTRING value){
 
-  uint16_t contents;
+  uint32_t contents;
   
-  memcpy(&contents,value.value, sizeof(uint16_t));
+  memcpy(&contents,value.value, sizeof(uint32_t));
 
 #ifndef WORDS_BIGENDIAN 
-  contents=(((contents>>8)&0xff) | ((contents&0xff)<<8));
+  contents=(((contents>>24)&0xff) | ((contents>>8)&0xff00));
 #endif 
-  return contents;
+  return (uint16_t)contents;
 
 }
 
@@ -1339,7 +1339,7 @@ static void print_decode_nvt_triplet(nvt_triplet triplet){
   }
 
   if (!wcscmp(triplet.type.value,L"text/x-calvin-integer-8")){
-    Rprintf("Its a int8_t  value is %d\n",decode_UINT8_t(triplet.value));
+    Rprintf("Its a int8_t  value is %d\n",decode_INT8_t(triplet.value));
   }
   if (!wcscmp(triplet.type.value,L"text/x-calvin-unsigned-integer-8")){
     Rprintf("Its a uint8_t  value is %d\n",decode_UINT8_t(triplet.value));
@@ -1669,7 +1669,7 @@ static SEXP decode_nvt_triplet(nvt_triplet triplet){
 
   if (!wcscmp(triplet.type.value,L"text/x-calvin-integer-8")){
     PROTECT(return_value=allocVector(INTSXP,1));
-    INTEGER_POINTER(return_value)[0] = (int32_t)decode_UINT8_t(triplet.value);
+    INTEGER_POINTER(return_value)[0] = (int32_t)decode_INT8_t(triplet.value);
     UNPROTECT(1);
     return(return_value);	
   }
