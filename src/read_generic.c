@@ -310,7 +310,7 @@ static int8_t decode_INT8_t(ASTRING value){
   memcpy(&contents,value.value, sizeof(int32_t));
 
   #ifndef WORDS_BIGENDIAN 
-    content=(((contents>>24)&0xff));
+    contents=(((contents>>24)&0xff));
   #endif 
 
   return (int8_t)contents;
