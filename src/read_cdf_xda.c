@@ -1227,13 +1227,13 @@ SEXP ReadCDFFileIntoRList(SEXP filename,SEXP fullstructure){
 	setAttrib(UNITSBlock,R_NamesSymbol,UNITSBlockNames);
 
 	PROTECT(UNITSBlockHeader = allocVector(REALSXP,6));
-	PROTECT(UNITSBlockHeaderNames= allocVector(VECSXP,6));
-	SET_VECTOR_ELT(UNITSBlockHeaderNames,0,mkChar("n.atoms"));
-	SET_VECTOR_ELT(UNITSBlockHeaderNames,1,mkChar("n.cells"));
-	SET_VECTOR_ELT(UNITSBlockHeaderNames,2,mkChar("n.cellsperatom"));
-	SET_VECTOR_ELT(UNITSBlockHeaderNames,3,mkChar("Direction"));
-	SET_VECTOR_ELT(UNITSBlockHeaderNames,4,mkChar("firstatom"));
-	SET_VECTOR_ELT(UNITSBlockHeaderNames,5,mkChar("unused"));
+	PROTECT(UNITSBlockHeaderNames= allocVector(STRSXP,6));
+	SET_STRING_ELT(UNITSBlockHeaderNames,0,mkChar("n.atoms"));
+	SET_STRING_ELT(UNITSBlockHeaderNames,1,mkChar("n.cells"));
+	SET_STRING_ELT(UNITSBlockHeaderNames,2,mkChar("n.cellsperatom"));
+	SET_STRING_ELT(UNITSBlockHeaderNames,3,mkChar("Direction"));
+	SET_STRING_ELT(UNITSBlockHeaderNames,4,mkChar("firstatom"));
+	SET_STRING_ELT(UNITSBlockHeaderNames,5,mkChar("unused"));
 	
 	NUMERIC_POINTER(UNITSBlockHeader)[0] = (double)my_cdf.units[i].unit_block[j].natoms;
 	NUMERIC_POINTER(UNITSBlockHeader)[1] = (double)my_cdf.units[i].unit_block[j].ncells;

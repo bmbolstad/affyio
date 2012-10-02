@@ -1409,7 +1409,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
 	INTEGER_POINTER(UNITSProbeInfoCODONIND)[k]=my_cdf.units[i].blocks[j].probes[k].codonid;
 	INTEGER_POINTER(UNITSProbeInfoCODON)[k]=my_cdf.units[i].blocks[j].probes[k].codon;
 	INTEGER_POINTER(UNITSProbeInfoREGIONTYPE)[k]=my_cdf.units[i].blocks[j].probes[k].regiontype;
-	SET_VECTOR_ELT(UNITSProbeInfoPROBE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].probe));
+	SET_STRING_ELT(UNITSProbeInfoPROBE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].probe));
 	SET_STRING_ELT(UNITSProbeInfoFEAT,k,mkChar(my_cdf.units[i].blocks[j].probes[k].feat));
 	SET_STRING_ELT(UNITSProbeInfoQUAL,k,mkChar(my_cdf.units[i].blocks[j].probes[k].qual));
 	SET_STRING_ELT(UNITSProbeInfoCBASE,k,mkChar(my_cdf.units[i].blocks[j].probes[k].cbase));
