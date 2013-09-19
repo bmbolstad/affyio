@@ -150,6 +150,7 @@
  ** Jun 3, 2009 - CEL corruption not detected in read.probematrix
  ** Nov 10, 2009 - Pthread on solaris fix
  ** May 26, 2010 - Multichannel CEL file support initiated 
+ ** Sept 18, 2013 -  improve 64bit support for read_abatch
  ** 
  *************************************************************/
  
@@ -616,12 +617,13 @@ static int check_cel_file(const char *filename, const char *ref_cdfName, int ref
  **
  ************************************************************************/
 
-static int read_cel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_cel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 #if USE_PTHREADS  
   char *tmp_pointer;
 #endif  
 
-  int i, cur_x,cur_y,cur_index;
+	/*	  int */
+  size_t i, cur_x,cur_y,cur_index;
   double cur_mean;
   FILE *currentFile; 
   char buffer[BUF_SIZE];
@@ -724,12 +726,12 @@ static int read_cel_file_intensities(const char *filename, double *intensity, in
  **
  ************************************************************************/
 
-static int read_cel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_cel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 #if USE_PTHREADS  
   char *tmp_pointer;
 #endif  
 
-  int i, cur_x,cur_y,cur_index;
+  size_t i, cur_x,cur_y,cur_index;
   double cur_mean, cur_stddev;
   FILE *currentFile; 
   char buffer[BUF_SIZE];
@@ -830,12 +832,12 @@ static int read_cel_file_stddev(const char *filename, double *intensity, int chi
  **
  ************************************************************************/
 
-static int read_cel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_cel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 #if USE_PTHREADS  
   char *tmp_pointer;
 #endif  
 
-  int i, cur_x,cur_y,cur_index,cur_npixels;
+  size_t i, cur_x,cur_y,cur_index,cur_npixels;
   double cur_mean, cur_stddev;
   FILE *currentFile; 
   char buffer[BUF_SIZE];
@@ -962,10 +964,10 @@ static int read_cel_file_npixels(const char *filename, double *intensity, int ch
  **
  ****************************************************************/
 
-static void apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
   
-  int i;
-  int numcells, cur_x, cur_y, cur_index;
+  size_t i;
+  size_t numcells, cur_x, cur_y, cur_index;
   FILE *currentFile;
   char buffer[BUF_SIZE];
   tokenset *cur_tokenset;
@@ -1522,12 +1524,12 @@ static int check_gzcel_file(const char *filename, const char *ref_cdfName, int r
  **
  ************************************************************************/
 
-static int read_gzcel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_gzcel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 #if USE_PTHREADS  
   char *tmp_pointer;
 #endif  
   
-  int i, cur_x,cur_y,cur_index;
+  size_t i, cur_x,cur_y,cur_index;
   double cur_mean;
   gzFile currentFile; 
   char buffer[BUF_SIZE];
@@ -1619,12 +1621,12 @@ static int read_gzcel_file_intensities(const char *filename, double *intensity, 
  **
  ************************************************************************/
 
-static int read_gzcel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_gzcel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 #if USE_PTHREADS  
   char *tmp_pointer;
 #endif  
   
-  int i, cur_x,cur_y,cur_index;
+  size_t i, cur_x,cur_y,cur_index;
   double cur_mean, cur_stddev;
   gzFile currentFile; 
   char buffer[BUF_SIZE];
@@ -1724,12 +1726,12 @@ static int read_gzcel_file_stddev(const char *filename, double *intensity, int c
  **
  ************************************************************************/
 
-static int read_gzcel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_gzcel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 #if USE_PTHREADS  
   char *tmp_pointer;
 #endif  
 
-  int i, cur_x,cur_y,cur_index,cur_npixels;
+  size_t i, cur_x,cur_y,cur_index,cur_npixels;
   double cur_mean, cur_stddev;
   gzFile currentFile; 
   char buffer[BUF_SIZE];
@@ -1836,10 +1838,10 @@ static int read_gzcel_file_npixels(const char *filename, double *intensity, int 
  **
  ****************************************************************/
 
-static void gz_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void gz_apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
   
-  int i;
-  int numcells, cur_x, cur_y, cur_index;
+  size_t i;
+  size_t numcells, cur_x, cur_y, cur_index;
   gzFile currentFile;
   char buffer[BUF_SIZE];
   tokenset *cur_tokenset;
@@ -2827,10 +2829,10 @@ static int check_binary_cel_file(const char *filename, const char *ref_cdfName, 
  **
  **************************************************************/
 
-static int read_binarycel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_binarycel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
 
@@ -2881,10 +2883,10 @@ static int read_binarycel_file_intensities(const char *filename, double *intensi
  **
  **************************************************************/
 
-static int read_binarycel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_binarycel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
 
   int fread_err=0;
   
@@ -2928,10 +2930,10 @@ static int read_binarycel_file_stddev(const char *filename, double *intensity, i
  **
  **************************************************************/
 
-static int read_binarycel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int read_binarycel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
 
   int fread_err=0;
  
@@ -2986,11 +2988,11 @@ static int read_binarycel_file_npixels(const char *filename, double *intensity, 
  **
  **************************************************************/
 
-static void binary_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void binary_apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
   
-  int i=0;
+  size_t i=0;
 
-  int cur_index;
+  size_t cur_index;
 
   int sizeofrecords;
 
@@ -3566,10 +3568,10 @@ static int check_gzbinary_cel_file(const char *filename, const char *ref_cdfName
  **
  **************************************************************/
 
-static int gzread_binarycel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int gzread_binarycel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
 
@@ -3620,10 +3622,10 @@ static int gzread_binarycel_file_intensities(const char *filename, double *inten
  **
  **************************************************************/
 
-static int gzread_binarycel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int gzread_binarycel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
 
   int fread_err=0;
   
@@ -3668,10 +3670,10 @@ static int gzread_binarycel_file_stddev(const char *filename, double *intensity,
  **
  **************************************************************/
 
-static int gzread_binarycel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+static int gzread_binarycel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
 
   int fread_err=0;
  
@@ -3714,11 +3716,11 @@ static int gzread_binarycel_file_npixels(const char *filename, double *intensity
  **
  **************************************************************/
 
-static void gz_binary_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+static void gz_binary_apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
   
-  int i=0;
+  size_t i=0;
 
-  int cur_index;
+  size_t cur_index;
 
   int sizeofrecords;
 
