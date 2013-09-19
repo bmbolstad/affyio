@@ -23,6 +23,7 @@
  ** Feb 11, 2008 - add #include for inttypes.h in situations that stdint.h might not exist
  ** Feb 13, 2008 - fix problems with generic_get_detailed_header_info(), gzgeneric_get_detailed_header_info()
  ** May 18, 2009 - Add Ability to extract scan date from CEL file header
+ ** Sep 19, 2013 - Improve ability to deal with large 64bit matrices
  **
  *************************************************************/
 #include <R.h>
@@ -702,10 +703,10 @@ int check_generic_cel_file(const char *filename, const char *ref_cdfName, int re
  **
  **************************************************************/
 
-int read_genericcel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+int read_genericcel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
   
@@ -752,10 +753,10 @@ int read_genericcel_file_intensities(const char *filename, double *intensity, in
 
 
 
-int read_genericcel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+int read_genericcel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
   
@@ -806,10 +807,10 @@ int read_genericcel_file_stddev(const char *filename, double *intensity, int chi
 
 
 
-int read_genericcel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+int read_genericcel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
   
@@ -956,11 +957,11 @@ void generic_get_masks_outliers(const char *filename, int *nmasks, short **masks
 
 
 
-void generic_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+void generic_apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
 
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   short cur_x, cur_y;
 
@@ -1706,10 +1707,10 @@ int check_gzgeneric_cel_file(const char *filename, const char *ref_cdfName, int 
 
 
 
-int gzread_genericcel_file_intensities(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+int gzread_genericcel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
   
@@ -1757,10 +1758,10 @@ int gzread_genericcel_file_intensities(const char *filename, double *intensity, 
 
 
 
-int gzread_genericcel_file_stddev(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+int gzread_genericcel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
   
@@ -1811,10 +1812,10 @@ int gzread_genericcel_file_stddev(const char *filename, double *intensity, int c
 
 
 
-int gzread_genericcel_file_npixels(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows){
+int gzread_genericcel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   int fread_err=0;
   
@@ -1964,11 +1965,11 @@ void gzgeneric_get_masks_outliers(const char *filename, int *nmasks, short **mas
 
 
 
-void gzgeneric_apply_masks(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers){
+void gzgeneric_apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
 
 
-  int i=0, j=0;
-  int cur_index;
+  size_t i=0, j=0;
+  size_t cur_index;
   
   short cur_x, cur_y;
 
