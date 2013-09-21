@@ -2253,9 +2253,9 @@ static int CountCDFProbes(SEXP cdfInfo){
  **
  *************************************************************************/
 
-static void storeIntensities(double *CurintensityMatrix, double *pmMatrix, double *mmMatrix, int curcol, int rows, int cols, int tot_n_probes, SEXP cdfInfo, int which){
+static void storeIntensities(double *CurintensityMatrix, double *pmMatrix, double *mmMatrix, size_t curcol, size_t rows, size_t cols, size_t tot_n_probes, SEXP cdfInfo, int which){
   
-  int i = 0,j=0, currow=0;
+  size_t i = 0,j=0, currow=0;
 #ifndef USE_PTHREADS
   int n_probes=0;
   int n_probesets = GET_LENGTH(cdfInfo);
