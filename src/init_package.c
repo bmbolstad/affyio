@@ -24,7 +24,8 @@ __declspec(dllexport)
 
 
 static const R_CallMethodDef callMethods[]  = {
- {"read_abatch",(DL_FUNC)&read_abatch,7},
+ {"read_abatch",(DL_FUNC)&read_abatch,7}, 
+ {"read_abatch_stddev",(DL_FUNC)&read_abatch,7},
   {NULL, NULL, 0}
   };
 
