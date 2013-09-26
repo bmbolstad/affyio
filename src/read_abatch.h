@@ -26,4 +26,8 @@ typedef struct{
 } detailed_header_info;
 
 
+
+SEXP read_abatch(SEXP filenames, SEXP rm_mask, SEXP rm_outliers, SEXP rm_extra, SEXP ref_cdfName, SEXP ref_dim, SEXP verbose);
+
+
 #endif
