@@ -1412,13 +1412,13 @@ static void print_generic_data_set(generic_data_set data_set){
 
   print_AWSTRING(data_set.data_set_name);
   Rprintf("\n");
-  printf("%d\n",data_set.n_name_type_value);
+  Rprintf("%d\n",data_set.n_name_type_value);
 
   for (i=0; i < data_set.n_name_type_value; i++){
     print_nvt_triplet(data_set.name_type_value[i]);
   }
   
-  printf("%d\n",data_set.ncols);
+  Rprintf("%d\n",data_set.ncols);
   
   for (i=0; i < data_set.ncols; i++){
     print_col_nvts_triplet(data_set.col_name_type_value[i]);
