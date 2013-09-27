@@ -744,56 +744,56 @@ void test_parsers_le(){
   
   if ((infile = fopen("LittleEndianTest.bin", "rb")) == NULL)
     {
-      printf("Unable to open the file\n");
+      Rprintf("Unable to open the file\n");
       return ;
     }
   
   for (i = 0; i < 255; i++){
     fread_uchar(&my_uc,1, infile);
-    printf("Was  : %d should be %d\n",my_uc,i);
+    Rprintf("Was  : %d should be %d\n",my_uc,i);
   }
   
   for (i = -128; i < 127; i++){
     fread_char(&my_c,1, infile);  
-    printf("Was  : %d should be %d\n",my_c,i);
+    Rprintf("Was  : %d should be %d\n",my_c,i);
   }
   
   for (i =0; i < 15; i++){
     fread_uint16(&my_us,1,infile);
-    printf("Was  : %d \n", my_us);
+    Rprintf("Was  : %d \n", my_us);
   } 
   
   for (i=0; i < 15; i++){
     fread_int16(&my_s,1,infile);
-    printf("Was  : %d \n", my_s);
+    Rprintf("Was  : %d \n", my_s);
   }
 
   for (i=0; i < 31; i++){
     fread_uint32(&my_ui,1,infile);
-    printf("uint32 Was  : %d \n", my_ui);
+    Rprintf("uint32 Was  : %d \n", my_ui);
   }
   
   
   for (i=0; i < 31; i++){
     fread_int32(&my_i,1, infile);
-    printf("int32 Was  : %d \n", my_i);
+    Rprintf("int32 Was  : %d \n", my_i);
   }
 
   
   for (i = 0; i < 25; i++){
     fread_float32(&my_f,1,infile);   
-    printf("float32 Was  : %e \n", my_f);
+    Rprintf("float32 Was  : %e \n", my_f);
   }
   fread_float32(&my_f,1,infile);
-  printf("PI float32 Was  : %f \n", my_f);
+  Rprintf("PI float32 Was  : %f \n", my_f);
 
   
   for (i = 0; i < 25; i++){
     fread_double64(&my_d,1,infile);
-    printf("double64 Was  : %le \n", my_d);
+    Rprintf("double64 Was  : %le \n", my_d);
   }
   fread_double64(&my_d,1,infile);
-  printf("exp(1) double64 Was  : %f \n", my_d);
+  Rprintf("exp(1) double64 Was  : %f \n", my_d);
 }
 
 
@@ -817,55 +817,55 @@ void test_parsers_be(){
   
   if ((infile = fopen("BigEndianTest.bin", "rb")) == NULL)
     {
-      printf("Unable to open the file\n");
+      Rprintf("Unable to open the file\n");
       return ;
     }
   
   for (i = 0; i < 255; i++){
     fread_be_uchar(&my_uc,1, infile);
-    printf("Was  : %d should be %d\n",my_uc,i);
+    Rprintf("Was  : %d should be %d\n",my_uc,i);
   }
   
   for (i = -128; i < 127; i++){
     fread_be_char(&my_c,1, infile);  
-    printf("Was  : %d should be %d\n",my_c,i);
+    Rprintf("Was  : %d should be %d\n",my_c,i);
   }
   
   for (i =0; i < 15; i++){
     fread_be_uint16(&my_us,1,infile);
-    printf("Was  : %d \n", my_us);
+    Rprintf("Was  : %d \n", my_us);
   } 
   
   for (i=0; i < 15; i++){
     fread_be_int16(&my_s,1,infile);
-    printf("Was  : %d \n", my_s);
+    Rprintf("Was  : %d \n", my_s);
   }
 
   for (i=0; i < 31; i++){
     fread_be_uint32(&my_ui,1,infile);
-    printf("uint32 Was  : %d \n", my_ui);
+    Rprintf("uint32 Was  : %d \n", my_ui);
   }
   
   
   for (i=0; i < 31; i++){
     fread_be_int32(&my_i,1, infile);
-    printf("int32 Was  : %d \n", my_i);
+    Rprintf("int32 Was  : %d \n", my_i);
   }
 
   
   for (i = 0; i < 25; i++){
     fread_be_float32(&my_f,1,infile);   
-    printf("float32 Was  : %e \n", my_f);
+    Rprintf("float32 Was  : %e \n", my_f);
   }
   fread_be_float32(&my_f,1,infile);
-  printf("PI float32 Was  : %f \n", my_f);
+  Rprintf("PI float32 Was  : %f \n", my_f);
 
   
   for (i = 0; i < 25; i++){
     fread_be_double64(&my_d,1,infile);
-    printf("double64 Was  : %le \n", my_d);
+    Rprintf("double64 Was  : %le \n", my_d);
   }
   fread_be_double64(&my_d,1,infile);
-  printf("exp(1) double64 Was  : %f \n", my_d);
+  Rprintf("exp(1) double64 Was  : %f \n", my_d);
 }
 
