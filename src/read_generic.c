@@ -454,7 +454,7 @@ AffyMIMEtypes determine_MIMETYPE(nvt_triplet triplet){
     return UINT8;
   }
   Rprintf("read_generic.c: Unknown MIME type encountered\n");
- 
+  return FLOAT32;
 }
 
 
@@ -1679,7 +1679,8 @@ static SEXP decode_nvt_triplet(nvt_triplet triplet){
     INTEGER_POINTER(return_value)[0] = (int32_t)decode_UINT8_t(triplet.value);
     UNPROTECT(1);  
     return(return_value);	
-  }
+  } 
+  return(return_value);
 }
 
 
