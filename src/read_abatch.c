@@ -4375,6 +4375,7 @@ void *readfile_group(void *data){
               args->ref_dim_1, args->ref_dim_2, args->n_files, args->num_probes, args->cdfInfo, args->which_flag, args->verbose);
    }
    Free(args->CurintensityMatrix);
+   return NULL;
 }
 
 void *checkFileCDF_group(void *data){
@@ -4384,6 +4385,7 @@ void *checkFileCDF_group(void *data){
   for(num = args->i; num < args->i+args->chunk_size; num++){
     checkFileCDF(args->filenames, num, args->refCdfName, args->ref_dim_1, args->ref_dim_2);
   }
+  return NULL;
 }
 #endif
 
