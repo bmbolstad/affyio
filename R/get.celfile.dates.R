@@ -1,7 +1,7 @@
 get.celfile.dates <- function(filenames,...){
     chardates<-vector("character",length(filenames))
     for(i in seq(along=chardates)){
-        tmp<-affyio::read.celfile.header(filenames[i],info="full")
+        tmp<-read.celfile.header(filenames[i],info="full")
         chardates[i]<-strsplit(tmp$ScanDate,"T|\ ")[[1]][1]
      
     }
