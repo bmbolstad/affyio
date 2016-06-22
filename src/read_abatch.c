@@ -151,6 +151,7 @@
  ** Nov 10, 2009 - Pthread on solaris fix
  ** May 26, 2010 - Multichannel CEL file support initiated 
  ** Sept 18, 2013 -  improve 64bit support for read_abatch
+ ** Jun 22, 2016 - Define PTHREAD_STACK_MIN if missing (e.g. Intel compiler) (DCT)
  ** 
  *************************************************************/
  
@@ -176,6 +177,12 @@
 #include <pthread.h>
 #include <limits.h>
 #include <unistd.h>
+
+// Intel Compiler doesn't have PTHREAD_STACK_MIN in limits.h
+//Set to 16K - (Linux standard for x86 / x86_64 (4 x 4K pages)
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 16384
+#endif
 
 pthread_mutex_t mutex_R;
 int n_probesets;
