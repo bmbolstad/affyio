@@ -177,6 +177,12 @@
 #include <limits.h>
 #include <unistd.h>
 
+// Intel Compiler doesn't have PTHREAD_STACK_MIN in limits.h
+//Set to 16K - (Linux standard for x86 / x86_64 (4 x 4K pages)
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 16384
+#endif
+
 pthread_mutex_t mutex_R;
 int n_probesets;
 int *n_probes = NULL;
