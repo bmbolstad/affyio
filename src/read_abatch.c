@@ -151,6 +151,7 @@
  ** Nov 10, 2009 - Pthread on solaris fix
  ** May 26, 2010 - Multichannel CEL file support initiated 
  ** Sept 18, 2013 -  improve 64bit support for read_abatch
+ ** Jun 22, 2016 - Define PTHREAD_STACK_MIN if missing (e.g. Intel compiler) (DCT)
  ** 
  *************************************************************/
  
