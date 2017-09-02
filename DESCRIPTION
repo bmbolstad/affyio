@@ -1,8 +1,8 @@
 Package: affyio
 Version: 1.47.0
 Title: Tools for parsing Affymetrix data files
-Author: Benjamin Milo Bolstad <bmb@bmbolstad.com>
-Maintainer: Benjamin Milo Bolstad <bmb@bmbolstad.com>
+Author: Ben Bolstad <bmb@bmbolstad.com>
+Maintainer: Ben Bolstad <bmb@bmbolstad.com>
 Depends: R (>= 2.6.0)
 Imports: zlibbioc
 Description: Routines for parsing Affymetrix data files based upon file format information. Primary focus is on accessing the CEL and CDF file formats.
