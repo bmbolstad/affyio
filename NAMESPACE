@@ -1,4 +1,4 @@
 exportPattern("^[^\\.]")
 useDynLib("affyio")
 import(zlibbioc)
-
+importFrom("methods", "is")
