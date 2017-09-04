@@ -24,6 +24,7 @@
  ** Feb 13, 2008 - fix problems with generic_get_detailed_header_info(), gzgeneric_get_detailed_header_info()
  ** May 18, 2009 - Add Ability to extract scan date from CEL file header
  ** Sep 19, 2013 - Improve ability to deal with large 64bit matrices
+ ** Sept 4, 2017 - change gzFile * to gzFile
  **
  *************************************************************/
 #include <R.h>
@@ -1060,7 +1061,7 @@ void generic_apply_masks(const char *filename, double *intensity, size_t chip_nu
 
 int isgzGenericCelFile(const char *filename){
 
-  gzFile *infile;
+  gzFile infile;
   generic_file_header file_header;
   generic_data_header data_header;
   
@@ -1099,7 +1100,7 @@ int isgzGenericCelFile(const char *filename){
 
 char *gzgeneric_get_header_info(const char *filename, int *dim1, int *dim2){
 
-  gzFile *infile;
+  gzFile infile;
   generic_file_header file_header;
   generic_data_header data_header;
 
@@ -1159,7 +1160,7 @@ char *gzgeneric_get_header_info(const char *filename, int *dim1, int *dim2){
 
 void gzgeneric_get_detailed_header_info(const char *filename, detailed_header_info *header_info){
   
-  gzFile *infile;
+  gzFile infile;
   generic_file_header file_header;
   generic_data_header data_header;
   nvt_triplet *triplet;
@@ -1646,7 +1647,7 @@ int check_gzgeneric_cel_file(const char *filename, const char *ref_cdfName, int 
   int dim1, dim2;
 
 
-  gzFile *infile;
+  gzFile infile;
   generic_file_header file_header;
   generic_data_header data_header;
   
@@ -1714,7 +1715,7 @@ int gzread_genericcel_file_intensities(const char *filename, double *intensity, 
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -1765,7 +1766,7 @@ int gzread_genericcel_file_stddev(const char *filename, double *intensity, size_
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -1819,7 +1820,7 @@ int gzread_genericcel_file_npixels(const char *filename, double *intensity, size
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -1884,7 +1885,7 @@ void gzgeneric_get_masks_outliers(const char *filename, int *nmasks, short **mas
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -1978,7 +1979,7 @@ void gzgeneric_apply_masks(const char *filename, double *intensity, size_t chip_
   int nrows;
   int size;
 
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;

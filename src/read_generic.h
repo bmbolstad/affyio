@@ -134,8 +134,8 @@ void Free_generic_data_group(generic_data_group *data_group);
 void Free_generic_data_set(generic_data_set *data_set);
 
 
-int gzread_generic_file_header(generic_file_header* file_header, gzFile *instream);
-int gzread_generic_data_header(generic_data_header *data_header, gzFile *instream);
-int gzread_generic_data_group(generic_data_group *data_group,gzFile *instream);
-int gzread_generic_data_set(generic_data_set *data_set, gzFile *instream);
-int gzread_generic_data_set_rows(generic_data_set *data_set, gzFile *instream);
+int gzread_generic_file_header(generic_file_header* file_header, gzFile instream);
+int gzread_generic_data_header(generic_data_header *data_header, gzFile instream);
+int gzread_generic_data_group(generic_data_group *data_group,gzFile instream);
+int gzread_generic_data_set(generic_data_set *data_set, gzFile instream);
+int gzread_generic_data_set_rows(generic_data_set *data_set, gzFile instream);

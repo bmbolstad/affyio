@@ -152,6 +152,7 @@
  ** May 26, 2010 - Multichannel CEL file support initiated 
  ** Sept 18, 2013 -  improve 64bit support for read_abatch
  ** Jun 22, 2016 - Define PTHREAD_STACK_MIN if missing (e.g. Intel compiler) (DCT)
+ ** Sept 4, 2017 - change gzFile* to gzFile
  ** 
  *************************************************************/
  
@@ -1408,7 +1409,7 @@ static gzFile open_gz_cel_file(const char *filename){
 
 /******************************************************************
  **
- ** void gzfindStartsWith(gzFile *my_file,char *starts, char *buffer)
+ ** void gzfindStartsWith(gzFile my_file,char *starts, char *buffer)
  **
  ** FILE *my_file - an open file to read from
  ** char *starts - the string to search for at the start of each line
@@ -1988,7 +1989,7 @@ static char *gz_get_header_info(const char *filename, int *dim1, int *dim2){
 static void gz_get_detailed_header_info(const char *filename, detailed_header_info *header_info){
 
   int i,endpos;
-  gzFile *currentFile; 
+  gzFile currentFile; 
   char buffer[BUF_SIZE];
   char *buffercopy;
 
@@ -2098,7 +2099,7 @@ static void gz_get_detailed_header_info(const char *filename, detailed_header_in
 
 static void gz_get_masks_outliers(const char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y){
   
-  gzFile *currentFile;
+  gzFile currentFile;
   char buffer[BUF_SIZE];
   int numcells, cur_x, cur_y;
   tokenset *cur_tokenset;
@@ -2328,7 +2329,7 @@ typedef struct{
   unsigned int n_masks;
   int n_subgrids;
   FILE *infile;
-  gzFile *gzinfile;
+  gzFile gzinfile;
 
 } binary_header;
 
@@ -3141,7 +3142,7 @@ static void binary_get_masks_outliers(const char *filename, int *nmasks, short *
 
 static int isgzBinaryCelFile(const char *filename){
 
-  gzFile *infile;
+  gzFile infile;
 
   int magicnumber;
   int version_number;
@@ -3191,7 +3192,7 @@ static int isgzBinaryCelFile(const char *filename){
 
 static binary_header *gzread_binary_header(const char *filename, int return_stream){  /* , FILE *infile){ */
   
-  gzFile *infile;
+  gzFile infile;
 
   binary_header *this_header = Calloc(1,binary_header);
   
@@ -3602,7 +3603,7 @@ static int gzread_binarycel_file_intensities(const char *filename, double *inten
 	return 1;
       }     
       if (cur_intensity->cur_intens < 0 || cur_intensity->cur_intens > 65536 || isnan(cur_intensity->cur_intens)){
-	gzclose(my_header->infile);
+	gzclose(my_header->gzinfile);
 	delete_binary_header(my_header);
 	Free(cur_intensity);
 	return 1;
@@ -3697,7 +3698,7 @@ static int gzread_binarycel_file_npixels(const char *filename, double *intensity
       fread_err+= gzread_float32(&(cur_intensity->cur_sd),1,my_header->gzinfile);
       fread_err+= gzread_int16(&(cur_intensity->npixels),1,my_header->gzinfile);  
       if (fread_err < 3){
-	gzclose(my_header->infile);
+	gzclose(my_header->gzinfile);
 	delete_binary_header(my_header);
 	Free(cur_intensity);
 	return 1;
@@ -3740,7 +3741,7 @@ static void gz_binary_apply_masks(const char *filename, double *intensity, size_
   sizeofrecords = 2*sizeof(float) + sizeof(short); /* sizeof(celintens_record) */
   
   //fseek(my_header->infile,my_header->n_cells*sizeofrecords,SEEK_CUR);
-  gzseek(my_header->infile,my_header->n_cells*sizeofrecords,SEEK_CUR);
+  gzseek(my_header->gzinfile,my_header->n_cells*sizeofrecords,SEEK_CUR);
   if (rm_mask){
     for (i =0; i < my_header->n_masks; i++){
       gzread_int16(&(cur_loc->x),1,my_header->gzinfile);

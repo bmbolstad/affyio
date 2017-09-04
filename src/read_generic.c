@@ -27,6 +27,7 @@
  ** Jan 15, 2008 - Fix VECTOR_ELT/STRING_ELT issues
  ** Feb, 2011 - Some debugging code for checking Generic file format parsing
  ** Nov, 2011 - Some additional fixed to deal with fixed width fields for strings in dataset rows
+ ** Sept 4, 2017 - change gzFile * to gzFile
  **
  *************************************************************/
 
@@ -903,7 +904,7 @@ int read_generic_data_set_rows(generic_data_set *data_set, FILE *instream){
 
 
 
-static int gzread_ASTRING(ASTRING *destination, gzFile *instream){
+static int gzread_ASTRING(ASTRING *destination, gzFile instream){
 
   gzread_be_int32(&(destination->len),1,instream);
   if (destination->len > 0){
@@ -917,7 +918,7 @@ static int gzread_ASTRING(ASTRING *destination, gzFile *instream){
 
 
 
-static int gzread_ASTRING_fw(ASTRING *destination, gzFile *instream, int length){
+static int gzread_ASTRING_fw(ASTRING *destination, gzFile instream, int length){
 
   gzread_be_int32(&(destination->len),1,instream);
   if (destination->len > 0){
@@ -933,7 +934,7 @@ static int gzread_ASTRING_fw(ASTRING *destination, gzFile *instream, int length)
 }
 
 
-static int gzread_AWSTRING(AWSTRING *destination, gzFile *instream){
+static int gzread_AWSTRING(AWSTRING *destination, gzFile instream){
 
   uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
 
@@ -955,7 +956,7 @@ static int gzread_AWSTRING(AWSTRING *destination, gzFile *instream){
 }
 
 
-static int gzread_AWSTRING_fw(AWSTRING *destination, gzFile *instream, int length){
+static int gzread_AWSTRING_fw(AWSTRING *destination, gzFile instream, int length){
 
   uint16_t temp;   /* Affy file wchar_t are 16 bits, the platform may have  32 bit wchar_t (notatbly linux) */
 
@@ -981,7 +982,7 @@ static int gzread_AWSTRING_fw(AWSTRING *destination, gzFile *instream, int lengt
 }
 
 
-static int gzread_nvt_triplet(nvt_triplet *destination, gzFile *instream){
+static int gzread_nvt_triplet(nvt_triplet *destination, gzFile instream){
 
   if (!(gzread_AWSTRING(&(destination->name),instream)) ||
       !(gzread_ASTRING(&(destination->value),instream)) ||
@@ -993,7 +994,7 @@ static int gzread_nvt_triplet(nvt_triplet *destination, gzFile *instream){
 
 
 
-static int gzread_nvts_triplet(col_nvts_triplet *destination, gzFile *instream){
+static int gzread_nvts_triplet(col_nvts_triplet *destination, gzFile instream){
 
   if (!(gzread_AWSTRING(&(destination->name),instream)) ||
       !(gzread_be_uchar(&(destination->type), 1, instream)) ||
@@ -1004,7 +1005,7 @@ static int gzread_nvts_triplet(col_nvts_triplet *destination, gzFile *instream){
 }
 
 
-int gzread_generic_file_header(generic_file_header* file_header, gzFile *instream){
+int gzread_generic_file_header(generic_file_header* file_header, gzFile instream){
 
   if (!gzread_be_uchar(&(file_header->magic_number),1,instream)){
     return 0;
@@ -1032,7 +1033,7 @@ int gzread_generic_file_header(generic_file_header* file_header, gzFile *instrea
 
 
 
-int gzread_generic_data_header(generic_data_header *data_header, gzFile *instream){
+int gzread_generic_data_header(generic_data_header *data_header, gzFile instream){
   
   int i;
 
@@ -1074,7 +1075,7 @@ int gzread_generic_data_header(generic_data_header *data_header, gzFile *instrea
 
 
 
-int gzread_generic_data_group(generic_data_group *data_group, gzFile *instream){
+int gzread_generic_data_group(generic_data_group *data_group, gzFile instream){
   
   if (!gzread_be_uint32(&(data_group->file_position_nextgroup),1,instream) ||
       !gzread_be_uint32(&(data_group->file_position_first_data),1,instream) ||
@@ -1090,7 +1091,7 @@ int gzread_generic_data_group(generic_data_group *data_group, gzFile *instream){
 
 
 
-int gzread_generic_data_set(generic_data_set *data_set, gzFile *instream){
+int gzread_generic_data_set(generic_data_set *data_set, gzFile instream){
 
   int i;
 
@@ -1159,7 +1160,7 @@ int gzread_generic_data_set(generic_data_set *data_set, gzFile *instream){
 
 
 
-int gzread_generic_data_set_rows(generic_data_set *data_set, gzFile *instream){
+int gzread_generic_data_set_rows(generic_data_set *data_set, gzFile instream){
 
   int i,j;
   
@@ -1493,7 +1494,7 @@ SEXP gzRead_Generic(SEXP filename){
 
   SEXP return_value = R_NilValue;
 
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;

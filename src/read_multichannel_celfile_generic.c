@@ -24,6 +24,7 @@
  ** Feb 13, 2008 - fix problems with generic_get_detailed_header_info(), gzgeneric_get_detailed_header_info()
  ** May 18, 2009 - Add Ability to extract scan date from CEL file header
  ** May 25, 2010 - Multichannel CELfile support adapted from single channel parser
+ ** Sep 4, 2017 - change gzFile* to gzFile
  **
  *************************************************************/
 #include <R.h>
@@ -613,7 +614,7 @@ void generic_apply_masks_multichannel(const char *filename, double *intensity, i
 
 int isgzGenericMultiChannelCelFile(const char *filename){
 
-  gzFile *infile;
+  gzFile infile;
   generic_file_header file_header;
   generic_data_header data_header;
   
@@ -663,7 +664,7 @@ int gzmultichannel_determine_number_channels(const char *filename){
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
   
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -716,7 +717,7 @@ char *gzmultichannel_determine_channel_name(const char *filename, int channelind
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
   
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -765,7 +766,7 @@ int gzread_genericcel_file_intensities_multichannel(const char *filename, double
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -821,7 +822,7 @@ int gzread_genericcel_file_stddev_multichannel(const char *filename, double *int
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -883,7 +884,7 @@ int gzread_genericcel_file_npixels_multichannel(const char *filename, double *in
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -952,7 +953,7 @@ void gzgeneric_get_masks_outliers_multichannel(const char *filename, int *nmasks
   
   int fread_err=0;
   
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
@@ -1056,7 +1057,7 @@ void gzgeneric_apply_masks_multichannel(const char *filename, double *intensity,
   int nrows;
   int size;
 
-  gzFile *infile;
+  gzFile infile;
 
   generic_file_header my_header;
   generic_data_header my_data_header;
