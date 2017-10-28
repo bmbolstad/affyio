@@ -103,11 +103,9 @@ static int compare_AWSTRING_Intensity(AWSTRING string){
 
 int multichannel_determine_number_channels(const char *filename){
   
-  int i=0, j=0, k=0;
-  int cur_index;
+  int j=0;
   int returnvalue = 0;
   
-  int fread_err=0;
   
   FILE *infile;
   
@@ -159,11 +157,8 @@ int multichannel_determine_number_channels(const char *filename){
 
 char *multichannel_determine_channel_name(const char *filename, int channelindex){
   
-  int i=0, j=0, k=0;
-  int cur_index;
+  int k=0;
   char *returnvalue = 0;
-  
-  int fread_err=0;
   
   FILE *infile;
   
@@ -171,9 +166,7 @@ char *multichannel_determine_channel_name(const char *filename, int channelindex
   generic_data_header my_data_header;
   generic_data_group my_data_group;
   
-  generic_data_set my_data_set;
-
-  uint32_t next_group =1;  
+    uint32_t next_group =1;  
 
 
   if ((infile = fopen(filename, "rb")) == NULL)
@@ -218,10 +211,7 @@ char *multichannel_determine_channel_name(const char *filename, int channelindex
 
 int read_genericcel_file_intensities_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int channelindex){
 
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
+  int i=0, k=0;
   
   FILE *infile;
 
@@ -275,11 +265,8 @@ int read_genericcel_file_intensities_multichannel(const char *filename, double *
 
 int read_genericcel_file_stddev_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int channelindex){
 
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
-  
+  int i=0, k=0;
+    
   FILE *infile;
 
   generic_file_header my_header;
@@ -339,10 +326,7 @@ int read_genericcel_file_stddev_multichannel(const char *filename, double *inten
 
 int read_genericcel_file_npixels_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows,  int channelindex){
 
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
+  int i=0, k=0;
   
   FILE *infile;
 
@@ -410,14 +394,8 @@ int read_genericcel_file_npixels_multichannel(const char *filename, double *inte
 
 void generic_get_masks_outliers_multichannel(const char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y, int channelindex){
 
-
-
-
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
-  
+  int i=0, k=0;
+    
   FILE *infile;
 
   generic_file_header my_header;
@@ -514,13 +492,12 @@ void generic_get_masks_outliers_multichannel(const char *filename, int *nmasks, 
 void generic_apply_masks_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers,  int channelindex){
 
 
-  int i=0, j=0;
+  int i=0;
   int cur_index;
   
   short cur_x, cur_y;
 
 
-  int fread_err=0;
   int nrows;
   int size;
 
@@ -658,12 +635,10 @@ int isgzGenericMultiChannelCelFile(const char *filename){
 
 int gzmultichannel_determine_number_channels(const char *filename){
   
-  int i=0, j=0, k=0;
-  int cur_index;
+  int j=0;
+ 
   int returnvalue = 0;
-  
-  int fread_err=0;
-  
+   
   gzFile infile;
   
   generic_file_header my_header;
@@ -711,11 +686,9 @@ int gzmultichannel_determine_number_channels(const char *filename){
 
 char *gzmultichannel_determine_channel_name(const char *filename, int channelindex){
   
-  int i=0, j=0, k=0;
-  int cur_index;
+  int k=0;
+
   char *returnvalue = 0;
-  
-  int fread_err=0;
   
   gzFile infile;
   
@@ -723,8 +696,6 @@ char *gzmultichannel_determine_channel_name(const char *filename, int channelind
   generic_data_header my_data_header;
   generic_data_group my_data_group;
   
-  generic_data_set my_data_set;
-
   uint32_t next_group =1;  
 
   if ((infile = gzopen(filename, "rb")) == NULL)
@@ -761,11 +732,8 @@ char *gzmultichannel_determine_channel_name(const char *filename, int channelind
 
 int gzread_genericcel_file_intensities_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int channelindex){
 
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
-  
+  int i=0, k=0;
+    
   gzFile infile;
 
   generic_file_header my_header;
@@ -817,11 +785,8 @@ int gzread_genericcel_file_intensities_multichannel(const char *filename, double
 
 int gzread_genericcel_file_stddev_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows,  int channelindex){
 
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
-  
+  int i=0, k=0;
+    
   gzFile infile;
 
   generic_file_header my_header;
@@ -879,10 +844,7 @@ int gzread_genericcel_file_stddev_multichannel(const char *filename, double *int
 
 int gzread_genericcel_file_npixels_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows,  int channelindex){
 
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
+  int i=0, k=0;
   
   gzFile infile;
 
@@ -946,13 +908,8 @@ int gzread_genericcel_file_npixels_multichannel(const char *filename, double *in
 
 void gzgeneric_get_masks_outliers_multichannel(const char *filename, int *nmasks, short **masks_x, short **masks_y, int *noutliers, short **outliers_x, short **outliers_y,  int channelindex){
 
-
-
-  int i=0, j=0, k=0;
-  int cur_index;
-  
-  int fread_err=0;
-  
+  int i=0, k=0;
+    
   gzFile infile;
 
   generic_file_header my_header;
@@ -1047,13 +1004,11 @@ void gzgeneric_get_masks_outliers_multichannel(const char *filename, int *nmasks
 void gzgeneric_apply_masks_multichannel(const char *filename, double *intensity, int chip_num, int rows, int cols,int chip_dim_rows, int rm_mask, int rm_outliers,  int channelindex){
 
 
-  int i=0, j=0;
+  int i=0;
   int cur_index;
   
   short cur_x, cur_y;
 
-
-  int fread_err=0;
   int nrows;
   int size;
 
