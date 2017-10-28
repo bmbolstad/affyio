@@ -706,10 +706,7 @@ int check_generic_cel_file(const char *filename, const char *ref_cdfName, int re
 
 int read_genericcel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  size_t i=0, j=0;
-  size_t cur_index;
-  
-  int fread_err=0;
+  size_t i=0;
   
   FILE *infile;
 
@@ -756,10 +753,7 @@ int read_genericcel_file_intensities(const char *filename, double *intensity, si
 
 int read_genericcel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  size_t i=0, j=0;
-  size_t cur_index;
-  
-  int fread_err=0;
+  size_t i=0;
   
   FILE *infile;
 
@@ -810,10 +804,7 @@ int read_genericcel_file_stddev(const char *filename, double *intensity, size_t 
 
 int read_genericcel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  size_t i=0, j=0;
-  size_t cur_index;
-  
-  int fread_err=0;
+  size_t i=0;
   
   FILE *infile;
 
@@ -872,10 +863,7 @@ void generic_get_masks_outliers(const char *filename, int *nmasks, short **masks
 
 
 
-  int i=0, j=0;
-  int cur_index;
-  
-  int fread_err=0;
+  int i=0;
   
   FILE *infile;
 
@@ -961,13 +949,12 @@ void generic_get_masks_outliers(const char *filename, int *nmasks, short **masks
 void generic_apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
 
 
-  size_t i=0, j=0;
+  size_t i=0;
   size_t cur_index;
   
   short cur_x, cur_y;
 
 
-  int fread_err=0;
   int nrows;
   int size;
 
@@ -1710,10 +1697,7 @@ int check_gzgeneric_cel_file(const char *filename, const char *ref_cdfName, int 
 
 int gzread_genericcel_file_intensities(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  size_t i=0, j=0;
-  size_t cur_index;
-  
-  int fread_err=0;
+  size_t i=0;
   
   gzFile infile;
 
@@ -1761,10 +1745,7 @@ int gzread_genericcel_file_intensities(const char *filename, double *intensity, 
 
 int gzread_genericcel_file_stddev(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  size_t i=0, j=0;
-  size_t cur_index;
-  
-  int fread_err=0;
+  size_t i=0;
   
   gzFile infile;
 
@@ -1815,10 +1796,7 @@ int gzread_genericcel_file_stddev(const char *filename, double *intensity, size_
 
 int gzread_genericcel_file_npixels(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows){
 
-  size_t i=0, j=0;
-  size_t cur_index;
-  
-  int fread_err=0;
+  size_t i=0;
   
   gzFile infile;
 
@@ -1880,10 +1858,7 @@ void gzgeneric_get_masks_outliers(const char *filename, int *nmasks, short **mas
 
 
 
-  int i=0, j=0;
-  int cur_index;
-  
-  int fread_err=0;
+  int i=0;
   
   gzFile infile;
 
@@ -1969,13 +1944,12 @@ void gzgeneric_get_masks_outliers(const char *filename, int *nmasks, short **mas
 void gzgeneric_apply_masks(const char *filename, double *intensity, size_t chip_num, size_t rows, size_t cols, size_t chip_dim_rows, int rm_mask, int rm_outliers){
 
 
-  size_t i=0, j=0;
+  size_t i=0;
   size_t cur_index;
   
   short cur_x, cur_y;
 
 
-  int fread_err=0;
   int nrows;
   int size;
 
