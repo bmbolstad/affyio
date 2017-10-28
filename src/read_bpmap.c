@@ -75,7 +75,7 @@ static SEXP ReadBPMAPHeader(FILE *infile){
 
   char *Magicnumber = R_alloc(8,sizeof(char));
   float version_number = 0.0;
-  int version_number_int;
+  
   unsigned int unsigned_version_number_int;
 
 
