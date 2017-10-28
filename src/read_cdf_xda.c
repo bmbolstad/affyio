@@ -1030,7 +1030,7 @@ SEXP ReadCDFFileIntoRList(SEXP filename,SEXP fullstructure){
 
 
 
-  char buf[10];
+  char buf[11];
   int i,j,k;
 
   cdf_xda my_cdf;

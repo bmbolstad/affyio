@@ -1068,7 +1068,7 @@ SEXP ReadtextCDFFileIntoRList(SEXP filename){
   SEXP UNITSProbeInfoNames;
   SEXP UNITSProbeInforow_names;
 
-  char buf[10]; /* temporary buffer for making names */
+  char buf[11]; /* temporary buffer for making names */
   int i,j,k,l;
   int tmpsum =0;
 						
