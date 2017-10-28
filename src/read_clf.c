@@ -554,7 +554,7 @@ void read_clf_header(FILE *cur_file, char *buffer, clf_headers *header){
 
 
   tokenset *cur_tokenset;
-  int i;
+
   char *temp_str;
   
   

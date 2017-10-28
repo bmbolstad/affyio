@@ -898,7 +898,7 @@ void read_pgf_header(FILE *cur_file, char *buffer, pgf_headers *header){
 
 
   tokenset *cur_tokenset;
-  int i;
+
   char *temp_str;
   
   
@@ -1164,7 +1164,7 @@ void insert_level0(char *buffer, probeset_list_header *probeset_list, header_0 *
 
   char *temp_str;
   tokenset *cur_tokenset;
-  probeset_list_node *temp_ptr;
+
 
   probeset_list_node *temp_node = Calloc(1,probeset_list_node);
 
