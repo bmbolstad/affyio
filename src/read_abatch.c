@@ -741,7 +741,7 @@ static int read_cel_file_stddev(const char *filename, double *intensity, size_t 
 #endif  
 
   size_t i, cur_x,cur_y,cur_index;
-  double cur_mean, cur_stddev;
+  double cur_stddev;
   FILE *currentFile; 
   char buffer[BUF_SIZE];
   /* tokenset *cur_tokenset;*/
@@ -794,7 +794,7 @@ static int read_cel_file_stddev(const char *filename, double *intensity, size_t 
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
-    cur_mean = atof(current_token);
+   
 #if USE_PTHREADS
     current_token = strtok_r(NULL," \t",&tmp_pointer);
 #else
@@ -847,7 +847,7 @@ static int read_cel_file_npixels(const char *filename, double *intensity, size_t
 #endif  
 
   size_t i, cur_x,cur_y,cur_index,cur_npixels;
-  double cur_mean, cur_stddev;
+
   FILE *currentFile; 
   char buffer[BUF_SIZE];
   /* tokenset *cur_tokenset;*/
@@ -901,7 +901,7 @@ static int read_cel_file_npixels(const char *filename, double *intensity, size_t
       break;
     }
     
-    cur_mean = atof(current_token);
+
 
 #if USE_PTHREADS
     current_token = strtok_r(NULL," \t",&tmp_pointer);
@@ -912,7 +912,7 @@ static int read_cel_file_npixels(const char *filename, double *intensity, size_t
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
-    cur_stddev = atof(current_token);
+
    
 #if USE_PTHREADS
     current_token = strtok_r(NULL," \t",&tmp_pointer);
@@ -1636,7 +1636,7 @@ static int read_gzcel_file_stddev(const char *filename, double *intensity, size_
 #endif  
   
   size_t i, cur_x,cur_y,cur_index;
-  double cur_mean, cur_stddev;
+  double cur_stddev;
   gzFile currentFile; 
   char buffer[BUF_SIZE];
   /* tokenset *cur_tokenset;*/
@@ -1688,7 +1688,7 @@ static int read_gzcel_file_stddev(const char *filename, double *intensity, size_
       break;
     }
 
-    cur_mean = atof(current_token);
+
 #if USE_PTHREADS
     current_token = strtok_r(NULL," \t",&tmp_pointer);
 #else
@@ -1741,7 +1741,7 @@ static int read_gzcel_file_npixels(const char *filename, double *intensity, size
 #endif  
 
   size_t i, cur_x,cur_y,cur_index,cur_npixels;
-  double cur_mean, cur_stddev;
+
   gzFile currentFile; 
   char buffer[BUF_SIZE];
   /* tokenset *cur_tokenset;*/
@@ -1789,7 +1789,7 @@ static int read_gzcel_file_npixels(const char *filename, double *intensity, size
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
-    cur_mean = atof(current_token);
+
 #if USE_PTHREADS
     current_token = strtok_r(NULL," \t",&tmp_pointer);
 #else
@@ -1799,7 +1799,7 @@ static int read_gzcel_file_npixels(const char *filename, double *intensity, size
       Rprintf("Warning: found an incomplete line where not expected in %s.\nThe CEL file may be truncated. \nSucessfully read to cel intensity %d of %d expected\n", filename, i-1, rows);
       break;
     }
-    cur_stddev = atof(current_token);
+
 #if USE_PTHREADS
     current_token = strtok_r(NULL," \t",&tmp_pointer);
 #else
@@ -4375,7 +4375,7 @@ void checkFileCDF(SEXP filenames, int i, const char *cdfName, int ref_dim_1, int
 void *readfile_group(void *data){
    int num;
    struct thread_data *args = (struct thread_data *) data;
-   SEXP Current_intensity;
+   
 
    args->CurintensityMatrix = Calloc(args->ref_dim_1*args->ref_dim_2, double);
 
@@ -4444,7 +4444,11 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
 
   const char *cur_file_name;
   const char *cdfName;
-  double *CurintensityMatrix, *pmMatrix=0, *mmMatrix=0;
+  double *pmMatrix=0, *mmMatrix=0;
+
+#ifndef USE_PTHREADS
+  double *CurintensityMatrix;
+#endif
 
   SEXP PM_intensity= R_NilValue, MM_intensity= R_NilValue, Current_intensity, names, dimnames;
   SEXP output_list,pmmmnames;
@@ -4485,7 +4489,10 @@ SEXP read_probeintensities(SEXP filenames,  SEXP rm_mask, SEXP rm_outliers, SEXP
   PROTECT(Current_intensity = allocMatrix(REALSXP, ref_dim_1*ref_dim_2, 1));
  
   cdfName = CHAR(STRING_ELT(ref_cdfName,0));
+
+#ifndef USE_PTHREADS
   CurintensityMatrix = NUMERIC_POINTER(AS_NUMERIC(Current_intensity));
+#endif
   
   /* Lets count how many probes we have */
   
