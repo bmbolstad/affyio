@@ -297,7 +297,7 @@ size_t fread_be_uint16(unsigned short *destination, int n, FILE *instream){
 
 
 
-static void swap_uint_32(unsigned int *tni4)              /* 4 byte integer numbers */
+/* static void swap_uint_32(unsigned int *tni4)              // 4 byte integer numbers 
 {
   
   *tni4=(((*tni4>>24)&0xff) | ((*tni4&0xff)<<24) |
@@ -305,7 +305,7 @@ static void swap_uint_32(unsigned int *tni4)              /* 4 byte integer numb
   
 
 }
-
+*/
 
 
 

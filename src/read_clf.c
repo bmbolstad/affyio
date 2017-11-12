@@ -289,7 +289,7 @@ static void delete_tokens(tokenset *x){
  **
  ******************************************************************/
 
-static int token_ends_with(char *token, char *ends_in){
+/* static int token_ends_with(char *token, char *ends_in){
   
   int tokenlength = strlen(token);
   int ends_length = strlen(ends_in);
@@ -297,7 +297,7 @@ static int token_ends_with(char *token, char *ends_in){
   char *tmp_ptr;
   
   if (tokenlength <= ends_length){
-    /* token string is too short so can't possibly end with ends */
+    // token string is too short so can't possibly end with ends 
     return 0;
   }
   
@@ -310,7 +310,7 @@ static int token_ends_with(char *token, char *ends_in){
   } else {
     return 0;
   }
-}
+  } */
 
 
 /*******************************************************************
@@ -386,12 +386,12 @@ static int IsHeaderLine(char *buffer){
  **
  ***************************************************************/
 
-static int IsCommentLine(char *buffer){
+/* static int IsCommentLine(char *buffer){
   if (strncmp("#",buffer,1) == 0){
     return 1;
   }
   return 0;
-}
+  } */
 
 /****************************************************************
  **
