@@ -1604,7 +1604,7 @@ static SEXP decode_nvt_triplet(nvt_triplet triplet){
   int temp32;
   float tempfloat;
  
-  SEXP return_value;
+  SEXP return_value=R_NilValue;
 
   if (!wcscmp(triplet.type.value,L"text/x-calvin-float")){
 
@@ -1781,7 +1781,7 @@ static SEXP data_header_R_List(generic_data_header *my_data_header){
 static SEXP data_group_R_list(generic_data_group *my_data_group){
 
   SEXP return_value;
-  SEXP tmp_sexp, return_names;
+  SEXP tmp_sexp=R_NilValue, return_names;
   char *temp;
 
   PROTECT(return_value =  allocVector(VECSXP,2));
@@ -1962,7 +1962,7 @@ SEXP Read_Generic_R_List(SEXP filename){
 
   SEXP return_value = R_NilValue;
   SEXP return_names;
-  SEXP temp_sxp,temp_sxp2,temp_names,temp_names2;	
+  SEXP temp_sxp = R_NilValue,temp_sxp2 = R_NilValue,temp_names = R_NilValue,temp_names2 = R_NilValue;	
   FILE *infile;
 
   char *temp;
