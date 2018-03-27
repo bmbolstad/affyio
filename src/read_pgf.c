@@ -1262,7 +1262,7 @@ probeset_type_list *pgf_count_probeset_types(pgf_file *my_pgf, int *number){
       my_type_list[0].count = 1;
       *number = 1; /* number of different types seen */
       while (my_pgf->probesets->current->next != NULL){
-	my_pgf->probesets->current= my_pgf->probesets->current->next;
+	my_pgf->probesets->current= (probeset_list_node *)my_pgf->probesets->current->next;
 	if (my_pgf->probesets->current->type == NULL){
 	  cur_type = "none";
 	} else {
