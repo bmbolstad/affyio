@@ -632,7 +632,8 @@ static int read_cel_file_intensities(const char *filename, double *intensity, si
 #endif  
 
 	/*	  int */
-  size_t i, cur_x,cur_y,cur_index;
+  size_t i, cur_index;
+  int cur_x, cur_y;
   double cur_mean;
   FILE *currentFile; 
   char buffer[BUF_SIZE];
@@ -689,7 +690,7 @@ static int read_cel_file_intensities(const char *filename, double *intensity, si
       break;
     }
 
-    if (cur_x < 0 || cur_x >= chip_dim_rows){
+    if (cur_x < 0 || cur_x >= chip_dim_rows){    
       error("It appears that the file %s is corrupted.",filename);
       return 1;
     }
@@ -1538,7 +1539,8 @@ static int read_gzcel_file_intensities(const char *filename, double *intensity, 
   char *tmp_pointer;
 #endif  
   
-  size_t i, cur_x,cur_y,cur_index;
+  size_t i, cur_index;
+  int cur_x, cur_y;
   double cur_mean;
   gzFile currentFile; 
   char buffer[BUF_SIZE];
