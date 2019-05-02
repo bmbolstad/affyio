@@ -1,5 +1,5 @@
 Package: affyio
-Version: 1.54.0
+Version: 1.55.0
 Title: Tools for parsing Affymetrix data files
 Author: Ben Bolstad <bmb@bmbolstad.com>
 Maintainer: Ben Bolstad <bmb@bmbolstad.com>
