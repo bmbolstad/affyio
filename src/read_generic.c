@@ -1687,8 +1687,8 @@ static SEXP decode_nvt_triplet(nvt_triplet triplet){
 
 static SEXP data_header_R_List(generic_data_header *my_data_header){
 
-  SEXP return_value, return_names;	
-  SEXP tmp_sexp, tmp_names;
+  SEXP return_value= R_NilValue, return_names= R_NilValue;	
+  SEXP tmp_sexp= R_NilValue, tmp_names= R_NilValue;
   char *temp;
   int i;
 
@@ -1782,8 +1782,8 @@ static SEXP data_header_R_List(generic_data_header *my_data_header){
 
 static SEXP data_header_R_List_full(generic_data_header *my_data_header){
 
-  SEXP return_value, return_names;	
-  SEXP tmp_sexp, tmp_names, tmp_type, tmp_value;
+  SEXP return_value= R_NilValue, return_names= R_NilValue;	
+  SEXP tmp_sexp= R_NilValue, tmp_names= R_NilValue, tmp_type= R_NilValue, tmp_value= R_NilValue;
   char *temp;
   int i;
 
@@ -1887,7 +1887,7 @@ static SEXP data_header_R_List_full(generic_data_header *my_data_header){
 static SEXP data_group_R_list(generic_data_group *my_data_group){
 
   SEXP return_value;
-  SEXP tmp_sexp=R_NilValue, return_names;
+  SEXP tmp_sexp=R_NilValue, return_names= R_NilValue;
   char *temp;
 
   PROTECT(return_value =  allocVector(VECSXP,2));
@@ -1916,8 +1916,8 @@ static SEXP data_group_R_list(generic_data_group *my_data_group){
 
 static SEXP generic_data_set_R_List(generic_data_set *my_data_set){
 
-  SEXP return_value, return_names;
-  SEXP tmp_sexp, tmp_names;
+  SEXP return_value= R_NilValue, return_names= R_NilValue;
+  SEXP tmp_sexp= R_NilValue, tmp_names= R_NilValue;
   int i;
   char *temp;
 
@@ -1973,6 +1973,69 @@ static SEXP generic_data_set_R_List(generic_data_set *my_data_set){
 
 
 
+static SEXP generic_data_set_R_List_full(generic_data_set *my_data_set){
+
+  SEXP return_value, return_names;
+  SEXP tmp_sexp, tmp_names, tmp_type, tmp_value;
+  int i;
+  char *temp;
+
+  PROTECT(return_value =  allocVector(VECSXP,3));
+  
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));  
+  if (my_data_set->data_set_name.len > 0){
+    temp = Calloc(my_data_set->data_set_name.len+1,char);
+    wcstombs(temp, my_data_set->data_set_name.value, my_data_set->data_set_name.len);
+    SET_STRING_ELT(tmp_sexp,0,mkChar(temp));  
+    Free(temp);
+  }
+  SET_VECTOR_ELT(return_value,0,tmp_sexp);
+  UNPROTECT(1);
+
+  PROTECT(tmp_sexp= allocVector(VECSXP,3));
+  PROTECT(tmp_names =  allocVector(STRSXP,my_data_set->n_name_type_value));
+  PROTECT(tmp_type =  allocVector(STRSXP,my_data_set->n_name_type_value));
+  PROTECT(tmp_value =  allocVector(VECSXP,my_data_set->n_name_type_value));
+  for (i=0; i < my_data_set->n_name_type_value; i++){
+    SET_VECTOR_ELT(tmp_value,i,decode_nvt_triplet(my_data_set->name_type_value[i]));
+    temp = Calloc(my_data_set->name_type_value[i].name.len+1,char);
+    wcstombs(temp, my_data_set->name_type_value[i].name.value, my_data_set->name_type_value[i].name.len);
+    SET_STRING_ELT(tmp_names,i,mkChar(temp));
+    Free(temp);
+    temp = Calloc(my_data_set->name_type_value[i].type.len+1,char);
+    wcstombs(temp, my_data_set->name_type_value[i].type.value, my_data_set->name_type_value[i].type.len);
+    SET_STRING_ELT(tmp_type,i,mkChar(temp));
+    Free(temp);
+  } 
+  setAttrib(tmp_value, R_NamesSymbol, tmp_names);
+  SET_VECTOR_ELT(tmp_sexp,0,tmp_names);
+  SET_VECTOR_ELT(tmp_sexp,1,tmp_value);
+  SET_VECTOR_ELT(tmp_sexp,2,tmp_type);
+  SET_VECTOR_ELT(return_value,1,tmp_sexp);
+  UNPROTECT(4); 
+
+  PROTECT(tmp_sexp= allocVector(VECSXP,my_data_set->ncols));  
+  SET_VECTOR_ELT(return_value,2,tmp_sexp);
+  PROTECT(tmp_names =  allocVector(STRSXP,my_data_set->ncols));
+  for (i=0; i < my_data_set->ncols; i++){
+     temp = Calloc(my_data_set->col_name_type_value[i].name.len+1,char);
+     wcstombs(temp, my_data_set->col_name_type_value[i].name.value, my_data_set->col_name_type_value[i].name.len);
+     SET_STRING_ELT(tmp_names,i,mkChar(temp));
+     Free(temp);
+  }
+  setAttrib(tmp_sexp, R_NamesSymbol, tmp_names); 
+  UNPROTECT(2);
+
+  PROTECT(return_names = allocVector(STRSXP,3));
+  SET_STRING_ELT(return_names,0,mkChar("Name"));
+  SET_STRING_ELT(return_names,1,mkChar("NVTList"));
+  SET_STRING_ELT(return_names,2,mkChar("DataColumns"));
+  setAttrib(return_value, R_NamesSymbol, return_names); 
+  UNPROTECT(2);
+  return return_value;
+
+}
+
 
 
 
@@ -1982,7 +2045,7 @@ static SEXP generic_data_set_R_List(generic_data_set *my_data_set){
 
 static SEXP generic_data_set_rows_R_List(generic_data_set *data_set, int col){
 
-  SEXP return_value;
+  SEXP return_value= R_NilValue;
   int i,j;
   char *temp;  
 
@@ -2062,11 +2125,11 @@ static SEXP generic_data_set_rows_R_List(generic_data_set *data_set, int col){
 
 
 
-SEXP Read_Generic_R_List(SEXP filename, SEXP reduce_NVT){
+SEXP Read_Generic_R_List(SEXP filename, SEXP reducedoutput){
 
   int i,j,k;
 
-  int shorten_NVT = asInteger(reduce_NVT);
+  int shorten_NVT = asInteger(reducedoutput);
   
   SEXP return_value = R_NilValue;
   SEXP return_names;
@@ -2128,8 +2191,14 @@ SEXP Read_Generic_R_List(SEXP filename, SEXP reduce_NVT){
     
     PROTECT(temp_names2 = allocVector(STRSXP,my_data_group.n_data_sets));	
     for (j=0; j < my_data_group.n_data_sets; j++){
-      read_generic_data_set(&my_data_set,infile); 
-      temp_sxp2 = generic_data_set_R_List(&my_data_set);
+      read_generic_data_set(&my_data_set,infile);
+
+      if (shorten_NVT){
+	temp_sxp2 = generic_data_set_R_List(&my_data_set);
+      } else {
+	temp_sxp2 =  generic_data_set_R_List_full(&my_data_set);
+      }
+      
       SET_VECTOR_ELT(VECTOR_ELT(VECTOR_ELT(temp_sxp,k),1),j,temp_sxp2);
 
       temp = Calloc(my_data_set.data_set_name.len+1,char);
