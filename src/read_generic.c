@@ -1778,6 +1778,106 @@ static SEXP data_header_R_List(generic_data_header *my_data_header){
 
 
 
+
+
+static SEXP data_header_R_List_full(generic_data_header *my_data_header){
+
+  SEXP return_value, return_names;	
+  SEXP tmp_sexp, tmp_names, tmp_type, tmp_value;
+  char *temp;
+  int i;
+
+  PROTECT(return_value = allocVector(VECSXP,8));	
+
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));
+  if (my_data_header->data_type_id.len > 0){
+    SET_STRING_ELT(tmp_sexp,0,mkChar(my_data_header->data_type_id.value));
+  }
+  SET_VECTOR_ELT(return_value,0,tmp_sexp);
+  UNPROTECT(1); 	
+
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));  
+  if (my_data_header->unique_file_id.len > 0){
+    SET_STRING_ELT(tmp_sexp,0,mkChar(my_data_header->unique_file_id.value));
+  }
+  SET_VECTOR_ELT(return_value,1,tmp_sexp);
+  UNPROTECT(1); 	
+
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));
+  if (my_data_header->Date_time.len > 0){
+    temp = Calloc(my_data_header->Date_time.len+1,char);
+    wcstombs(temp, my_data_header->Date_time.value, my_data_header->Date_time.len);
+    SET_STRING_ELT(tmp_sexp,0,mkChar(temp));  
+    Free(temp);
+  }
+  SET_VECTOR_ELT(return_value,2,tmp_sexp);
+  UNPROTECT(1); 
+ 
+  PROTECT(tmp_sexp= allocVector(STRSXP,1));
+  if (my_data_header->locale.len > 0){
+    temp = Calloc(my_data_header->locale.len+1,char);
+    wcstombs(temp, my_data_header->locale.value, my_data_header->locale.len);
+    SET_STRING_ELT(tmp_sexp,0,mkChar(temp));  
+    Free(temp);
+  }
+  SET_VECTOR_ELT(return_value,3,tmp_sexp);
+  UNPROTECT(1); 
+   
+  PROTECT(tmp_sexp= allocVector(INTSXP,1));
+  INTEGER(tmp_sexp)[0] =  (int32_t)my_data_header->n_name_type_value;
+  SET_VECTOR_ELT(return_value,4,tmp_sexp);
+  UNPROTECT(1); 
+
+  PROTECT(tmp_sexp= allocVector(VECSXP,3));
+  PROTECT(tmp_value = allocVector(VECSXP,  my_data_header->n_name_type_value));
+  PROTECT(tmp_names = allocVector(STRSXP, my_data_header->n_name_type_value));
+  PROTECT(tmp_type = allocVector(STRSXP, my_data_header->n_name_type_value));
+  
+  for (i=0; i < my_data_header->n_name_type_value; i++){
+     SET_VECTOR_ELT(tmp_value,i,decode_nvt_triplet(my_data_header->name_type_value[i]));
+     temp = Calloc(my_data_header->name_type_value[i].name.len+1,char);
+     wcstombs(temp, my_data_header->name_type_value[i].name.value, my_data_header->name_type_value[i].name.len);
+     SET_STRING_ELT(tmp_names,i,mkChar(temp));
+     Free(temp);
+  } 
+  setAttrib(tmp_value, R_NamesSymbol, tmp_names);
+  SET_VECTOR_ELT(tmp_sexp,0,tmp_names);
+  SET_VECTOR_ELT(tmp_sexp,1,tmp_value);
+  SET_VECTOR_ELT(tmp_sexp,2,tmp_type);
+  
+  SET_VECTOR_ELT(return_value,5,tmp_sexp);
+  UNPROTECT(4); 
+
+  PROTECT(tmp_sexp= allocVector(INTSXP,1));
+  INTEGER(tmp_sexp)[0] =  (int32_t)my_data_header->n_parent_headers;
+  SET_VECTOR_ELT(return_value,6,tmp_sexp);
+  UNPROTECT(1); 
+  
+  PROTECT(tmp_sexp= allocVector(VECSXP,my_data_header->n_parent_headers)); 
+  if (my_data_header->n_parent_headers > 0){
+   for (i =0; i < my_data_header->n_parent_headers; i++){
+      SET_VECTOR_ELT(tmp_sexp,i,data_header_R_List(my_data_header->parent_headers[i]));
+    }
+  }
+  SET_VECTOR_ELT(return_value,7,tmp_sexp);
+  UNPROTECT(1); 
+
+
+  PROTECT(return_names = allocVector(STRSXP,8));
+  SET_STRING_ELT(return_names,0,mkChar("DataTypeID"));
+  SET_STRING_ELT(return_names,1,mkChar("UniqueFileID"));
+  SET_STRING_ELT(return_names,2,mkChar("DateTime"));
+  SET_STRING_ELT(return_names,3,mkChar("Locale"));
+  SET_STRING_ELT(return_names,4,mkChar("NumberOfNameValueType"));
+  SET_STRING_ELT(return_names,5,mkChar("NVTList"));
+  SET_STRING_ELT(return_names,6,mkChar("NumberOfParentHeaders"));
+  SET_STRING_ELT(return_names,7,mkChar("ParentHeaders"));
+  setAttrib(return_value, R_NamesSymbol, return_names); 
+  UNPROTECT(2);
+  return return_value;
+}
+
+
 static SEXP data_group_R_list(generic_data_group *my_data_group){
 
   SEXP return_value;
@@ -1956,10 +2056,12 @@ static SEXP generic_data_set_rows_R_List(generic_data_set *data_set, int col){
 
 
 
-SEXP Read_Generic_R_List(SEXP filename){
+SEXP Read_Generic_R_List(SEXP filename, SEXP reduce_NVT){
 
   int i,j,k;
 
+  int shorten_NVT = asInteger(reduce_NVT);
+  
   SEXP return_value = R_NilValue;
   SEXP return_names;
   SEXP temp_sxp = R_NilValue,temp_sxp2 = R_NilValue,temp_names = R_NilValue,temp_names2 = R_NilValue;	
@@ -1995,8 +2097,13 @@ SEXP Read_Generic_R_List(SEXP filename){
   SET_VECTOR_ELT(return_value,0,file_header_R_List(&my_header));
 
   /* Data Header is Second Element of Return List */
-  SET_VECTOR_ELT(return_value,1,data_header_R_List(&my_data_header));
+  if (shorten_NVT){
+    SET_VECTOR_ELT(return_value,1,data_header_R_List(&my_data_header));
+  } else {
+    SET_VECTOR_ELT(return_value,1,data_header_R_List_full(&my_data_header));
+  }
 
+    
   /* Data Groups are it Third Element of Return List */	
   /* Now Read Data groups */	
   
