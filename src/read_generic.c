@@ -1841,7 +1841,7 @@ static SEXP data_header_R_List_full(generic_data_header *my_data_header){
      Free(temp);
      temp = Calloc(my_data_header->name_type_value[i].type.len+1,char);
      wcstombs(temp, my_data_header->name_type_value[i].type.value, my_data_header->name_type_value[i].type.len);
-     SET_STRING_ELT(tmp_names,i,mkChar(temp));
+     SET_STRING_ELT(tmp_type,i,mkChar(temp));
      Free(temp);
 
      
