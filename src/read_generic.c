@@ -1975,12 +1975,12 @@ static SEXP generic_data_set_R_List(generic_data_set *my_data_set){
 
 static SEXP generic_data_set_R_List_full(generic_data_set *my_data_set){
 
-  SEXP return_value, return_names;
-  SEXP tmp_sexp, tmp_names, tmp_type, tmp_value;
+  SEXP return_value = R_NilValue, return_names = R_NilValue;
+  SEXP tmp_sexp = R_NilValue, tmp_names = R_NilValue, tmp_type = R_NilValue, tmp_value = R_NilValue, tmp_size = R_NilValue;
   int i;
   char *temp;
 
-  PROTECT(return_value =  allocVector(VECSXP,3));
+  PROTECT(return_value =  allocVector(VECSXP,4));
   
   PROTECT(tmp_sexp= allocVector(STRSXP,1));  
   if (my_data_set->data_set_name.len > 0){
@@ -2026,10 +2026,29 @@ static SEXP generic_data_set_R_List_full(generic_data_set *my_data_set){
   setAttrib(tmp_sexp, R_NamesSymbol, tmp_names); 
   UNPROTECT(2);
 
+
+  PROTECT(tmp_sexp = allocVector(VECSXP,3));
+  PROTECT(tmp_names =  allocVector(STRSXP,my_data_set->ncols));
+  PROTECT(tmp_value =  allocVector(INTSXP,my_data_set->ncols));
+  PROTECT(tmp_size =  allocVector(VECSXP,my_data_set->ncols));
+  for (i=0; i < my_data_set->ncols; i++){
+    temp = Calloc(my_data_set->col_name_type_value[i].name.len+1,char);
+    wcstombs(temp, my_data_set->col_name_type_value[i].name.value, my_data_set->col_name_type_value[i].name.len);
+    SET_STRING_ELT(tmp_names,i,mkChar(temp));
+    Free(temp);
+  }
+  SET_VECTOR_ELT(tmp_sexp,0,tmp_names);
+  SET_VECTOR_ELT(tmp_sexp,1,tmp_value);
+  SET_VECTOR_ELT(tmp_sexp,2,tmp_size);
+  SET_VECTOR_ELT(return_value,3,tmp_sexp);
+  UNPROTECT(4);
+  
+
   PROTECT(return_names = allocVector(STRSXP,3));
   SET_STRING_ELT(return_names,0,mkChar("Name"));
   SET_STRING_ELT(return_names,1,mkChar("NVTList"));
   SET_STRING_ELT(return_names,2,mkChar("DataColumns"));
+  SET_STRING_ELT(return_names,3,mkChar("DataColumnNTS"));
   setAttrib(return_value, R_NamesSymbol, return_names); 
   UNPROTECT(2);
   return return_value;
