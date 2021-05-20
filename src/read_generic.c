@@ -1850,7 +1850,14 @@ static SEXP data_header_R_List_full(generic_data_header *my_data_header){
   SET_VECTOR_ELT(tmp_sexp,0,tmp_names);
   SET_VECTOR_ELT(tmp_sexp,1,tmp_value);
   SET_VECTOR_ELT(tmp_sexp,2,tmp_type);
-  
+
+  PROTECT(return_names = allocVector(STRSXP,3));
+  SET_STRING_ELT(return_names,0,mkChar("Name"));
+  SET_STRING_ELT(return_names,1,mkChar("Value"));
+  SET_STRING_ELT(return_names,2,mkChar("Type"));
+  setAttrib(tmp_sexp, R_NamesSymbol, return_names); 
+  UNPROTECT(1);
+
   SET_VECTOR_ELT(return_value,5,tmp_sexp);
   UNPROTECT(4); 
 
