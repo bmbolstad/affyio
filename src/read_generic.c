@@ -2042,6 +2042,15 @@ static SEXP generic_data_set_R_List_full(generic_data_set *my_data_set){
   SET_VECTOR_ELT(tmp_sexp,0,tmp_names);
   SET_VECTOR_ELT(tmp_sexp,1,tmp_value);
   SET_VECTOR_ELT(tmp_sexp,2,tmp_size);
+
+  PROTECT(return_names = allocVector(STRSXP,3));
+  SET_STRING_ELT(return_names,0,mkChar("Name"));
+  SET_STRING_ELT(return_names,1,mkChar("ValueType"));
+  SET_STRING_ELT(return_names,2,mkChar("Size"));
+  setAttrib(tmp_sexp, R_NamesSymbol, return_names); 
+  UNPROTECT(1);
+
+  
   SET_VECTOR_ELT(return_value,3,tmp_sexp);
   UNPROTECT(4);
   
