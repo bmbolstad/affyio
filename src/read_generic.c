@@ -2036,7 +2036,7 @@ static SEXP generic_data_set_R_List_full(generic_data_set *my_data_set){
     wcstombs(temp, my_data_set->col_name_type_value[i].name.value, my_data_set->col_name_type_value[i].name.len);
     SET_STRING_ELT(tmp_names,i,mkChar(temp));
     Free(temp);
-    INTEGER(tmp_value)[i] = (int) my_data_set->col_name_type_value[i].type);
+    INTEGER(tmp_value)[i] = (int) my_data_set->col_name_type_value[i].type;
     
   }
   SET_VECTOR_ELT(tmp_sexp,0,tmp_names);
