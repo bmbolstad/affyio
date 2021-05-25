@@ -1869,7 +1869,7 @@ static SEXP data_header_R_List_full(generic_data_header *my_data_header){
   PROTECT(tmp_sexp= allocVector(VECSXP,my_data_header->n_parent_headers)); 
   if (my_data_header->n_parent_headers > 0){
    for (i =0; i < my_data_header->n_parent_headers; i++){
-      SET_VECTOR_ELT(tmp_sexp,i,data_header_R_List(my_data_header->parent_headers[i]));
+      SET_VECTOR_ELT(tmp_sexp,i,data_header_R_List_full(my_data_header->parent_headers[i]));
     }
   }
   SET_VECTOR_ELT(return_value,7,tmp_sexp);
