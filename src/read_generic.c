@@ -28,6 +28,7 @@
  ** Feb, 2011 - Some debugging code for checking Generic file format parsing
  ** Nov, 2011 - Some additional fixed to deal with fixed width fields for strings in dataset rows
  ** Sept 4, 2017 - change gzFile * to gzFile
+ ** August 26, 2021 - Handling fixed width strings of length 0, Better handling for situations where logical ordering and physical ordering of data groups do not agree
  **
  *************************************************************/
 
@@ -179,6 +180,7 @@ static int fread_ASTRING_fw(ASTRING *destination, FILE *instream, int length){
     }
   } else {
     destination->value = 0;
+    fseek(instream, length, SEEK_CUR);
   }
   return 1;
 }
@@ -225,6 +227,7 @@ static int fread_AWSTRING_fw(AWSTRING *destination, FILE *instream, int length){
     }
   } else {
     destination->value = 0;
+    fseek(instream, length, SEEK_CUR);
   }
   
   return 1;
@@ -929,6 +932,7 @@ static int gzread_ASTRING_fw(ASTRING *destination, gzFile instream, int length){
     }
   } else {
     destination->value = 0;
+    gzseek(instream, length, SEEK_CUR);
   }
   return 1;
 }
@@ -976,6 +980,7 @@ static int gzread_AWSTRING_fw(AWSTRING *destination, gzFile instream, int length
 
   } else {
     destination->value = 0;
+    gzseek(instream, length, SEEK_CUR);
   }
   
   return 1;
@@ -1478,6 +1483,7 @@ SEXP Read_Generic(SEXP filename){
       fseek(infile, my_data_set.file_pos_last, SEEK_SET);
       Free_generic_data_set(&my_data_set);
     }
+    fseek(infile, my_data_group.file_position_nextgroup, SEEK_SET);
     Free_generic_data_group(&my_data_group);
   }
   Free_generic_data_header(&my_data_header);
@@ -2141,8 +2147,10 @@ static SEXP generic_data_set_rows_R_List(generic_data_set *data_set, int col){
   case 7:	
      PROTECT(return_value = allocVector(STRSXP, data_set->nrows));
      for (i=0; i < data_set->nrows; i++){
-	temp = (char *)((ASTRING *)data_set->Data[j])[i].value;
-	SET_STRING_ELT(return_value,i,mkChar(temp));
+       if ((int32_t)((ASTRING *)data_set->Data[j])[i].len > 0){
+	 temp = (char *)((ASTRING *)data_set->Data[j])[i].value;
+	 SET_STRING_ELT(return_value,i,mkChar(temp));
+       }
      }
      break;
   case 8:	
@@ -2252,6 +2260,7 @@ SEXP Read_Generic_R_List(SEXP filename, SEXP reducedoutput){
       fseek(infile, my_data_set.file_pos_last, SEEK_SET);
       Free_generic_data_set(&my_data_set);
     }
+    fseek(infile, my_data_group.file_position_nextgroup, SEEK_SET);
     setAttrib(VECTOR_ELT(VECTOR_ELT(temp_sxp,k),1), R_NamesSymbol, temp_names2); 
     UNPROTECT(1);	
 
