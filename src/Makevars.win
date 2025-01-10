@@ -1,3 +1,4 @@
 PKG_CPPFLAGS += -DHAVE_ZLIB
+PKG_LIBS=-lz
 %.o: %.c
-	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
+	$(CC) $(ZLIB_CFLAGS) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
